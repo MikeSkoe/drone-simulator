@@ -1,105 +1,105 @@
 import P5 = require('p5');
 import * as Matter from 'matter-js';
-import { Entity, BodyID, Mission } from '../../types';
-import {
-  $currentMission,
-  $missionDetail,
-  $collisionStart,
-  $doneMissions,
-} from '../../state';
+import { Entity, BodyID, Mission, BaseState, MyState } from '../../types';
+import { $collisionStart } from '../../state';
 
-interface MissionEmitterState {
-  body: Matter.Body;
-  mission: Mission;
+const RADIUS = 25;
+
+enum MissionState {
+  New,
+  Progress,
+  Done,
+}
+
+interface MissionEmitterState extends BaseState {
+  missionState: MissionState;
 }
 
 export const MissionEmitter = (
   p5: P5,
+  state: MyState,
   mission: Mission,
   [x, y]: [number, number],
 ): Entity<MissionEmitterState> => {
-  const radius = 25;
-  let progress: Mission['progress'] = 'new';
-
-  $collisionStart.observable.subscribe(
-    ([id1, id2]) => {
-      if (
-        id1 === BodyID.MissionEmitter
-        || id2 === BodyID.MissionEmitter
-      ) {
-        if (progress !== 'done') {
-          $missionDetail.next(() => [mission])
+  const localState: MissionEmitterState = {
+    bodies: [
+      Matter.Bodies.circle(
+        x, y, RADIUS,
+        {
+          isStatic: true,
+          isSensor: true,
+          id: BodyID.MissionEmitter,
+        },
+      ),
+      Matter.Bodies.circle(
+        ...mission.target.pos, RADIUS,
+        {
+          isStatic: true,
+          isSensor: true,
+          id: BodyID.MissionTarget,
         }
-      }
-    }
-  );
+      )
+    ],
+    unsubs: [
+      $collisionStart
+        .observable.subscribe(([id1, id2]) => {
+          if (
+            id1 === BodyID.MissionEmitter
+            || id2 === BodyID.MissionEmitter
+          ) {
+            switch (localState.missionState) {
+              case MissionState.New:
+                localState.missionState = MissionState.Progress;
+                break;
+              case MissionState.Done:
+                console.log('done!!!');
+                break;
+              default: break;
+            }
+          }
+        })
+        .unsubscribe,
 
-  const currentMissionSubscription = $currentMission.observable.subscribe(
-    ([currentMission])=> {
-      if (currentMission && currentMission.id === mission.id) {
-        if (currentMission.progress !== 'done') {
-          progress = currentMission.progress;
-        }
-      } else {
-        progress = 'new';
-      }
-    }
-  );
-
-  $doneMissions.observable.subscribe(
-    doneMissions => {
-      if (doneMissions.some(msn => msn.id === mission.id)) {
-        progress = 'done';
-        currentMissionSubscription.unsubscribe();
-      }
-    }
-  )
-
-  const body = Matter.Bodies.circle(
-    x, y, radius,
-    {
-      isStatic: true,
-      isSensor: true,
-      id: BodyID.MissionEmitter,
-    },
-  );
-
-  const state: MissionEmitterState = {
-    body,
-    mission,
+      $collisionStart
+        .observable.subscribe(([id1, id2]) => {
+          if (
+            id1 === BodyID.MissionTarget
+            || id2 === BodyID.MissionTarget
+          ) {
+            if (localState.missionState === MissionState.Progress) {
+              localState.missionState = MissionState.Done;
+            }
+          }
+        })
+        .unsubscribe,
+    ],
+    missionState: MissionState.New,
   };
 
   return {
-    state,
-    update: () => {},
+    localState,
+    update: () => { },
     draw: () => {
       p5.push();
-      p5.noStroke();
-      p5.fill(255, 0, 255);
-      p5.circle(
-        body.position.x,
-        body.position.y,
-        radius * 2,
-      );
-
-      p5.fill(255, 255, 0);
-      if (progress === 'new') {
-        p5.rect(
-          body.position.x - 5,
-          body.position.y - 80,
-          10,
-          40,
-        )
-      }
-
-      if (progress === 'progress') {
+      {
+        p5.noStroke();
+        p5.fill(255, 0, 255);
         p5.circle(
-          body.position.x,
-          body.position.y - 50,
-          30,
-        )
+          x,
+          y,
+          RADIUS * 2,
+        );
+        p5.fill(255, 255, 0);
+
+        if (localState.missionState === MissionState.Progress) {
+          p5.circle(
+            ...mission.target.pos,
+            RADIUS * 2,
+          );
+        }
       }
       p5.pop();
     },
   };
-}
+};
+

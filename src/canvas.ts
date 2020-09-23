@@ -4,11 +4,12 @@ import { Copter } from './entities/Copter';
 import { Grounds } from './entities/Ground';
 import { Bonuses } from './entities/Bonus';
 import { Camera } from './entities/Camera';
-import { collisionChecking } from './hooks/withCollision';
+import { withCollision } from './hooks/withCollision';
 import { DialogEmitter } from './entities/DialogEmitter';
 import { MissionEmitter } from './entities/MissionEmitter';
-import { MissionEntities } from './entities/MissionEntities';
-import { Mission, DialogItem } from './types';
+import { Health } from './entities/Health';
+import { Gamepad } from './entities/Gamepad';
+import { MyState, Mission, DialogItem } from './types';
 
 import missionJSON from './data/missions/1.json';
 import dialogJSON from './data/dialogs/1.json';
@@ -44,51 +45,37 @@ const drawBG = (p5: P5, xOffset, yOffset) => {
   p5.pop();
 };
 
-export const initCanvas = () => {
+export const initCanvas = (state: MyState) => {
   new P5(
     (p5: P5) => {
       // matter
       const engine = Matter.Engine.create();
 
       // entities
-      const copter = Copter(p5);
-      const missionEmitter = MissionEmitter(
-        p5,
-        missionData,
-        [200, -50],
-      )
-      const missions = MissionEntities(p5, engine.world);
-      const dialogEmitter = DialogEmitter(
-        p5,
-        dialogData,
-        [50, -50],
-      );
-      const grounds = Grounds(
-        p5,
-        groundsData,
-      );
-      const bonuses = Bonuses(
-        p5,
-        bonusesData,
-      );
-      const camera = Camera(
-        p5,
-        () => copter.state.body.position,
-      );
+      const copter = Copter(p5, state);
+      const missionEmitter = MissionEmitter(p5, state, missionData, [200, -50]);
+      const dialogEmitter = DialogEmitter(p5, state, dialogData, [50, -50]);
+      const grounds = Grounds(p5, state, groundsData);
+      const bonuses = Bonuses(p5, state, bonusesData,);
+      const camera = Camera(p5, state, () => copter.localState.bodies[0].position);
+      const health = Health(p5, state);
+      const gamepad = Gamepad();
 
       // matter setup
       Matter.World.add(
         engine.world,
         [
-          copter.state.body,
-          dialogEmitter.state.body,
-          missionEmitter.state.body,
-          ...grounds.map(ground => ground.state.body),
-          ...bonuses.map(bonus => bonus.state.body),
-        ]
+          ...copter.localState.bodies,
+          ...dialogEmitter.localState.bodies,
+          ...missionEmitter.localState.bodies,
+          ...grounds.localState.bodies,
+          ...bonuses.localState.bodies,
+          ...health.localState.bodies,
+        ],
       );
+
       Matter.Engine.run(engine);
-      collisionChecking(engine);
+      withCollision(engine);
 
       // p5 init
       p5.setup = () => {
@@ -99,28 +86,34 @@ export const initCanvas = () => {
         p5.background(0);
 
         // update
+        gamepad.update();
         camera.update();
-        grounds.forEach(ground => ground.update());
-        bonuses.forEach(bonus => bonus.update());
+        grounds.update();
+        bonuses.update();
         dialogEmitter.update();
-        missions.update();
         missionEmitter.update();
         copter.update();
+        health.update();
 
         // draw
         drawBG(
           p5,
-          camera.state.pos.x / 2,
-          camera.state.pos.y / 2,
+          camera.localState.pos.x / 2,
+          camera.localState.pos.y / 2,
         );
 
-        camera.draw();
-        grounds.forEach(ground => ground.draw());
-        bonuses.forEach(bonus => bonus.draw());
-        dialogEmitter.draw();
-        missions.draw();
-        missionEmitter.draw();
-        copter.draw();
+        p5.push();
+        {
+          camera.draw();
+          grounds.draw();
+          bonuses.draw();
+          dialogEmitter.draw();
+          missionEmitter.draw();
+          copter.draw();
+        }
+        p5.pop();
+
+        health.draw();
       };
     },
     canvas,

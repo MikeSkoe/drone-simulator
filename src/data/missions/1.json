@@ -2,9 +2,8 @@
   "id": 123,
   "title": "first mission",
   "description": "done your first mision ever!",
-  "item": {
-    "id": "box",
-    "targetPosition": [700, 300]
+  "target": {
+    "pos": [700, 300]
   },
   "progress": "new"
 }

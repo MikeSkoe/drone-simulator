@@ -1,7 +1,7 @@
 import * as Matter from 'matter-js';
 import { $collisionStart, $collisionActive } from '../state';
 
-export const collisionChecking = (
+export const withCollision = (
   engine: Matter.Engine,
 ) => {
   Matter.Events.on(
