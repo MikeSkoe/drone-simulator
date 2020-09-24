@@ -2,6 +2,7 @@ import P5 = require('p5');
 import * as Matter from 'matter-js';
 import { Entity, BodyID, Mission, BaseState, MyState } from '../../types';
 import { $collisionStart } from '../../state';
+import { addToWorld } from '../../hooks/addToWorld';
 
 const RADIUS = 25;
 
@@ -21,25 +22,26 @@ export const MissionEmitter = (
   mission: Mission,
   [x, y]: [number, number],
 ): Entity<MissionEmitterState> => {
+  const bodies = [
+    Matter.Bodies.circle(
+      x, y, RADIUS,
+      {
+        isStatic: true,
+        isSensor: true,
+        id: BodyID.MissionEmitter,
+      },
+    ),
+    Matter.Bodies.circle(
+      ...mission.target.pos, RADIUS,
+      {
+        isStatic: true,
+        isSensor: true,
+        id: BodyID.MissionTarget,
+      }
+    )
+  ];
+
   const localState: MissionEmitterState = {
-    bodies: [
-      Matter.Bodies.circle(
-        x, y, RADIUS,
-        {
-          isStatic: true,
-          isSensor: true,
-          id: BodyID.MissionEmitter,
-        },
-      ),
-      Matter.Bodies.circle(
-        ...mission.target.pos, RADIUS,
-        {
-          isStatic: true,
-          isSensor: true,
-          id: BodyID.MissionTarget,
-        }
-      )
-    ],
     unsubs: [
       $collisionStart
         .observable.subscribe(([id1, id2]) => {
@@ -72,6 +74,8 @@ export const MissionEmitter = (
           }
         })
         .unsubscribe,
+
+      addToWorld(state.engine, bodies),
     ],
     missionState: MissionState.New,
   };

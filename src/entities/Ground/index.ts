@@ -1,6 +1,7 @@
 import P5 = require('p5');
 import * as Matter from 'matter-js';
 import { BodyID, Entity, BaseState, MyState } from '../../types';
+import { addToWorld } from '../../hooks/addToWorld';
 
 interface GroundState extends BaseState { }
 
@@ -14,11 +15,14 @@ export const Grounds = (
     h: number,
   ][]
 ): Entity<GroundState> =>{
+  const bodies = data.map(([x, y, w, h]) =>
+    Matter.Bodies.rectangle(x, y, w, h, { isStatic: true, id: BodyID.Ground }),
+  );
+
   const localState: BaseState = {
-    bodies: data.map(([x, y, w, h]) =>
-      Matter.Bodies.rectangle(x, y, w, h, { isStatic: true, id: BodyID.Ground }),
-    ),
-    unsubs: [],
+    unsubs: [
+      addToWorld(state.engine, bodies),
+    ],
   };
 
   return {
@@ -26,7 +30,11 @@ export const Grounds = (
     update: () => {
     },
     draw: () => {
-      data.forEach(([x, y, w, h]) => {
+      bodies.forEach(body => {
+        const {x, y} = body.position;
+        const {min, max} = body.bounds;
+        const [w, h] = [max.x - min.x, max.y - min.y];
+
         p5.push();
           p5.translate(x, y);
           p5.rect(-w/2, -h/2, w, h);

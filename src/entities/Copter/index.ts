@@ -1,8 +1,11 @@
 import P5 = require('p5');
 import * as Matter from 'matter-js';
 import { Entity, BodyID, BaseState, MyState } from '../../types';
+import { addToWorld } from '../../hooks/addToWorld';
 
-interface CopterState extends BaseState { };
+interface CopterState extends BaseState {
+  pos: {x: number, y: number};
+};
 
 export const Copter = (
   p5: P5,
@@ -10,14 +13,16 @@ export const Copter = (
   [x, y]: [number, number] = [50, 50],
   [w, h]: [number, number] = [50, 25],
 ): Entity<CopterState> => {
+  const body = Matter.Bodies.rectangle(
+    x, y, w, h,
+    { id: BodyID.Copter }
+  );
+
   const localState: CopterState = {
-    bodies: [
-      Matter.Bodies.rectangle(
-        x, y, w, h,
-        { id: BodyID.Copter }
-      ),
+    pos: body.position,
+    unsubs: [
+      addToWorld(state.engine, [body]),
     ],
-    unsubs: [],
   };
 
   return {
@@ -27,10 +32,11 @@ export const Copter = (
         return;
       }
 
+      localState.pos = body.position;
+
       const [gamepad] = navigator.getGamepads();
       const upValue = gamepad?.buttons[7].value ?? 0;
       const rotateValue = gamepad?.axes[0] ?? 0;
-      const [body] = localState.bodies;
       const direction = p5
         .createVector(0, -(0.003 * upValue))
         .rotate(body.angle);
@@ -66,11 +72,9 @@ export const Copter = (
     draw: () => {
       p5.push();
       {
-        localState.bodies.forEach(body => {
-          p5.translate(body.position.x, body.position.y);
-          p5.rotate(body.angle);
-          p5.rect(-w/2, -h/2, w, h);
-        });
+        p5.translate(body.position.x, body.position.y);
+        p5.rotate(body.angle);
+        p5.rect(-w/2, -h/2, w, h);
       }
       p5.pop();
     },

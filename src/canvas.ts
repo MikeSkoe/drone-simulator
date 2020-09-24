@@ -45,11 +45,17 @@ const drawBG = (p5: P5, xOffset, yOffset) => {
   p5.pop();
 };
 
-export const initCanvas = (state: MyState) => {
+export const initCanvas = () => {
   new P5(
     (p5: P5) => {
       // matter
       const engine = Matter.Engine.create();
+      const state: MyState = {
+        health: 1,
+        dialog: [],
+        movable: true,
+        engine,
+      };
 
       // entities
       const copter = Copter(p5, state);
@@ -57,22 +63,9 @@ export const initCanvas = (state: MyState) => {
       const dialogEmitter = DialogEmitter(p5, state, dialogData, [50, -50]);
       const grounds = Grounds(p5, state, groundsData);
       const bonuses = Bonuses(p5, state, bonusesData,);
-      const camera = Camera(p5, state, () => copter.localState.bodies[0].position);
+      const camera = Camera(p5, state, () => copter.localState.pos);
       const health = Health(p5, state);
       const gamepad = Gamepad();
-
-      // matter setup
-      Matter.World.add(
-        engine.world,
-        [
-          ...copter.localState.bodies,
-          ...dialogEmitter.localState.bodies,
-          ...missionEmitter.localState.bodies,
-          ...grounds.localState.bodies,
-          ...bonuses.localState.bodies,
-          ...health.localState.bodies,
-        ],
-      );
 
       Matter.Engine.run(engine);
       withCollision(engine);

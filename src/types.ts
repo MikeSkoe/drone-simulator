@@ -1,7 +1,6 @@
 import * as Matter from 'matter-js';
 
 export interface BaseState {
-  bodies: Matter.Body[];
   unsubs: (() => void)[];
 }
 
@@ -38,11 +37,13 @@ export interface Mission {
 export type MyState =
   {
     health: number;
+    engine: Matter.Engine,
     dialog: [];
     movable: true;
   }
   | {
     health: number;
+    engine: Matter.Engine,
     dialog: DialogItem[];
     movable: false;
   };

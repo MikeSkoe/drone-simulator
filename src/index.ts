@@ -1,15 +1,9 @@
 import { Div, String } from './TypeScriptUI/nodes';
 import { initCanvas } from './canvas';
-import { MyState } from './types';
 import { $dialog } from './state';
 
 const App = () => {
-  const state: MyState = {
-    health: 1,
-    dialog: [],
-    movable: true,
-  };
-  initCanvas(state);
+  initCanvas();
 
   return Div(
     String(

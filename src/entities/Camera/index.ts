@@ -15,7 +15,6 @@ export const Camera = (
       getTargetPos().x,
       getTargetPos().y,
     ),
-    bodies: [],
     unsubs: [],
   };
 

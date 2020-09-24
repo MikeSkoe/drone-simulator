@@ -3,6 +3,7 @@ import * as Matter from 'matter-js';
 import { Entity, MyState, BaseState } from '../../types';
 import { $collisionActive } from '../../state';
 import { BodyID } from '../../types';
+import { addToWorld } from '../../hooks/addToWorld';
 
 const RADIUS = 25;
 
@@ -17,18 +18,21 @@ export const Bonuses = (
     r: number,
   ][],
 ): Entity<BonusState> => {
-  const localState: BonusState = {
-    bodies: data.map(([x, y]) => 
-      Matter.Bodies.circle(
-        x, y, RADIUS,
-        {
-          isStatic: true,
-          isSensor: true,
-          id: BodyID.Bonus,
-        },
-      ),
+  const bodies = data.map(([x, y]) => 
+    Matter.Bodies.circle(
+      x, y, RADIUS,
+      {
+        isStatic: true,
+        isSensor: true,
+        id: BodyID.Bonus,
+      },
     ),
+  );
+
+  const localState: BonusState = {
     unsubs: [
+      addToWorld(state.engine, bodies),
+
       $collisionActive.observable.subscribe(
         ([id1, id2]) => {
           if (
@@ -46,7 +50,7 @@ export const Bonuses = (
     localState,
     update: () => {},
     draw: () => {
-      localState.bodies.forEach(body => {
+      bodies.forEach(body => {
         p5.circle(
           body.position.x,
           body.position.y,

@@ -43547,7 +43547,59 @@ var BodyID;
   BodyID[BodyID["MissionEmitter"] = 5] = "MissionEmitter";
   BodyID[BodyID["MissionTarget"] = 6] = "MissionTarget";
 })(BodyID = exports.BodyID || (exports.BodyID = {}));
-},{}],"src/entities/Copter/index.ts":[function(require,module,exports) {
+},{}],"src/hooks/addToWorld.ts":[function(require,module,exports) {
+"use strict";
+
+var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  Object.defineProperty(o, k2, {
+    enumerable: true,
+    get: function get() {
+      return m[k];
+    }
+  });
+} : function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  o[k2] = m[k];
+});
+
+var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
+  Object.defineProperty(o, "default", {
+    enumerable: true,
+    value: v
+  });
+} : function (o, v) {
+  o["default"] = v;
+});
+
+var __importStar = this && this.__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) {
+    if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+  }
+
+  __setModuleDefault(result, mod);
+
+  return result;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.addToWorld = void 0;
+
+var Matter = __importStar(require("matter-js"));
+
+exports.addToWorld = function (engine, bodies) {
+  Matter.World.add(engine.world, bodies);
+  return function () {
+    bodies.forEach(function (body) {
+      Matter.Composite.remove(engine.world, body);
+    });
+  };
+};
+},{"matter-js":"node_modules/matter-js/build/matter.js"}],"src/entities/Copter/index.ts":[function(require,module,exports) {
 "use strict";
 
 var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
@@ -43593,6 +43645,8 @@ var Matter = __importStar(require("matter-js"));
 
 var types_1 = require("../../types");
 
+var addToWorld_1 = require("../../hooks/addToWorld");
+
 ;
 
 exports.Copter = function (p5, state, _a, _b) {
@@ -43604,11 +43658,12 @@ exports.Copter = function (p5, state, _a, _b) {
       w = _d[0],
       h = _d[1];
 
+  var body = Matter.Bodies.rectangle(x, y, w, h, {
+    id: types_1.BodyID.Copter
+  });
   var localState = {
-    bodies: [Matter.Bodies.rectangle(x, y, w, h, {
-      id: types_1.BodyID.Copter
-    })],
-    unsubs: []
+    pos: body.position,
+    unsubs: [addToWorld_1.addToWorld(state.engine, [body])]
   };
   return {
     localState: localState,
@@ -43619,10 +43674,10 @@ exports.Copter = function (p5, state, _a, _b) {
         return;
       }
 
+      localState.pos = body.position;
       var gamepad = navigator.getGamepads()[0];
       var upValue = (_a = gamepad === null || gamepad === void 0 ? void 0 : gamepad.buttons[7].value) !== null && _a !== void 0 ? _a : 0;
       var rotateValue = (_b = gamepad === null || gamepad === void 0 ? void 0 : gamepad.axes[0]) !== null && _b !== void 0 ? _b : 0;
-      var body = localState.bodies[0];
       var direction = p5.createVector(0, -(0.003 * upValue)).rotate(body.angle);
 
       if (state.health > 0) {
@@ -43641,17 +43696,15 @@ exports.Copter = function (p5, state, _a, _b) {
     draw: function draw() {
       p5.push();
       {
-        localState.bodies.forEach(function (body) {
-          p5.translate(body.position.x, body.position.y);
-          p5.rotate(body.angle);
-          p5.rect(-w / 2, -h / 2, w, h);
-        });
+        p5.translate(body.position.x, body.position.y);
+        p5.rotate(body.angle);
+        p5.rect(-w / 2, -h / 2, w, h);
       }
       p5.pop();
     }
   };
 };
-},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts"}],"src/entities/Ground/index.ts":[function(require,module,exports) {
+},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Ground/index.ts":[function(require,module,exports) {
 "use strict";
 
 var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
@@ -43697,29 +43750,36 @@ var Matter = __importStar(require("matter-js"));
 
 var types_1 = require("../../types");
 
+var addToWorld_1 = require("../../hooks/addToWorld");
+
 exports.Grounds = function (p5, state, data) {
+  var bodies = data.map(function (_a) {
+    var x = _a[0],
+        y = _a[1],
+        w = _a[2],
+        h = _a[3];
+    return Matter.Bodies.rectangle(x, y, w, h, {
+      isStatic: true,
+      id: types_1.BodyID.Ground
+    });
+  });
   var localState = {
-    bodies: data.map(function (_a) {
-      var x = _a[0],
-          y = _a[1],
-          w = _a[2],
-          h = _a[3];
-      return Matter.Bodies.rectangle(x, y, w, h, {
-        isStatic: true,
-        id: types_1.BodyID.Ground
-      });
-    }),
-    unsubs: []
+    unsubs: [addToWorld_1.addToWorld(state.engine, bodies)]
   };
   return {
     localState: localState,
     update: function update() {},
     draw: function draw() {
-      data.forEach(function (_a) {
-        var x = _a[0],
-            y = _a[1],
-            w = _a[2],
-            h = _a[3];
+      bodies.forEach(function (body) {
+        var _a = body.position,
+            x = _a.x,
+            y = _a.y;
+        var _b = body.bounds,
+            min = _b.min,
+            max = _b.max;
+        var _c = [max.x - min.x, max.y - min.y],
+            w = _c[0],
+            h = _c[1];
         p5.push();
         p5.translate(x, y);
         p5.rect(-w / 2, -h / 2, w, h);
@@ -43728,7 +43788,7 @@ exports.Grounds = function (p5, state, data) {
     }
   };
 };
-},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts"}],"node_modules/zen-observable/lib/Observable.js":[function(require,module,exports) {
+},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"node_modules/zen-observable/lib/Observable.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -44526,20 +44586,22 @@ var state_1 = require("../../state");
 
 var types_1 = require("../../types");
 
+var addToWorld_1 = require("../../hooks/addToWorld");
+
 var RADIUS = 25;
 
 exports.Bonuses = function (p5, state, data) {
+  var bodies = data.map(function (_a) {
+    var x = _a[0],
+        y = _a[1];
+    return Matter.Bodies.circle(x, y, RADIUS, {
+      isStatic: true,
+      isSensor: true,
+      id: types_1.BodyID.Bonus
+    });
+  });
   var localState = {
-    bodies: data.map(function (_a) {
-      var x = _a[0],
-          y = _a[1];
-      return Matter.Bodies.circle(x, y, RADIUS, {
-        isStatic: true,
-        isSensor: true,
-        id: types_1.BodyID.Bonus
-      });
-    }),
-    unsubs: [state_1.$collisionActive.observable.subscribe(function (_a) {
+    unsubs: [addToWorld_1.addToWorld(state.engine, bodies), state_1.$collisionActive.observable.subscribe(function (_a) {
       var id1 = _a[0],
           id2 = _a[1];
 
@@ -44552,13 +44614,13 @@ exports.Bonuses = function (p5, state, data) {
     localState: localState,
     update: function update() {},
     draw: function draw() {
-      localState.bodies.forEach(function (body) {
+      bodies.forEach(function (body) {
         p5.circle(body.position.x, body.position.y, RADIUS * 2);
       });
     }
   };
 };
-},{"matter-js":"node_modules/matter-js/build/matter.js","../../state":"src/state/index.ts","../../types":"src/types.ts"}],"src/entities/Camera/index.ts":[function(require,module,exports) {
+},{"matter-js":"node_modules/matter-js/build/matter.js","../../state":"src/state/index.ts","../../types":"src/types.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Camera/index.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -44569,7 +44631,6 @@ exports.Camera = void 0;
 exports.Camera = function (p5, state, getTargetPos) {
   var localState = {
     pos: p5.createVector(getTargetPos().x, getTargetPos().y),
-    bodies: [],
     unsubs: []
   };
   return {
@@ -44767,17 +44828,19 @@ var state_1 = require("../../state");
 
 var Gamepad_1 = require("../Gamepad");
 
+var addToWorld_1 = require("../../hooks/addToWorld");
+
 var RADIUS = 25;
 
 exports.DialogEmitter = function (p5, state, dialog, _a) {
   var x = _a[0],
       y = _a[1];
+  var bodies = [Matter.Bodies.circle(x, y, RADIUS, {
+    isStatic: true,
+    isSensor: true,
+    id: types_1.BodyID.DialogEmitter
+  })];
   var localState = {
-    bodies: [Matter.Bodies.circle(x, y, RADIUS, {
-      isStatic: true,
-      isSensor: true,
-      id: types_1.BodyID.DialogEmitter
-    })],
     unsubs: [state_1.$collisionStart.observable.subscribe(function (_a) {
       var id1 = _a[0],
           id2 = _a[1];
@@ -44791,7 +44854,7 @@ exports.DialogEmitter = function (p5, state, dialog, _a) {
           });
         }
       }
-    }).unsubscribe]
+    }).unsubscribe, addToWorld_1.addToWorld(state.engine, bodies)]
   };
   return {
     localState: localState,
@@ -44817,7 +44880,7 @@ exports.DialogEmitter = function (p5, state, dialog, _a) {
       {
         p5.noStroke();
         p5.fill(255, 255, 0);
-        localState.bodies.forEach(function (body) {
+        bodies.forEach(function (body) {
           p5.circle(body.position.x, body.position.y, RADIUS * 2);
         });
       }
@@ -44825,7 +44888,7 @@ exports.DialogEmitter = function (p5, state, dialog, _a) {
     }
   };
 };
-},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../state":"src/state/index.ts","../Gamepad":"src/entities/Gamepad/index.ts"}],"src/entities/MissionEmitter/index.ts":[function(require,module,exports) {
+},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../state":"src/state/index.ts","../Gamepad":"src/entities/Gamepad/index.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/MissionEmitter/index.ts":[function(require,module,exports) {
 "use strict";
 
 var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
@@ -44887,6 +44950,8 @@ var types_1 = require("../../types");
 
 var state_1 = require("../../state");
 
+var addToWorld_1 = require("../../hooks/addToWorld");
+
 var RADIUS = 25;
 var MissionState;
 
@@ -44901,16 +44966,16 @@ exports.MissionEmitter = function (p5, state, mission, _a) {
 
   var x = _a[0],
       y = _a[1];
+  var bodies = [Matter.Bodies.circle(x, y, RADIUS, {
+    isStatic: true,
+    isSensor: true,
+    id: types_1.BodyID.MissionEmitter
+  }), (_b = Matter.Bodies).circle.apply(_b, __spreadArrays(mission.target.pos, [RADIUS, {
+    isStatic: true,
+    isSensor: true,
+    id: types_1.BodyID.MissionTarget
+  }]))];
   var localState = {
-    bodies: [Matter.Bodies.circle(x, y, RADIUS, {
-      isStatic: true,
-      isSensor: true,
-      id: types_1.BodyID.MissionEmitter
-    }), (_b = Matter.Bodies).circle.apply(_b, __spreadArrays(mission.target.pos, [RADIUS, {
-      isStatic: true,
-      isSensor: true,
-      id: types_1.BodyID.MissionTarget
-    }]))],
     unsubs: [state_1.$collisionStart.observable.subscribe(function (_a) {
       var id1 = _a[0],
           id2 = _a[1];
@@ -44938,7 +45003,7 @@ exports.MissionEmitter = function (p5, state, mission, _a) {
           localState.missionState = MissionState.Done;
         }
       }
-    }).unsubscribe],
+    }).unsubscribe, addToWorld_1.addToWorld(state.engine, bodies)],
     missionState: MissionState.New
   };
   return {
@@ -44960,7 +45025,7 @@ exports.MissionEmitter = function (p5, state, mission, _a) {
     }
   };
 };
-},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../state":"src/state/index.ts"}],"src/entities/Health/index.ts":[function(require,module,exports) {
+},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../state":"src/state/index.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Health/index.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -44970,7 +45035,6 @@ exports.Health = void 0;
 
 exports.Health = function (p5, state) {
   var localState = {
-    bodies: [],
     unsubs: []
   };
   return {
@@ -45043,20 +45107,6 @@ var __importStar = this && this.__importStar || function (mod) {
   return result;
 };
 
-var __spreadArrays = this && this.__spreadArrays || function () {
-  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
-    s += arguments[i].length;
-  }
-
-  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
-    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
-      r[k] = a[j];
-    }
-  }
-
-  return r;
-};
-
 var __importDefault = this && this.__importDefault || function (mod) {
   return mod && mod.__esModule ? mod : {
     "default": mod
@@ -45120,20 +45170,25 @@ var drawBG = function drawBG(p5, xOffset, yOffset) {
   p5.pop();
 };
 
-exports.initCanvas = function (state) {
+exports.initCanvas = function () {
   new P5(function (p5) {
     var engine = Matter.Engine.create();
+    var state = {
+      health: 1,
+      dialog: [],
+      movable: true,
+      engine: engine
+    };
     var copter = Copter_1.Copter(p5, state);
     var missionEmitter = MissionEmitter_1.MissionEmitter(p5, state, missionData, [200, -50]);
     var dialogEmitter = DialogEmitter_1.DialogEmitter(p5, state, dialogData, [50, -50]);
     var grounds = Ground_1.Grounds(p5, state, groundsData);
     var bonuses = Bonus_1.Bonuses(p5, state, bonusesData);
     var camera = Camera_1.Camera(p5, state, function () {
-      return copter.localState.bodies[0].position;
+      return copter.localState.pos;
     });
     var health = Health_1.Health(p5, state);
     var gamepad = Gamepad_1.Gamepad();
-    Matter.World.add(engine.world, __spreadArrays(copter.localState.bodies, dialogEmitter.localState.bodies, missionEmitter.localState.bodies, grounds.localState.bodies, bonuses.localState.bodies, health.localState.bodies));
     Matter.Engine.run(engine);
     withCollision_1.withCollision(engine);
 
@@ -45180,12 +45235,7 @@ var canvas_1 = require("./canvas");
 var state_1 = require("./state");
 
 var App = function App() {
-  var state = {
-    health: 1,
-    dialog: [],
-    movable: true
-  };
-  canvas_1.initCanvas(state);
+  canvas_1.initCanvas();
   return nodes_1.Div(nodes_1.String(state_1.$dialog.observable.map(function (items) {
     return items.map(function (item) {
       return item.speach;
@@ -45222,7 +45272,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49914" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50677" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

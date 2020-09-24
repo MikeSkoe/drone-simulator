@@ -3,6 +3,7 @@ import * as Matter from 'matter-js';
 import { Entity, BodyID, DialogItem, BaseState, MyState } from '../../types';
 import { $collisionStart, $dialog } from '../../state';
 import { isButtonPressed } from '../Gamepad';
+import { addToWorld } from '../../hooks/addToWorld';
 
 const RADIUS = 25;
 
@@ -14,17 +15,18 @@ export const DialogEmitter = (
   dialog: DialogItem[],
   [x, y]: [number, number],
 ): Entity<DialogEmitterState> => {
+  const bodies = [
+    Matter.Bodies.circle(
+      x, y, RADIUS,
+      {
+        isStatic: true,
+        isSensor: true,
+        id: BodyID.DialogEmitter,
+      },
+    ),
+  ];
+
   const localState = {
-    bodies: [
-      Matter.Bodies.circle(
-        x, y, RADIUS,
-        {
-          isStatic: true,
-          isSensor: true,
-          id: BodyID.DialogEmitter,
-        },
-      ),
-    ],
     unsubs: [
       $collisionStart
         .observable.subscribe(([id1, id2]) => {
@@ -39,6 +41,8 @@ export const DialogEmitter = (
           }
         })
         .unsubscribe,
+
+      addToWorld(state.engine, bodies),
     ],
   };
 
@@ -64,7 +68,7 @@ export const DialogEmitter = (
       {
         p5.noStroke();
         p5.fill(255, 255, 0);
-        localState.bodies.forEach(body => {
+        bodies.forEach(body => {
           p5.circle(
             body.position.x,
             body.position.y,

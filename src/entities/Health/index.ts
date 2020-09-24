@@ -8,7 +8,6 @@ export const Health = (
   state: MyState,
 ): Entity<HealthState> =>{
   const localState: BaseState = {
-    bodies: [],
     unsubs: [],
   };
 
