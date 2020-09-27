@@ -46,5 +46,44 @@ export type MyState =
     engine: Matter.Engine,
     dialog: DialogItem[];
     movable: false;
-  };
+  }
+
+export type LevelData = {
+  mission: Mission,
+  dialog: DialogItem[],
+  grounds: [x: number, y: number, w: number, h: number][];
+  bonuses: [x: number, y: number][];
+}
+
+export type TileMapLayer = {
+  name: 'tiles';
+  gridCellWidth: number;
+  gridCellHeight: number;
+  gridCellsX: number;
+  gridCellsY: number;
+  tileset: string;
+  dataCoords2D: [number, number][][];
+}
+
+export type TileMapGroundLayer = {
+  name: 'grounds';
+  gridCellWidth: number;
+  gridCellHeight: number;
+  gridCellsX: number;
+  gridCellsY: number;
+  entities: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    originX: number;
+    originY: number;
+  }[];
+}
+
+export type TileMap = {
+  width: number;
+  height: number;
+  layers: TileMapLayer[];
+}
 

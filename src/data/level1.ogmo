@@ -1,0 +1,117 @@
+{
+  "name": "New Project",
+  "ogmoVersion": "3.3.0",
+  "levelPaths": ["."],
+  "backgroundColor": "#282c34ff",
+  "gridColor": "#3c4049cc",
+  "anglesRadians": true,
+  "directoryDepth": 5,
+  "layerGridDefaultSize": {"x": 8, "y": 8},
+  "levelDefaultSize": {"x": 320, "y": 240},
+  "levelMinSize": {"x": 128, "y": 128},
+  "levelMaxSize": {"x": 4096, "y": 4096},
+  "levelValues": [],
+  "defaultExportMode": ".json",
+  "compactExport": false,
+  "externalScript": "",
+  "playCommand": "",
+  "entityTags": [],
+  "layers": [
+    {
+      "definition": "tile",
+      "name": "new_layer",
+      "gridSize": {"x": 8, "y": 8},
+      "exportID": "21949250",
+      "exportMode": 1,
+      "arrayMode": 1,
+      "defaultTileset": "New Tileset"
+    },
+    {
+      "definition": "entity",
+      "name": "enitty layer",
+      "gridSize": {"x": 8, "y": 8},
+      "exportID": "22171626",
+      "requiredTags": [],
+      "excludedTags": []
+    }
+  ],
+  "entities": [
+    {
+      "exportID": "22127337",
+      "name": "Ground",
+      "limit": -1,
+      "size": {"x": 16, "y": 8},
+      "origin": {"x": 0, "y": 0},
+      "originAnchored": true,
+      "shape": {
+        "label": "Rectangle",
+        "points": [
+          {"x": -1, "y": -1},
+          {"x": 1, "y": -1},
+          {"x": -1, "y": 1},
+          {"x": 1, "y": -1},
+          {"x": -1, "y": 1},
+          {"x": 1, "y": 1}
+        ]
+      },
+      "color": "#ff0000ff",
+      "tileX": true,
+      "tileY": true,
+      "tileSize": {"x": 8, "y": 8},
+      "resizeableX": true,
+      "resizeableY": true,
+      "rotatable": false,
+      "rotationDegrees": 360,
+      "canFlipX": false,
+      "canFlipY": false,
+      "canSetColor": false,
+      "hasNodes": false,
+      "nodeLimit": 0,
+      "nodeDisplay": 0,
+      "nodeGhost": true,
+      "tags": [],
+      "values": [],
+      "texture": "../../../../../../Pictures/copter/copter.png",
+      "textureImage": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAECAYAAACHtL/sAAAACXBIWXMAAAsSAAALEgHS3X78AAAAVElEQVQYGWNUVFRk2Hnvwn8GNOCuZMB4b54pWFwp6TQjLjUsIIkAaVdGNP0MO58CDT2QChbGp4YFpGLD090YLkA3EJcaJpBT0RWD+MjiyGxktSBxAJYEJaJSkkxQAAAAAElFTkSuQmCC"
+    },
+    {
+      "exportID": "22271630",
+      "name": "gr",
+      "limit": -1,
+      "size": {"x": 8, "y": 8},
+      "origin": {"x": 0, "y": 0},
+      "originAnchored": true,
+      "shape": {
+        "label": "Rectangle",
+        "points": [
+          {"x": -1, "y": -1},
+          {"x": 1, "y": -1},
+          {"x": -1, "y": 1},
+          {"x": 1, "y": -1},
+          {"x": -1, "y": 1},
+          {"x": 1, "y": 1}
+        ]
+      },
+      "color": "#ff0000ff",
+      "tileX": false,
+      "tileY": false,
+      "tileSize": {"x": 8, "y": 8},
+      "resizeableX": true,
+      "resizeableY": true,
+      "rotatable": false,
+      "rotationDegrees": 360,
+      "canFlipX": false,
+      "canFlipY": false,
+      "canSetColor": false,
+      "hasNodes": false,
+      "nodeLimit": 0,
+      "nodeDisplay": 0,
+      "nodeGhost": true,
+      "tags": [],
+      "values": []
+    }
+  ],
+  "tilesets": [
+    {"label": "New Tileset", "path": "block.png", "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAA9hAAAPYQGoP6dpAAABX0lEQVRoBe1YPQrCUAy2xYO4O3gUF3F00Ht4ExfHbh7FwfNUUkgJJS0v+R4RbFwepPn5fqxNbU7Xe7+p8Dk/nqYu3e1iyp9L3s5dsMQJ/Od1KCrZH99DHtXUINEWTV1IsoCnNpKo1TUNBkxAaxoZSwKRamuz0gFNlchYOhCptjYrHdBUiYylA5Fqa7PW7YB1kWMFay50Db8PeDZDCYTBWU5erS01nMur+EDAqyQ3izwlaSLRdP2uR5WMJECzJIl138TRymvz0gFNlchYOhCptjYrHdBUiYz9hwPyyRapnmfWFOuwSngaUQ26gkzBeHC0vNV5ihEASC1jJezDPRBNohZ4IjL+ve4h4XmHYPXk6ZnN9dCvEDKYAaA9IAIM4pdnEvil+jQ7HUgHQAXyKwQKCJenA7CEYIMqDliWM0tuCbdxmStJXsqpDWxplrwGO4AsY0gtk4AJUCMPEE8Ng5bnF6zeVIRmjmcPAAAAAElFTkSuQmCC", "tileWidth": 8, "tileHeight": 8, "tileSeparationX": 0, "tileSeparationY": 0}
+  ]
+}

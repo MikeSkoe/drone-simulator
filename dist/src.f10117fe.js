@@ -45045,31 +45045,112 @@ exports.Health = function (p5, state) {
     }
   };
 };
-},{}],"src/data/missions/1.json":[function(require,module,exports) {
-module.exports = {
-  "id": 123,
-  "title": "first mission",
-  "description": "done your first mision ever!",
-  "target": {
-    "pos": [700, 300]
-  },
-  "progress": "new"
+},{}],"src/data/block.png":[function(require,module,exports) {
+module.exports = "/block.5633389d.png";
+},{}],"src/entities/TileMap/index.ts":[function(require,module,exports) {
+"use strict";
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
 };
-},{}],"src/data/dialogs/1.json":[function(require,module,exports) {
-module.exports = [{
-  "speaker": "one",
-  "speach": "one speach of one speaker"
-}, {
-  "speaker": "two",
-  "speach": "two speach of two speaker"
-}, {
-  "speaker": "three",
-  "speach": "three speach of three speaker"
-}];
-},{}],"src/data/grounds.json":[function(require,module,exports) {
-module.exports = [[100, 100, 400, 50], [500, 500, 400, 50], [1000, 1500, 400, 50], [4000, 4000, 400, 50]];
-},{}],"src/data/bonuses.json":[function(require,module,exports) {
-module.exports = [[300, 300, 25], [500, 300, 25]];
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.TileMap = void 0;
+
+var block_png_1 = __importDefault(require("../../data/block.png"));
+
+exports.TileMap = function (p5, state, data) {
+  var imageData = p5.loadImage(block_png_1.default);
+  var localState = {
+    unsubs: []
+  };
+  console.log('hi');
+  return {
+    localState: localState,
+    update: function update() {},
+    draw: function draw() {
+      p5.push();
+      {
+        p5.scale(3);
+        p5.translate(-50, -50);
+        var width = data.width,
+            height = data.height,
+            layers = data.layers;
+
+        for (var _i = 0, layers_1 = layers; _i < layers_1.length; _i++) {
+          var layer = layers_1[_i];
+          var gridCellWidth = layer.gridCellWidth,
+              gridCellHeight = layer.gridCellHeight,
+              dataCoords2D = layer.dataCoords2D;
+          var rowSize = width / gridCellWidth;
+          var columnSize = height / gridCellHeight;
+
+          for (var y = 0; y < columnSize; y++) {
+            for (var x = 0; x < rowSize; x++) {
+              var xPos = x * gridCellWidth;
+              var yPos = y * gridCellHeight;
+              var _a = dataCoords2D[y][x],
+                  tileX = _a[0],
+                  tileY = _a[1];
+              p5.image(imageData, xPos, yPos, gridCellWidth, gridCellHeight, tileX * gridCellWidth, tileY * gridCellHeight, 8, 8);
+            }
+          }
+        }
+      }
+      p5.pop();
+    }
+  };
+};
+},{"../../data/block.png":"src/data/block.png"}],"src/data/level1.json":[function(require,module,exports) {
+module.exports = {
+  "mission": {
+    "id": 123,
+    "title": "first mission",
+    "description": "done your first mision ever!",
+    "target": {
+      "pos": [700, 300]
+    },
+    "progress": "new"
+  },
+  "dialog": [{
+    "speaker": "one",
+    "speach": "one speach of one speaker"
+  }, {
+    "speaker": "two",
+    "speach": "two speach of two speaker"
+  }, {
+    "speaker": "three",
+    "speach": "three speach of three speaker"
+  }],
+  "bonuses": [[300, 300], [500, 300]],
+  "grounds": [[100, 100, 400, 50], [500, 500, 400, 50], [1000, 1500, 400, 50], [4000, 4000, 400, 50]]
+};
+},{}],"src/data/level3_tilemap.json":[function(require,module,exports) {
+module.exports = {
+  "ogmoVersion": "3.3.0",
+  "width": 136,
+  "height": 128,
+  "offsetX": 0,
+  "offsetY": 0,
+  "layers": [{
+    "name": "new_layer",
+    "_eid": "21949250",
+    "offsetX": 0,
+    "offsetY": 0,
+    "gridCellWidth": 8,
+    "gridCellHeight": 8,
+    "gridCellsX": 17,
+    "gridCellsY": 16,
+    "tileset": "New Tileset",
+    "dataCoords2D": [[[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [2, 0], [4, 2], [4, 2], [4, 2], [5, 2], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [2, 4], [2, 2], [2, 2], [2, 2], [3, 4], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [2, 4], [2, 2], [2, 2], [2, 2], [3, 4], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [2, 4], [2, 2], [2, 2], [2, 2], [3, 4], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [2, 5], [4, 3], [4, 3], [4, 3], [3, 5], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]],
+    "exportMode": 1,
+    "arrayMode": 1
+  }]
+};
 },{}],"src/canvas.ts":[function(require,module,exports) {
 "use strict";
 
@@ -45140,18 +45221,14 @@ var Health_1 = require("./entities/Health");
 
 var Gamepad_1 = require("./entities/Gamepad");
 
-var _1_json_1 = __importDefault(require("./data/missions/1.json"));
+var TileMap_1 = require("./entities/TileMap");
 
-var _1_json_2 = __importDefault(require("./data/dialogs/1.json"));
+var level1_json_1 = __importDefault(require("./data/level1.json"));
 
-var grounds_json_1 = __importDefault(require("./data/grounds.json"));
+var level3_tilemap_json_1 = __importDefault(require("./data/level3_tilemap.json"));
 
-var bonuses_json_1 = __importDefault(require("./data/bonuses.json"));
-
-var missionData = _1_json_1.default;
-var dialogData = _1_json_2.default;
-var groundsData = grounds_json_1.default;
-var bonusesData = bonuses_json_1.default;
+var levelData = level1_json_1.default;
+var tileMapData = level3_tilemap_json_1.default;
 var canvas = document.querySelector('#canvas');
 
 var drawBG = function drawBG(p5, xOffset, yOffset) {
@@ -45180,15 +45257,17 @@ exports.initCanvas = function () {
       engine: engine
     };
     var copter = Copter_1.Copter(p5, state);
-    var missionEmitter = MissionEmitter_1.MissionEmitter(p5, state, missionData, [200, -50]);
-    var dialogEmitter = DialogEmitter_1.DialogEmitter(p5, state, dialogData, [50, -50]);
-    var grounds = Ground_1.Grounds(p5, state, groundsData);
-    var bonuses = Bonus_1.Bonuses(p5, state, bonusesData);
+    var missionEmitter = MissionEmitter_1.MissionEmitter(p5, state, levelData.mission, [200, -50]);
+    var dialogEmitter = DialogEmitter_1.DialogEmitter(p5, state, levelData.dialog, [50, -50]);
+    var grounds = Ground_1.Grounds(p5, state, levelData.grounds);
+    var bonuses = Bonus_1.Bonuses(p5, state, levelData.bonuses);
     var camera = Camera_1.Camera(p5, state, function () {
       return copter.localState.pos;
     });
     var health = Health_1.Health(p5, state);
     var gamepad = Gamepad_1.Gamepad();
+    var tileMap = TileMap_1.TileMap(p5, state, tileMapData);
+    var children = [health, camera, tileMap, grounds, bonuses, missionEmitter, dialogEmitter, copter];
     Matter.Engine.run(engine);
     withCollision_1.withCollision(engine);
 
@@ -45198,30 +45277,28 @@ exports.initCanvas = function () {
 
     p5.draw = function () {
       p5.background(0);
+      p5.noSmooth();
       gamepad.update();
-      camera.update();
-      grounds.update();
-      bonuses.update();
-      dialogEmitter.update();
-      missionEmitter.update();
-      copter.update();
-      health.update();
+
+      for (var _i = 0, children_1 = children; _i < children_1.length; _i++) {
+        var child = children_1[_i];
+        child.update();
+      }
+
       drawBG(p5, camera.localState.pos.x / 2, camera.localState.pos.y / 2);
       p5.push();
       {
-        camera.draw();
-        grounds.draw();
-        bonuses.draw();
-        dialogEmitter.draw();
-        missionEmitter.draw();
-        copter.draw();
+        for (var _a = 0, children_2 = children; _a < children_2.length; _a++) {
+          var child = children_2[_a];
+          child.draw();
+        }
       }
       p5.pop();
       health.draw();
     };
   }, canvas);
 };
-},{"p5":"node_modules/p5/lib/p5.min.js","matter-js":"node_modules/matter-js/build/matter.js","./entities/Copter":"src/entities/Copter/index.ts","./entities/Ground":"src/entities/Ground/index.ts","./entities/Bonus":"src/entities/Bonus/index.ts","./entities/Camera":"src/entities/Camera/index.ts","./hooks/withCollision":"src/hooks/withCollision.ts","./entities/DialogEmitter":"src/entities/DialogEmitter/index.ts","./entities/MissionEmitter":"src/entities/MissionEmitter/index.ts","./entities/Health":"src/entities/Health/index.ts","./entities/Gamepad":"src/entities/Gamepad/index.ts","./data/missions/1.json":"src/data/missions/1.json","./data/dialogs/1.json":"src/data/dialogs/1.json","./data/grounds.json":"src/data/grounds.json","./data/bonuses.json":"src/data/bonuses.json"}],"src/index.ts":[function(require,module,exports) {
+},{"p5":"node_modules/p5/lib/p5.min.js","matter-js":"node_modules/matter-js/build/matter.js","./entities/Copter":"src/entities/Copter/index.ts","./entities/Ground":"src/entities/Ground/index.ts","./entities/Bonus":"src/entities/Bonus/index.ts","./entities/Camera":"src/entities/Camera/index.ts","./hooks/withCollision":"src/hooks/withCollision.ts","./entities/DialogEmitter":"src/entities/DialogEmitter/index.ts","./entities/MissionEmitter":"src/entities/MissionEmitter/index.ts","./entities/Health":"src/entities/Health/index.ts","./entities/Gamepad":"src/entities/Gamepad/index.ts","./entities/TileMap":"src/entities/TileMap/index.ts","./data/level1.json":"src/data/level1.json","./data/level3_tilemap.json":"src/data/level3_tilemap.json"}],"src/index.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -45272,7 +45349,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50677" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "60830" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

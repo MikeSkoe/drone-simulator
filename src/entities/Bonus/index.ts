@@ -15,7 +15,6 @@ export const Bonuses = (
   data: [
     x: number,
     y: number,
-    r: number,
   ][],
 ): Entity<BonusState> => {
   const bodies = data.map(([x, y]) => 
