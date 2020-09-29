@@ -4,7 +4,7 @@ import { Entity, BodyID, Mission, BaseState, MyState } from '../../types';
 import { $collisionStart } from '../../state';
 import { addToWorld } from '../../hooks/addToWorld';
 
-const RADIUS = 25;
+const RADIUS = 5;
 
 enum MissionState {
   New,
@@ -12,7 +12,7 @@ enum MissionState {
   Done,
 }
 
-interface MissionEmitterState extends BaseState {
+export interface MissionEmitterState extends BaseState {
   missionState: MissionState;
 }
 

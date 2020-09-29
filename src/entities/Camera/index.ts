@@ -1,7 +1,7 @@
 import P5 = require('p5');
-import { Entity, BaseState, MyState } from '../../types';
+import { Entity, BaseState, MyState, SCALE } from '../../types';
 
-interface CameraState extends BaseState {
+export interface CameraState extends BaseState {
   pos: P5.Vector;
 }
 
@@ -27,8 +27,8 @@ export const Camera = (
     },
     draw: () => {
       p5.translate(
-        -localState.pos.x + p5.width/2,
-        -localState.pos.y + p5.height/2,
+        -localState.pos.x + p5.width/2/SCALE,
+        -localState.pos.y + p5.height/2/SCALE,
       );
     }
   }

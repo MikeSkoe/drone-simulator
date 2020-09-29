@@ -1,5 +1,7 @@
 import * as Matter from 'matter-js';
 
+export const SCALE = 5;
+
 export interface BaseState {
   unsubs: (() => void)[];
 }
@@ -8,15 +10,16 @@ export interface Entity<LocalState extends BaseState> {
   localState: LocalState;
   draw: () => void;
   update: () => void;
+  preload?: () => void;
 }
 
 export enum BodyID {
-  Copter = 1,
-  Bonus = 2,
-  Ground = 3,
-  DialogEmitter = 4,
-  MissionEmitter = 5,
-  MissionTarget = 6,
+  Copter = 100,
+  Bonus,
+  Ground,
+  DialogEmitter,
+  MissionEmitter,
+  MissionTarget,
 }
 
 export interface DialogItem {
@@ -48,42 +51,38 @@ export type MyState =
     movable: false;
   }
 
-export type LevelData = {
-  mission: Mission,
-  dialog: DialogItem[],
-  grounds: [x: number, y: number, w: number, h: number][];
-  bonuses: [x: number, y: number][];
-}
-
 export type TileMapLayer = {
-  name: 'tiles';
+  name: 'tilemap';
   gridCellWidth: number;
   gridCellHeight: number;
   gridCellsX: number;
   gridCellsY: number;
   tileset: string;
-  dataCoords2D: [number, number][][];
+  dataCoords2D: number[];
 }
 
 export type TileMapGroundLayer = {
-  name: 'grounds';
+  name: 'entity';
   gridCellWidth: number;
   gridCellHeight: number;
   gridCellsX: number;
   gridCellsY: number;
   entities: {
+    name: 'copter' | 'ground' | 'bonus' | 'dialog_emitter' | 'mission_emitter' | 'mission_target';
     x: number;
     y: number;
     width: number;
     height: number;
     originX: number;
     originY: number;
+    title: string;
+    description: string;
   }[];
 }
 
-export type TileMap = {
+export type LevelData = {
   width: number;
   height: number;
-  layers: TileMapLayer[];
+  layers: (TileMapLayer | TileMapGroundLayer)[];
 }
 

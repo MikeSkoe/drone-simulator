@@ -2,8 +2,10 @@ import P5 = require('p5');
 import * as Matter from 'matter-js';
 import { Entity, BodyID, BaseState, MyState } from '../../types';
 import { addToWorld } from '../../hooks/addToWorld';
+// @ts-ignore
+import imagePath from '../../data/copter.png';
 
-interface CopterState extends BaseState {
+export interface CopterState extends BaseState {
   pos: {x: number, y: number};
 };
 
@@ -13,10 +15,15 @@ export const Copter = (
   [x, y]: [number, number] = [50, 50],
   [w, h]: [number, number] = [50, 25],
 ): Entity<CopterState> => {
+  let imageData: P5.Image;
   const body = Matter.Bodies.rectangle(
-    x, y, w, h,
-    { id: BodyID.Copter }
+    x + w/2, y + h/2, w, h,
+    {
+      id: BodyID.Copter,
+      label: 'copter',
+    },
   );
+  console.log(body);
 
   const localState: CopterState = {
     pos: body.position,
@@ -27,6 +34,9 @@ export const Copter = (
 
   return {
     localState,
+    preload: () => {
+      imageData = p5.loadImage(imagePath);
+    },
     update: () => {
       if (!state.movable) {
         return;
@@ -38,7 +48,7 @@ export const Copter = (
       const upValue = gamepad?.buttons[7].value ?? 0;
       const rotateValue = gamepad?.axes[0] ?? 0;
       const direction = p5
-        .createVector(0, -(0.003 * upValue))
+        .createVector(0, -(0.0002 * upValue))
         .rotate(body.angle);
 
       // move
@@ -66,15 +76,17 @@ export const Copter = (
       // decrease nrg
       if (upValue !== 0) {
         state.health = Math.max(0, state.health - upValue / 1000);
+        
       }
     },
+
 
     draw: () => {
       p5.push();
       {
         p5.translate(body.position.x, body.position.y);
         p5.rotate(body.angle);
-        p5.rect(-w/2, -h/2, w, h);
+        p5.image(imageData, -w/2, -h/4);
       }
       p5.pop();
     },

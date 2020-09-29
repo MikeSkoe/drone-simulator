@@ -5,9 +5,9 @@ import { $collisionActive } from '../../state';
 import { BodyID } from '../../types';
 import { addToWorld } from '../../hooks/addToWorld';
 
-const RADIUS = 25;
+const RADIUS = 5;
 
-interface BonusState extends BaseState { }
+export interface BonusState extends BaseState { }
 
 export const Bonuses = (
   p5: P5,

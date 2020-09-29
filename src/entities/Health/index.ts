@@ -1,7 +1,7 @@
 import P5 = require('p5');
-import { Entity, BaseState, MyState } from '../../types';
+import { Entity, BaseState, MyState, SCALE } from '../../types';
 
-interface HealthState extends BaseState { }
+export interface HealthState extends BaseState { }
 
 export const Health = (
   p5: P5,
@@ -15,7 +15,12 @@ export const Health = (
     localState,
     update: () => {},
     draw: () => {
-      p5.rect(10, 10, state.health * 100, 20);
+      p5.push();
+      {
+        p5.scale(1/SCALE)
+        p5.rect(10, 10, state.health * 100, 20);
+      }
+      p5.pop();
     },
   };
 };
