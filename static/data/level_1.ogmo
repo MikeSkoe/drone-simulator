@@ -183,7 +183,7 @@
       "nodeGhost": true,
       "tags": [],
       "values": [
-        {"name": "dialog_path", "definition": "String", "defaults": "", "maxLength": 0, "trimWhitespace": true}
+        {"name": "path", "definition": "String", "defaults": "/data/dialog1.json", "maxLength": 0, "trimWhitespace": true}
       ]
     },
     {

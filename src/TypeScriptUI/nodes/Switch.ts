@@ -14,7 +14,7 @@ class Switch<T> extends View<HTMLElement> {
 
         this.pushUnsub(
             pub.subscribe(val => {
-                const newNode = render(val);
+                const newNode = val ? render(val) : PlaceHolder();
 
                 this.currentNode.remove();
                 this.currentNode = newNode;
@@ -26,5 +26,5 @@ class Switch<T> extends View<HTMLElement> {
 
 export default <T>(
     pub: Observable<T>,
-    render: (val: T) => View<HTMLElement | Text>,
+    render: (val: T) => View<HTMLElement | Text> | null,
 ) => new Switch(pub, render);

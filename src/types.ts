@@ -1,6 +1,13 @@
 import * as Matter from 'matter-js';
 
-export const SCALE = 5;
+export const SCALE = 3;
+
+export enum Key {
+  Enter = 13,
+  Left = 37,
+  Up,
+  Right,
+};
 
 export interface BaseState {
   unsubs: (() => void)[];
@@ -75,8 +82,11 @@ export type TileMapGroundLayer = {
     height: number;
     originX: number;
     originY: number;
-    title: string;
-    description: string;
+    values: {
+      title: string;
+      description: string;
+      path: string;
+    }
   }[];
 }
 

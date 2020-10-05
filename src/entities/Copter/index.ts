@@ -1,14 +1,15 @@
 import P5 = require('p5');
 import * as Matter from 'matter-js';
-import { Entity, BaseState, MyState } from '../../types';
+import { Key, Entity, BaseState, MyState } from '../../types';
 import { addToWorld } from '../../hooks/addToWorld';
-// @ts-ignore
-import imagePath from '../../data/copter.png';
+
+const imagePath = '/data/copter.png';
 
 const MAX_MAGNITUDE = 5;
 
 export interface CopterState extends BaseState {
   pos: {x: number, y: number};
+  power: number;
 };
 
 export const Copter = (
@@ -26,6 +27,7 @@ export const Copter = (
   );
 
   const localState: CopterState = {
+    power: 0.00007,
     pos: body.position,
     unsubs: [
       addToWorld(state.engine, [body]),
@@ -45,10 +47,18 @@ export const Copter = (
       localState.pos = body.position;
 
       const [gamepad] = navigator.getGamepads();
-      const upValue = gamepad?.buttons[7].value ?? 0;
-      const rotateValue = gamepad?.axes[0] ?? 0;
+      const upValue
+        = p5.keyIsDown(Key.Up)
+          ? 1
+        : gamepad?.buttons[7].value ?? 0;
+      const rotateValue
+        = p5.keyIsDown(Key.Left)
+          ? -1
+        : p5.keyIsDown(Key.Right)
+          ? 1
+        : gamepad?.axes[0] ?? 0;
       const direction = p5
-        .createVector(0, -(0.00007 * upValue))
+        .createVector(0, -(localState.power * upValue))
         .rotate(body.angle);
 
       // move
@@ -62,20 +72,6 @@ export const Copter = (
       }
 
       // set max velocity
-      const mag = Matter.Vector.magnitude(body.velocity) ;
-
-      if (mag > 3) {
-        Matter.Body.setVelocity(
-          body,
-          Matter.Vector.mult(
-            Matter.Vector.normalise(
-              body.velocity,
-            ),
-            3,
-          )
-        )
-      }
-
       if (Matter.Vector.magnitude(body.velocity) > MAX_MAGNITUDE) {
         Matter.Body.setVelocity(
           body,

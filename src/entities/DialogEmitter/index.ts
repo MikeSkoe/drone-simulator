@@ -7,13 +7,15 @@ import { addToWorld } from '../../hooks/addToWorld';
 
 const RADIUS = 5;
 
-export interface DialogEmitterState extends BaseState{ }
+export interface DialogEmitterState extends BaseState{
+  dialog: DialogItem[],
+}
 
 export const DialogEmitter = (
   p5: P5,
   state: MyState,
-  dialog: DialogItem[],
   [x, y]: [number, number],
+  dialogPath: string,
 ): Entity<DialogEmitterState> => {
   const bodies = [
     Matter.Bodies.circle(
@@ -27,6 +29,7 @@ export const DialogEmitter = (
   ];
 
   const localState = {
+    dialog: [],
     unsubs: [
       $collisionStart
         .observable.subscribe(([labelA, labelB]) => {
@@ -35,8 +38,8 @@ export const DialogEmitter = (
           ) {
             if (state.dialog.length === 0) {
               state.movable = false;
-              state.dialog = dialog;
-              $dialog.next(() => dialog);
+              state.dialog = localState.dialog;
+              $dialog.next(() => localState.dialog);
             }
           }
         })
@@ -45,6 +48,11 @@ export const DialogEmitter = (
       addToWorld(state.engine, bodies),
     ],
   };
+
+  fetch(dialogPath)
+    .then(data => data.json())
+    .then(dialog => localState.dialog = dialog)
+    .catch(console.log);
 
   return {
     localState,

@@ -77,6 +77,6 @@ export class ZenPushStream<T> {
     }
 }
 
-const createState = <T>(initialValue?: T) => new ZenPushStream(initialValue);
+export const createState = <T>(initialValue?: T) => new ZenPushStream(initialValue);
 
 export default createState;

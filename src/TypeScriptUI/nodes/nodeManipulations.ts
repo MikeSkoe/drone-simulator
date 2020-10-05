@@ -1,7 +1,9 @@
 import {default as Observable} from "zen-observable";
 
-export const className = (className: string) => (node: HTMLElement) => {
-    node.classList.add(className);
+export const className = (classNames: string) => (node: HTMLElement) => {
+  classNames.split(' ').forEach(
+    className => node.classList.add(className),
+  );
 };
 
 export const event = <K extends keyof HTMLElementEventMap>(
@@ -19,21 +21,27 @@ export const event = <K extends keyof HTMLElementEventMap>(
 }
 
 export const classNameOn = (
-    className: string,
+    classNames: string,
     $bool: Observable<boolean> | boolean,
 ) => (
     node: HTMLElement,
  ) => {
     if (typeof $bool === 'boolean') {
         if ($bool) {
-            node.classList.add(className);
+            classNames.split(' ').forEach(
+                className => node.classList.add(className),
+            );
         }
     } else {
         return $bool.subscribe(val => {
             if (val) {
-                node.classList.add(className)
+                classNames.split(' ').forEach(
+                  className => node.classList.add(className),
+                );
             } else {
-                node.classList.remove(className)
+                classNames.split(' ').forEach(
+                  className => node.classList.remove(className),
+                );
             }
         }).unsubscribe
     }

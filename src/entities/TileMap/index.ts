@@ -1,7 +1,5 @@
 import P5 = require('p5');
 import { Entity, MyState, BaseState, LevelData } from '../../types';
-// @ts-ignore
-import img from '../../data/block.png';
 import { CopterState, Copter } from '../Copter';
 import { Bonuses, BonusState } from '../Bonus';
 import { Camera, CameraState } from '../Camera';
@@ -9,6 +7,8 @@ import { Health, HealthState } from '../Health';
 import { MissionEmitter, MissionEmitterState } from '../MissionEmitter';
 import { Grounds, GroundState } from '../Ground';
 import { DialogEmitter, DialogEmitterState } from '../DialogEmitter';
+
+const img = '/data/block.png';
 
 const drawToBuffer = (
   data: LevelData,
@@ -55,11 +55,11 @@ const getEntities = (p5: P5, state: MyState, levels: LevelData['layers']) => {
         = level.entities.find(entity => entity.name === 'copter');
       const bonusesData
         = level.entities.filter(entity => entity.name === 'bonus');
-      const {title, description, x: missionEmitterX, y: missionEmitterY}
+      const {values: {title, description}, x: missionEmitterX, y: missionEmitterY}
         = level.entities.find(entity => entity.name === 'mission_emitter');
       const {x: targetX, y: targetY}
         = level.entities.find(entity => entity.name === 'mission_target');
-      const {x: dialogX, y: dialogY}
+      const {values: {path: dialogPath}, x: dialogX, y: dialogY, }
         = level.entities.find(entity => entity.name === 'dialog_emitter');
       const groundPositions
         = level.entities
@@ -77,7 +77,7 @@ const getEntities = (p5: P5, state: MyState, levels: LevelData['layers']) => {
       grounds = Grounds(p5, state, groundPositions)
       camera = Camera(p5, state, () => copter.localState.pos);
       health = Health(p5, state);
-      dialogEmitter = DialogEmitter(p5, state, [{speach: 'one', speaker: 'ONE'}], [dialogX, dialogY]);
+      dialogEmitter = DialogEmitter(p5, state, [dialogX, dialogY], dialogPath);
     }
   }
 

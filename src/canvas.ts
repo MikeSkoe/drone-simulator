@@ -5,18 +5,17 @@ import { Gamepad } from './entities/Gamepad';
 import { TileMap } from './entities/TileMap';
 import { LevelData, MyState, SCALE } from './types';
 
-import levelJSON from './data/level1.json';
-
-const levelData = levelJSON as LevelData;
-
 const canvas = document.querySelector<HTMLDivElement>('#canvas');
+const CANVAS_WIDTH = 800;
+const CANVAS_HEIGHT = 600;
 
-export const initCanvas = () => {
+export const initCanvas = (levelData: LevelData) => {
   new P5(
     (p5: P5) => {
       // matter
       const engine = Matter.Engine.create();
       engine.world.gravity.y = 0.33;
+
       const state: MyState = {
         health: 1,
         dialog: [],
@@ -27,16 +26,13 @@ export const initCanvas = () => {
       // entities
       const gamepad = Gamepad();
       const tileMap = TileMap(p5, state, levelData);
-
-      const children = [
-        tileMap,
-      ];
+      const children = [tileMap];
 
       Matter.Engine.run(engine);
       withCollision(engine);
 
       p5.setup = () => {
-        p5.createCanvas(window.innerWidth, window.innerHeight);
+        p5.createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
       };
 
       p5.preload = () => {
@@ -46,7 +42,6 @@ export const initCanvas = () => {
       }
 
       p5.draw = () => {
-
         // update
         gamepad.update();
 

@@ -222,6 +222,288 @@ var Button = function (_super) {
 exports.default = function (title, onClick) {
   return new Button(title, onClick);
 };
+},{"../lib/View":"src/TypeScriptUI/lib/View.ts"}],"src/TypeScriptUI/nodes/Div.ts":[function(require,module,exports) {
+"use strict";
+
+var __extends = this && this.__extends || function () {
+  var _extendStatics = function extendStatics(d, b) {
+    _extendStatics = Object.setPrototypeOf || {
+      __proto__: []
+    } instanceof Array && function (d, b) {
+      d.__proto__ = b;
+    } || function (d, b) {
+      for (var p in b) {
+        if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
+      }
+    };
+
+    return _extendStatics(d, b);
+  };
+
+  return function (d, b) {
+    _extendStatics(d, b);
+
+    function __() {
+      this.constructor = d;
+    }
+
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+  };
+}();
+
+var __spreadArrays = this && this.__spreadArrays || function () {
+  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
+    s += arguments[i].length;
+  }
+
+  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
+    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
+      r[k] = a[j];
+    }
+  }
+
+  return r;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var View_1 = require("../lib/View");
+
+var Div = function (_super) {
+  __extends(Div, _super);
+
+  function Div() {
+    var children = [];
+
+    for (var _i = 0; _i < arguments.length; _i++) {
+      children[_i] = arguments[_i];
+    }
+
+    var _this = _super.call(this) || this;
+
+    _this.node = document.createElement('div');
+    children.forEach(function (child) {
+      return _this.node.appendChild(child.node);
+    });
+    _this.children = children;
+    return _this;
+  }
+
+  Div.prototype.remove = function () {
+    _super.prototype.remove.call(this);
+
+    this.children.forEach(function (child) {
+      return child.remove();
+    });
+  };
+
+  ;
+  return Div;
+}(View_1.View);
+
+exports.default = function () {
+  var children = [];
+
+  for (var _i = 0; _i < arguments.length; _i++) {
+    children[_i] = arguments[_i];
+  }
+
+  return new (Div.bind.apply(Div, __spreadArrays([void 0], children)))();
+};
+},{"../lib/View":"src/TypeScriptUI/lib/View.ts"}],"src/TypeScriptUI/nodes/PlaceHolder.ts":[function(require,module,exports) {
+"use strict";
+
+var __extends = this && this.__extends || function () {
+  var _extendStatics = function extendStatics(d, b) {
+    _extendStatics = Object.setPrototypeOf || {
+      __proto__: []
+    } instanceof Array && function (d, b) {
+      d.__proto__ = b;
+    } || function (d, b) {
+      for (var p in b) {
+        if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
+      }
+    };
+
+    return _extendStatics(d, b);
+  };
+
+  return function (d, b) {
+    _extendStatics(d, b);
+
+    function __() {
+      this.constructor = d;
+    }
+
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+  };
+}();
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var View_1 = require("../lib/View");
+
+var PlaceHolder = function (_super) {
+  __extends(PlaceHolder, _super);
+
+  function PlaceHolder() {
+    var _this = _super !== null && _super.apply(this, arguments) || this;
+
+    _this.node = document.createTextNode('');
+    return _this;
+  }
+
+  return PlaceHolder;
+}(View_1.View);
+
+exports.default = function () {
+  return new PlaceHolder();
+};
+},{"../lib/View":"src/TypeScriptUI/lib/View.ts"}],"src/TypeScriptUI/nodes/If.ts":[function(require,module,exports) {
+"use strict";
+
+var __extends = this && this.__extends || function () {
+  var _extendStatics = function extendStatics(d, b) {
+    _extendStatics = Object.setPrototypeOf || {
+      __proto__: []
+    } instanceof Array && function (d, b) {
+      d.__proto__ = b;
+    } || function (d, b) {
+      for (var p in b) {
+        if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
+      }
+    };
+
+    return _extendStatics(d, b);
+  };
+
+  return function (d, b) {
+    _extendStatics(d, b);
+
+    function __() {
+      this.constructor = d;
+    }
+
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+  };
+}();
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var View_1 = require("../lib/View");
+
+var PlaceHolder_1 = __importDefault(require("./PlaceHolder"));
+
+var If = function (_super) {
+  __extends(If, _super);
+
+  function If(pub, element, another) {
+    var _this = _super.call(this) || this;
+
+    _this.node = document.createElement('div');
+    _this.currentNode = PlaceHolder_1.default();
+
+    if (typeof pub === 'boolean') {
+      var newNode = pub ? element() : another ? another() : PlaceHolder_1.default();
+
+      _this.currentNode.remove();
+
+      _this.currentNode = newNode;
+
+      _this.node.appendChild(newNode.node);
+    } else {
+      _this.pushUnsub(pub.subscribe(function (val) {
+        var newNode = val ? element() : another ? another() : PlaceHolder_1.default();
+
+        _this.currentNode.remove();
+
+        _this.currentNode = newNode;
+
+        _this.node.appendChild(newNode.node);
+      }).unsubscribe);
+    }
+
+    return _this;
+  }
+
+  return If;
+}(View_1.View);
+
+exports.default = function (pub, element, another) {
+  return new If(pub, element, another);
+};
+},{"../lib/View":"src/TypeScriptUI/lib/View.ts","./PlaceHolder":"src/TypeScriptUI/nodes/PlaceHolder.ts"}],"src/TypeScriptUI/nodes/InnerHTML.ts":[function(require,module,exports) {
+"use strict";
+
+var __extends = this && this.__extends || function () {
+  var _extendStatics = function extendStatics(d, b) {
+    _extendStatics = Object.setPrototypeOf || {
+      __proto__: []
+    } instanceof Array && function (d, b) {
+      d.__proto__ = b;
+    } || function (d, b) {
+      for (var p in b) {
+        if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
+      }
+    };
+
+    return _extendStatics(d, b);
+  };
+
+  return function (d, b) {
+    _extendStatics(d, b);
+
+    function __() {
+      this.constructor = d;
+    }
+
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+  };
+}();
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var View_1 = require("../lib/View");
+
+var String = function (_super) {
+  __extends(String, _super);
+
+  function String(str) {
+    var _this = _super.call(this) || this;
+
+    _this.node = document.createElement('div');
+
+    if (typeof str === 'string') {
+      _this.node.innerHTML = str;
+    } else {
+      _this.pushUnsub(str.observable.subscribe(function (val) {
+        return _this.node.innerHTML = val;
+      }).unsubscribe);
+    }
+
+    return _this;
+  }
+
+  return String;
+}(View_1.View);
+
+exports.default = function (str) {
+  return new String(str);
+};
 },{"../lib/View":"src/TypeScriptUI/lib/View.ts"}],"src/TypeScriptUI/nodes/Input.ts":[function(require,module,exports) {
 "use strict";
 
@@ -283,6 +565,104 @@ var Input = function (_super) {
 
 exports.default = function (pub) {
   return new Input(pub);
+};
+},{"../lib/View":"src/TypeScriptUI/lib/View.ts"}],"src/TypeScriptUI/nodes/Link.ts":[function(require,module,exports) {
+"use strict";
+
+var __extends = this && this.__extends || function () {
+  var _extendStatics = function extendStatics(d, b) {
+    _extendStatics = Object.setPrototypeOf || {
+      __proto__: []
+    } instanceof Array && function (d, b) {
+      d.__proto__ = b;
+    } || function (d, b) {
+      for (var p in b) {
+        if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
+      }
+    };
+
+    return _extendStatics(d, b);
+  };
+
+  return function (d, b) {
+    _extendStatics(d, b);
+
+    function __() {
+      this.constructor = d;
+    }
+
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+  };
+}();
+
+var __spreadArrays = this && this.__spreadArrays || function () {
+  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
+    s += arguments[i].length;
+  }
+
+  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
+    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
+      r[k] = a[j];
+    }
+  }
+
+  return r;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var View_1 = require("../lib/View");
+
+var Link = function (_super) {
+  __extends(Link, _super);
+
+  function Link(href) {
+    var children = [];
+
+    for (var _i = 1; _i < arguments.length; _i++) {
+      children[_i - 1] = arguments[_i];
+    }
+
+    var _this = _super.call(this) || this;
+
+    _this.node = document.createElement('a');
+
+    if (typeof href === 'string') {
+      _this.node.href = href;
+    } else {
+      _this.pushUnsub(href.subscribe(function (val) {
+        return _this.node.href = val;
+      }).unsubscribe);
+    }
+
+    children.forEach(function (child) {
+      return _this.node.appendChild(child.node);
+    });
+    _this.children = children;
+    return _this;
+  }
+
+  Link.prototype.remove = function () {
+    _super.prototype.remove.call(this);
+
+    this.children.forEach(function (child) {
+      return child.remove();
+    });
+  };
+
+  return Link;
+}(View_1.View);
+
+exports.default = function (href) {
+  var children = [];
+
+  for (var _i = 1; _i < arguments.length; _i++) {
+    children[_i - 1] = arguments[_i];
+  }
+
+  return new (Link.bind.apply(Link, __spreadArrays([void 0, href], children)))();
 };
 },{"../lib/View":"src/TypeScriptUI/lib/View.ts"}],"src/TypeScriptUI/lib/utils.ts":[function(require,module,exports) {
 "use strict";
@@ -469,161 +849,7 @@ var List = function (_super) {
 exports.default = function (data, render) {
   return new List(data, render);
 };
-},{"../lib/utils":"src/TypeScriptUI/lib/utils.ts","../lib/View":"src/TypeScriptUI/lib/View.ts"}],"src/TypeScriptUI/nodes/String.ts":[function(require,module,exports) {
-"use strict";
-
-var __extends = this && this.__extends || function () {
-  var _extendStatics = function extendStatics(d, b) {
-    _extendStatics = Object.setPrototypeOf || {
-      __proto__: []
-    } instanceof Array && function (d, b) {
-      d.__proto__ = b;
-    } || function (d, b) {
-      for (var p in b) {
-        if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
-      }
-    };
-
-    return _extendStatics(d, b);
-  };
-
-  return function (d, b) {
-    _extendStatics(d, b);
-
-    function __() {
-      this.constructor = d;
-    }
-
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-  };
-}();
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var View_1 = require("../lib/View");
-
-var isObservable = function isObservable(value) {
-  return Object.keys(value).includes('_subscriber');
-};
-
-var String = function (_super) {
-  __extends(String, _super);
-
-  function String(str) {
-    var _this = _super.call(this) || this;
-
-    _this.node = document.createTextNode('');
-
-    if (isObservable(str)) {
-      _this.pushUnsub(str.subscribe(function (str) {
-        return _this.node.textContent = "" + str;
-      }).unsubscribe);
-    } else {
-      _this.node.textContent = "" + str;
-    }
-
-    return _this;
-  }
-
-  return String;
-}(View_1.View);
-
-exports.default = function (str) {
-  return new String(str);
-};
-},{"../lib/View":"src/TypeScriptUI/lib/View.ts"}],"src/TypeScriptUI/nodes/Div.ts":[function(require,module,exports) {
-"use strict";
-
-var __extends = this && this.__extends || function () {
-  var _extendStatics = function extendStatics(d, b) {
-    _extendStatics = Object.setPrototypeOf || {
-      __proto__: []
-    } instanceof Array && function (d, b) {
-      d.__proto__ = b;
-    } || function (d, b) {
-      for (var p in b) {
-        if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
-      }
-    };
-
-    return _extendStatics(d, b);
-  };
-
-  return function (d, b) {
-    _extendStatics(d, b);
-
-    function __() {
-      this.constructor = d;
-    }
-
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-  };
-}();
-
-var __spreadArrays = this && this.__spreadArrays || function () {
-  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
-    s += arguments[i].length;
-  }
-
-  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
-    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
-      r[k] = a[j];
-    }
-  }
-
-  return r;
-};
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var View_1 = require("../lib/View");
-
-var Div = function (_super) {
-  __extends(Div, _super);
-
-  function Div() {
-    var children = [];
-
-    for (var _i = 0; _i < arguments.length; _i++) {
-      children[_i] = arguments[_i];
-    }
-
-    var _this = _super.call(this) || this;
-
-    _this.node = document.createElement('div');
-    children.forEach(function (child) {
-      return _this.node.appendChild(child.node);
-    });
-    _this.children = children;
-    return _this;
-  }
-
-  Div.prototype.remove = function () {
-    _super.prototype.remove.call(this);
-
-    this.children.forEach(function (child) {
-      return child.remove();
-    });
-  };
-
-  ;
-  return Div;
-}(View_1.View);
-
-exports.default = function () {
-  var children = [];
-
-  for (var _i = 0; _i < arguments.length; _i++) {
-    children[_i] = arguments[_i];
-  }
-
-  return new (Div.bind.apply(Div, __spreadArrays([void 0], children)))();
-};
-},{"../lib/View":"src/TypeScriptUI/lib/View.ts"}],"src/TypeScriptUI/nodes/Range.ts":[function(require,module,exports) {
+},{"../lib/utils":"src/TypeScriptUI/lib/utils.ts","../lib/View":"src/TypeScriptUI/lib/View.ts"}],"src/TypeScriptUI/nodes/Range.ts":[function(require,module,exports) {
 "use strict";
 
 var __extends = this && this.__extends || function () {
@@ -718,7 +944,900 @@ exports.default = function (range, update, min, max, type) {
 
   return new Range(range, update, min.toString(), max.toString(), type);
 };
-},{"../lib/View":"src/TypeScriptUI/lib/View.ts"}],"src/TypeScriptUI/nodes/index.ts":[function(require,module,exports) {
+},{"../lib/View":"src/TypeScriptUI/lib/View.ts"}],"src/TypeScriptUI/nodes/Router.ts":[function(require,module,exports) {
+"use strict";
+
+var __extends = this && this.__extends || function () {
+  var _extendStatics = function extendStatics(d, b) {
+    _extendStatics = Object.setPrototypeOf || {
+      __proto__: []
+    } instanceof Array && function (d, b) {
+      d.__proto__ = b;
+    } || function (d, b) {
+      for (var p in b) {
+        if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
+      }
+    };
+
+    return _extendStatics(d, b);
+  };
+
+  return function (d, b) {
+    _extendStatics(d, b);
+
+    function __() {
+      this.constructor = d;
+    }
+
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+  };
+}();
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var View_1 = require("../lib/View");
+
+var PlaceHolder_1 = __importDefault(require("./PlaceHolder"));
+
+var Router = function (_super) {
+  __extends(Router, _super);
+
+  function Router(options) {
+    var _this = _super.call(this) || this;
+
+    _this.node = document.createElement('div');
+    _this.currentView = PlaceHolder_1.default();
+
+    _this.render = function () {
+      var currentLocation = _this.getLocation();
+
+      _this.currentView.remove();
+
+      loop: for (var _i = 0, _a = Object.keys(_this.routerOptions); _i < _a.length; _i++) {
+        var key = _a[_i];
+        var keyReplaced = key.replace(/^\//, '').replace(/^$/, '/');
+        var currentLocationReplaced = currentLocation.replace(/^\//, '').replace(/^$/, '/');
+
+        if (currentLocationReplaced.startsWith(keyReplaced)) {
+          _this.currentView = _this.routerOptions[key](currentLocation.replace(key, '').split('/').slice(1));
+          break loop;
+        }
+      }
+
+      _this.node.appendChild(_this.currentView.node);
+    };
+
+    _this.getLocation = function () {
+      return location.hash.slice(1);
+    };
+
+    _this.node.appendChild(_this.currentView.node);
+
+    _this.routerOptions = options;
+    window.addEventListener('load', _this.render);
+    window.addEventListener('hashchange', _this.render);
+    return _this;
+  }
+
+  return Router;
+}(View_1.View);
+
+exports.default = function (options) {
+  return new Router(options);
+};
+},{"../lib/View":"src/TypeScriptUI/lib/View.ts","./PlaceHolder":"src/TypeScriptUI/nodes/PlaceHolder.ts"}],"src/TypeScriptUI/nodes/String.ts":[function(require,module,exports) {
+"use strict";
+
+var __extends = this && this.__extends || function () {
+  var _extendStatics = function extendStatics(d, b) {
+    _extendStatics = Object.setPrototypeOf || {
+      __proto__: []
+    } instanceof Array && function (d, b) {
+      d.__proto__ = b;
+    } || function (d, b) {
+      for (var p in b) {
+        if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
+      }
+    };
+
+    return _extendStatics(d, b);
+  };
+
+  return function (d, b) {
+    _extendStatics(d, b);
+
+    function __() {
+      this.constructor = d;
+    }
+
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+  };
+}();
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var View_1 = require("../lib/View");
+
+var isObservable = function isObservable(value) {
+  return Object.keys(value).includes('_subscriber');
+};
+
+var String = function (_super) {
+  __extends(String, _super);
+
+  function String(str) {
+    var _this = _super.call(this) || this;
+
+    _this.node = document.createTextNode('');
+
+    if (isObservable(str)) {
+      _this.pushUnsub(str.subscribe(function (str) {
+        return _this.node.textContent = "" + str;
+      }).unsubscribe);
+    } else {
+      _this.node.textContent = "" + str;
+    }
+
+    return _this;
+  }
+
+  return String;
+}(View_1.View);
+
+exports.default = function (str) {
+  return new String(str);
+};
+},{"../lib/View":"src/TypeScriptUI/lib/View.ts"}],"src/TypeScriptUI/nodes/Switch.ts":[function(require,module,exports) {
+"use strict";
+
+var __extends = this && this.__extends || function () {
+  var _extendStatics = function extendStatics(d, b) {
+    _extendStatics = Object.setPrototypeOf || {
+      __proto__: []
+    } instanceof Array && function (d, b) {
+      d.__proto__ = b;
+    } || function (d, b) {
+      for (var p in b) {
+        if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
+      }
+    };
+
+    return _extendStatics(d, b);
+  };
+
+  return function (d, b) {
+    _extendStatics(d, b);
+
+    function __() {
+      this.constructor = d;
+    }
+
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+  };
+}();
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var View_1 = require("../lib/View");
+
+var PlaceHolder_1 = __importDefault(require("./PlaceHolder"));
+
+var Switch = function (_super) {
+  __extends(Switch, _super);
+
+  function Switch(pub, render) {
+    var _this = _super.call(this) || this;
+
+    _this.node = document.createElement('div');
+    _this.currentNode = PlaceHolder_1.default();
+
+    _this.pushUnsub(pub.subscribe(function (val) {
+      var newNode = val ? render(val) : PlaceHolder_1.default();
+
+      _this.currentNode.remove();
+
+      _this.currentNode = newNode;
+
+      _this.node.appendChild(newNode.node);
+    }).unsubscribe);
+
+    return _this;
+  }
+
+  return Switch;
+}(View_1.View);
+
+exports.default = function (pub, render) {
+  return new Switch(pub, render);
+};
+},{"../lib/View":"src/TypeScriptUI/lib/View.ts","./PlaceHolder":"src/TypeScriptUI/nodes/PlaceHolder.ts"}],"src/TypeScriptUI/nodes/nodeManipulations.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.classNameOn = exports.event = exports.className = void 0;
+
+exports.className = function (classNames) {
+  return function (node) {
+    classNames.split(' ').forEach(function (className) {
+      return node.classList.add(className);
+    });
+  };
+};
+
+exports.event = function (type, listener, options) {
+  return function (node) {
+    node.addEventListener(type, listener, options);
+    return function () {
+      node.removeEventListener(type, listener);
+    };
+  };
+};
+
+exports.classNameOn = function (classNames, $bool) {
+  return function (node) {
+    if (typeof $bool === 'boolean') {
+      if ($bool) {
+        classNames.split(' ').forEach(function (className) {
+          return node.classList.add(className);
+        });
+      }
+    } else {
+      return $bool.subscribe(function (val) {
+        if (val) {
+          classNames.split(' ').forEach(function (className) {
+            return node.classList.add(className);
+          });
+        } else {
+          classNames.split(' ').forEach(function (className) {
+            return node.classList.remove(className);
+          });
+        }
+      }).unsubscribe;
+    }
+  };
+};
+},{}],"node_modules/zen-observable/lib/Observable.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Observable = void 0;
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+// === Symbol Support ===
+var hasSymbols = function () {
+  return typeof Symbol === 'function';
+};
+
+var hasSymbol = function (name) {
+  return hasSymbols() && Boolean(Symbol[name]);
+};
+
+var getSymbol = function (name) {
+  return hasSymbol(name) ? Symbol[name] : '@@' + name;
+};
+
+if (hasSymbols() && !hasSymbol('observable')) {
+  Symbol.observable = Symbol('observable');
+}
+
+var SymbolIterator = getSymbol('iterator');
+var SymbolObservable = getSymbol('observable');
+var SymbolSpecies = getSymbol('species'); // === Abstract Operations ===
+
+function getMethod(obj, key) {
+  var value = obj[key];
+  if (value == null) return undefined;
+  if (typeof value !== 'function') throw new TypeError(value + ' is not a function');
+  return value;
+}
+
+function getSpecies(obj) {
+  var ctor = obj.constructor;
+
+  if (ctor !== undefined) {
+    ctor = ctor[SymbolSpecies];
+
+    if (ctor === null) {
+      ctor = undefined;
+    }
+  }
+
+  return ctor !== undefined ? ctor : Observable;
+}
+
+function isObservable(x) {
+  return x instanceof Observable; // SPEC: Brand check
+}
+
+function hostReportError(e) {
+  if (hostReportError.log) {
+    hostReportError.log(e);
+  } else {
+    setTimeout(function () {
+      throw e;
+    });
+  }
+}
+
+function enqueue(fn) {
+  Promise.resolve().then(function () {
+    try {
+      fn();
+    } catch (e) {
+      hostReportError(e);
+    }
+  });
+}
+
+function cleanupSubscription(subscription) {
+  var cleanup = subscription._cleanup;
+  if (cleanup === undefined) return;
+  subscription._cleanup = undefined;
+
+  if (!cleanup) {
+    return;
+  }
+
+  try {
+    if (typeof cleanup === 'function') {
+      cleanup();
+    } else {
+      var unsubscribe = getMethod(cleanup, 'unsubscribe');
+
+      if (unsubscribe) {
+        unsubscribe.call(cleanup);
+      }
+    }
+  } catch (e) {
+    hostReportError(e);
+  }
+}
+
+function closeSubscription(subscription) {
+  subscription._observer = undefined;
+  subscription._queue = undefined;
+  subscription._state = 'closed';
+}
+
+function flushSubscription(subscription) {
+  var queue = subscription._queue;
+
+  if (!queue) {
+    return;
+  }
+
+  subscription._queue = undefined;
+  subscription._state = 'ready';
+
+  for (var i = 0; i < queue.length; ++i) {
+    notifySubscription(subscription, queue[i].type, queue[i].value);
+    if (subscription._state === 'closed') break;
+  }
+}
+
+function notifySubscription(subscription, type, value) {
+  subscription._state = 'running';
+  var observer = subscription._observer;
+
+  try {
+    var m = getMethod(observer, type);
+
+    switch (type) {
+      case 'next':
+        if (m) m.call(observer, value);
+        break;
+
+      case 'error':
+        closeSubscription(subscription);
+        if (m) m.call(observer, value);else throw value;
+        break;
+
+      case 'complete':
+        closeSubscription(subscription);
+        if (m) m.call(observer);
+        break;
+    }
+  } catch (e) {
+    hostReportError(e);
+  }
+
+  if (subscription._state === 'closed') cleanupSubscription(subscription);else if (subscription._state === 'running') subscription._state = 'ready';
+}
+
+function onNotify(subscription, type, value) {
+  if (subscription._state === 'closed') return;
+
+  if (subscription._state === 'buffering') {
+    subscription._queue.push({
+      type: type,
+      value: value
+    });
+
+    return;
+  }
+
+  if (subscription._state !== 'ready') {
+    subscription._state = 'buffering';
+    subscription._queue = [{
+      type: type,
+      value: value
+    }];
+    enqueue(function () {
+      return flushSubscription(subscription);
+    });
+    return;
+  }
+
+  notifySubscription(subscription, type, value);
+}
+
+var Subscription =
+/*#__PURE__*/
+function () {
+  function Subscription(observer, subscriber) {
+    _classCallCheck(this, Subscription);
+
+    // ASSERT: observer is an object
+    // ASSERT: subscriber is callable
+    this._cleanup = undefined;
+    this._observer = observer;
+    this._queue = undefined;
+    this._state = 'initializing';
+    var subscriptionObserver = new SubscriptionObserver(this);
+
+    try {
+      this._cleanup = subscriber.call(undefined, subscriptionObserver);
+    } catch (e) {
+      subscriptionObserver.error(e);
+    }
+
+    if (this._state === 'initializing') this._state = 'ready';
+  }
+
+  _createClass(Subscription, [{
+    key: "unsubscribe",
+    value: function unsubscribe() {
+      if (this._state !== 'closed') {
+        closeSubscription(this);
+        cleanupSubscription(this);
+      }
+    }
+  }, {
+    key: "closed",
+    get: function () {
+      return this._state === 'closed';
+    }
+  }]);
+
+  return Subscription;
+}();
+
+var SubscriptionObserver =
+/*#__PURE__*/
+function () {
+  function SubscriptionObserver(subscription) {
+    _classCallCheck(this, SubscriptionObserver);
+
+    this._subscription = subscription;
+  }
+
+  _createClass(SubscriptionObserver, [{
+    key: "next",
+    value: function next(value) {
+      onNotify(this._subscription, 'next', value);
+    }
+  }, {
+    key: "error",
+    value: function error(value) {
+      onNotify(this._subscription, 'error', value);
+    }
+  }, {
+    key: "complete",
+    value: function complete() {
+      onNotify(this._subscription, 'complete');
+    }
+  }, {
+    key: "closed",
+    get: function () {
+      return this._subscription._state === 'closed';
+    }
+  }]);
+
+  return SubscriptionObserver;
+}();
+
+var Observable =
+/*#__PURE__*/
+function () {
+  function Observable(subscriber) {
+    _classCallCheck(this, Observable);
+
+    if (!(this instanceof Observable)) throw new TypeError('Observable cannot be called as a function');
+    if (typeof subscriber !== 'function') throw new TypeError('Observable initializer must be a function');
+    this._subscriber = subscriber;
+  }
+
+  _createClass(Observable, [{
+    key: "subscribe",
+    value: function subscribe(observer) {
+      if (typeof observer !== 'object' || observer === null) {
+        observer = {
+          next: observer,
+          error: arguments[1],
+          complete: arguments[2]
+        };
+      }
+
+      return new Subscription(observer, this._subscriber);
+    }
+  }, {
+    key: "forEach",
+    value: function forEach(fn) {
+      var _this = this;
+
+      return new Promise(function (resolve, reject) {
+        if (typeof fn !== 'function') {
+          reject(new TypeError(fn + ' is not a function'));
+          return;
+        }
+
+        function done() {
+          subscription.unsubscribe();
+          resolve();
+        }
+
+        var subscription = _this.subscribe({
+          next: function (value) {
+            try {
+              fn(value, done);
+            } catch (e) {
+              reject(e);
+              subscription.unsubscribe();
+            }
+          },
+          error: reject,
+          complete: resolve
+        });
+      });
+    }
+  }, {
+    key: "map",
+    value: function map(fn) {
+      var _this2 = this;
+
+      if (typeof fn !== 'function') throw new TypeError(fn + ' is not a function');
+      var C = getSpecies(this);
+      return new C(function (observer) {
+        return _this2.subscribe({
+          next: function (value) {
+            try {
+              value = fn(value);
+            } catch (e) {
+              return observer.error(e);
+            }
+
+            observer.next(value);
+          },
+          error: function (e) {
+            observer.error(e);
+          },
+          complete: function () {
+            observer.complete();
+          }
+        });
+      });
+    }
+  }, {
+    key: "filter",
+    value: function filter(fn) {
+      var _this3 = this;
+
+      if (typeof fn !== 'function') throw new TypeError(fn + ' is not a function');
+      var C = getSpecies(this);
+      return new C(function (observer) {
+        return _this3.subscribe({
+          next: function (value) {
+            try {
+              if (!fn(value)) return;
+            } catch (e) {
+              return observer.error(e);
+            }
+
+            observer.next(value);
+          },
+          error: function (e) {
+            observer.error(e);
+          },
+          complete: function () {
+            observer.complete();
+          }
+        });
+      });
+    }
+  }, {
+    key: "reduce",
+    value: function reduce(fn) {
+      var _this4 = this;
+
+      if (typeof fn !== 'function') throw new TypeError(fn + ' is not a function');
+      var C = getSpecies(this);
+      var hasSeed = arguments.length > 1;
+      var hasValue = false;
+      var seed = arguments[1];
+      var acc = seed;
+      return new C(function (observer) {
+        return _this4.subscribe({
+          next: function (value) {
+            var first = !hasValue;
+            hasValue = true;
+
+            if (!first || hasSeed) {
+              try {
+                acc = fn(acc, value);
+              } catch (e) {
+                return observer.error(e);
+              }
+            } else {
+              acc = value;
+            }
+          },
+          error: function (e) {
+            observer.error(e);
+          },
+          complete: function () {
+            if (!hasValue && !hasSeed) return observer.error(new TypeError('Cannot reduce an empty sequence'));
+            observer.next(acc);
+            observer.complete();
+          }
+        });
+      });
+    }
+  }, {
+    key: "concat",
+    value: function concat() {
+      var _this5 = this;
+
+      for (var _len = arguments.length, sources = new Array(_len), _key = 0; _key < _len; _key++) {
+        sources[_key] = arguments[_key];
+      }
+
+      var C = getSpecies(this);
+      return new C(function (observer) {
+        var subscription;
+        var index = 0;
+
+        function startNext(next) {
+          subscription = next.subscribe({
+            next: function (v) {
+              observer.next(v);
+            },
+            error: function (e) {
+              observer.error(e);
+            },
+            complete: function () {
+              if (index === sources.length) {
+                subscription = undefined;
+                observer.complete();
+              } else {
+                startNext(C.from(sources[index++]));
+              }
+            }
+          });
+        }
+
+        startNext(_this5);
+        return function () {
+          if (subscription) {
+            subscription.unsubscribe();
+            subscription = undefined;
+          }
+        };
+      });
+    }
+  }, {
+    key: "flatMap",
+    value: function flatMap(fn) {
+      var _this6 = this;
+
+      if (typeof fn !== 'function') throw new TypeError(fn + ' is not a function');
+      var C = getSpecies(this);
+      return new C(function (observer) {
+        var subscriptions = [];
+
+        var outer = _this6.subscribe({
+          next: function (value) {
+            if (fn) {
+              try {
+                value = fn(value);
+              } catch (e) {
+                return observer.error(e);
+              }
+            }
+
+            var inner = C.from(value).subscribe({
+              next: function (value) {
+                observer.next(value);
+              },
+              error: function (e) {
+                observer.error(e);
+              },
+              complete: function () {
+                var i = subscriptions.indexOf(inner);
+                if (i >= 0) subscriptions.splice(i, 1);
+                completeIfDone();
+              }
+            });
+            subscriptions.push(inner);
+          },
+          error: function (e) {
+            observer.error(e);
+          },
+          complete: function () {
+            completeIfDone();
+          }
+        });
+
+        function completeIfDone() {
+          if (outer.closed && subscriptions.length === 0) observer.complete();
+        }
+
+        return function () {
+          subscriptions.forEach(function (s) {
+            return s.unsubscribe();
+          });
+          outer.unsubscribe();
+        };
+      });
+    }
+  }, {
+    key: SymbolObservable,
+    value: function () {
+      return this;
+    }
+  }], [{
+    key: "from",
+    value: function from(x) {
+      var C = typeof this === 'function' ? this : Observable;
+      if (x == null) throw new TypeError(x + ' is not an object');
+      var method = getMethod(x, SymbolObservable);
+
+      if (method) {
+        var observable = method.call(x);
+        if (Object(observable) !== observable) throw new TypeError(observable + ' is not an object');
+        if (isObservable(observable) && observable.constructor === C) return observable;
+        return new C(function (observer) {
+          return observable.subscribe(observer);
+        });
+      }
+
+      if (hasSymbol('iterator')) {
+        method = getMethod(x, SymbolIterator);
+
+        if (method) {
+          return new C(function (observer) {
+            enqueue(function () {
+              if (observer.closed) return;
+              var _iteratorNormalCompletion = true;
+              var _didIteratorError = false;
+              var _iteratorError = undefined;
+
+              try {
+                for (var _iterator = method.call(x)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                  var _item = _step.value;
+                  observer.next(_item);
+                  if (observer.closed) return;
+                }
+              } catch (err) {
+                _didIteratorError = true;
+                _iteratorError = err;
+              } finally {
+                try {
+                  if (!_iteratorNormalCompletion && _iterator.return != null) {
+                    _iterator.return();
+                  }
+                } finally {
+                  if (_didIteratorError) {
+                    throw _iteratorError;
+                  }
+                }
+              }
+
+              observer.complete();
+            });
+          });
+        }
+      }
+
+      if (Array.isArray(x)) {
+        return new C(function (observer) {
+          enqueue(function () {
+            if (observer.closed) return;
+
+            for (var i = 0; i < x.length; ++i) {
+              observer.next(x[i]);
+              if (observer.closed) return;
+            }
+
+            observer.complete();
+          });
+        });
+      }
+
+      throw new TypeError(x + ' is not observable');
+    }
+  }, {
+    key: "of",
+    value: function of() {
+      for (var _len2 = arguments.length, items = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+        items[_key2] = arguments[_key2];
+      }
+
+      var C = typeof this === 'function' ? this : Observable;
+      return new C(function (observer) {
+        enqueue(function () {
+          if (observer.closed) return;
+
+          for (var i = 0; i < items.length; ++i) {
+            observer.next(items[i]);
+            if (observer.closed) return;
+          }
+
+          observer.complete();
+        });
+      });
+    }
+  }, {
+    key: SymbolSpecies,
+    get: function () {
+      return this;
+    }
+  }]);
+
+  return Observable;
+}();
+
+exports.Observable = Observable;
+
+if (hasSymbols()) {
+  Object.defineProperty(Observable, Symbol('extensions'), {
+    value: {
+      symbol: SymbolObservable,
+      hostReportError: hostReportError
+    },
+    configurable: true
+  });
+}
+},{}],"node_modules/zen-observable/index.js":[function(require,module,exports) {
+module.exports = require('./lib/Observable.js').Observable;
+
+},{"./lib/Observable.js":"node_modules/zen-observable/lib/Observable.js"}],"src/TypeScriptUI/lib/ZenPushStream.ts":[function(require,module,exports) {
 "use strict";
 
 var __importDefault = this && this.__importDefault || function (mod) {
@@ -730,32 +1849,211 @@ var __importDefault = this && this.__importDefault || function (mod) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.Range = exports.Div = exports.String = exports.List = exports.Input = exports.Button = void 0;
+exports.createState = exports.ZenPushStream = void 0;
 
-var Button_1 = __importDefault(require("./Button"));
+var zen_observable_1 = __importDefault(require("zen-observable"));
+
+var ZenPushStream = function () {
+  function ZenPushStream(initialValue) {
+    var _this = this;
+
+    this.observer = null;
+    this.observers = null;
+
+    this.next = function (fn) {
+      _this.lastValue = fn(_this.lastValue);
+
+      _this.send('next', _this.lastValue);
+    };
+
+    this.send = function (message, value) {
+      if (_this.observer) {
+        _this.sendMessage(_this.observer, message, value);
+      } else if (_this.observers) {
+        var list = [];
+
+        _this.observers.forEach(function (to) {
+          return list.push(to);
+        });
+
+        list.forEach(function (to) {
+          return _this.sendMessage(to, message, value);
+        });
+      }
+    };
+
+    this.sendMessage = function (observer, message, value) {
+      if (observer.closed) {
+        return;
+      }
+
+      switch (message) {
+        case 'next':
+          return observer.next(value);
+
+        case 'error':
+          return observer.error(value);
+
+        case 'complete':
+          return observer.complete();
+      }
+    };
+
+    this.addObserver = function (observer) {
+      if (_this.observers) {
+        _this.observers.add(observer);
+      } else if (!_this.observer) {
+        _this.observer = observer;
+      } else {
+        _this.observers = new Set();
+
+        _this.observers.add(_this.observer);
+
+        _this.observers.add(observer);
+
+        _this.observer = null;
+      }
+    };
+
+    this.lastValue = initialValue;
+    this.observable = new zen_observable_1.default(function (observer) {
+      _this.addObserver(observer);
+
+      if (initialValue !== undefined) {
+        observer.next(_this.lastValue);
+      }
+
+      return function () {
+        _this.deleteObserver(observer);
+      };
+    });
+  }
+
+  ZenPushStream.prototype.deleteObserver = function (observer) {
+    if (this.observers) {
+      this.observers.delete(observer);
+    } else if (this.observer === observer) {
+      this.observer = null;
+    }
+  };
+
+  return ZenPushStream;
+}();
+
+exports.ZenPushStream = ZenPushStream;
+
+exports.createState = function (initialValue) {
+  return new ZenPushStream(initialValue);
+};
+
+exports.default = exports.createState;
+},{"zen-observable":"node_modules/zen-observable/index.js"}],"src/TypeScriptUI/index.ts":[function(require,module,exports) {
+"use strict";
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.createState = exports.ZenPushStream = exports.View = exports.classNameOn = exports.event = exports.className = exports.Switch = exports.String = exports.Router = exports.Range = exports.PlaceHolder = exports.List = exports.Link = exports.Input = exports.InnerHTML = exports.If = exports.Div = exports.Button = void 0;
+
+var Button_1 = __importDefault(require("./nodes/Button"));
 
 exports.Button = Button_1.default;
 
-var Input_1 = __importDefault(require("./Input"));
-
-exports.Input = Input_1.default;
-
-var List_1 = __importDefault(require("./List"));
-
-exports.List = List_1.default;
-
-var String_1 = __importDefault(require("./String"));
-
-exports.String = String_1.default;
-
-var Div_1 = __importDefault(require("./Div"));
+var Div_1 = __importDefault(require("./nodes/Div"));
 
 exports.Div = Div_1.default;
 
-var Range_1 = __importDefault(require("./Range"));
+var If_1 = __importDefault(require("./nodes/If"));
+
+exports.If = If_1.default;
+
+var InnerHTML_1 = __importDefault(require("./nodes/InnerHTML"));
+
+exports.InnerHTML = InnerHTML_1.default;
+
+var Input_1 = __importDefault(require("./nodes/Input"));
+
+exports.Input = Input_1.default;
+
+var Link_1 = __importDefault(require("./nodes/Link"));
+
+exports.Link = Link_1.default;
+
+var List_1 = __importDefault(require("./nodes/List"));
+
+exports.List = List_1.default;
+
+var PlaceHolder_1 = __importDefault(require("./nodes/PlaceHolder"));
+
+exports.PlaceHolder = PlaceHolder_1.default;
+
+var Range_1 = __importDefault(require("./nodes/Range"));
 
 exports.Range = Range_1.default;
-},{"./Button":"src/TypeScriptUI/nodes/Button.ts","./Input":"src/TypeScriptUI/nodes/Input.ts","./List":"src/TypeScriptUI/nodes/List.ts","./String":"src/TypeScriptUI/nodes/String.ts","./Div":"src/TypeScriptUI/nodes/Div.ts","./Range":"src/TypeScriptUI/nodes/Range.ts"}],"node_modules/p5/lib/p5.min.js":[function(require,module,exports) {
+
+var Router_1 = __importDefault(require("./nodes/Router"));
+
+exports.Router = Router_1.default;
+
+var String_1 = __importDefault(require("./nodes/String"));
+
+exports.String = String_1.default;
+
+var Switch_1 = __importDefault(require("./nodes/Switch"));
+
+exports.Switch = Switch_1.default;
+
+var nodeManipulations_1 = require("./nodes/nodeManipulations");
+
+Object.defineProperty(exports, "className", {
+  enumerable: true,
+  get: function get() {
+    return nodeManipulations_1.className;
+  }
+});
+Object.defineProperty(exports, "event", {
+  enumerable: true,
+  get: function get() {
+    return nodeManipulations_1.event;
+  }
+});
+Object.defineProperty(exports, "classNameOn", {
+  enumerable: true,
+  get: function get() {
+    return nodeManipulations_1.classNameOn;
+  }
+});
+
+var View_1 = require("./lib/View");
+
+Object.defineProperty(exports, "View", {
+  enumerable: true,
+  get: function get() {
+    return View_1.View;
+  }
+});
+
+var ZenPushStream_1 = require("./lib/ZenPushStream");
+
+Object.defineProperty(exports, "ZenPushStream", {
+  enumerable: true,
+  get: function get() {
+    return ZenPushStream_1.ZenPushStream;
+  }
+});
+Object.defineProperty(exports, "createState", {
+  enumerable: true,
+  get: function get() {
+    return ZenPushStream_1.createState;
+  }
+});
+},{"./nodes/Button":"src/TypeScriptUI/nodes/Button.ts","./nodes/Div":"src/TypeScriptUI/nodes/Div.ts","./nodes/If":"src/TypeScriptUI/nodes/If.ts","./nodes/InnerHTML":"src/TypeScriptUI/nodes/InnerHTML.ts","./nodes/Input":"src/TypeScriptUI/nodes/Input.ts","./nodes/Link":"src/TypeScriptUI/nodes/Link.ts","./nodes/List":"src/TypeScriptUI/nodes/List.ts","./nodes/PlaceHolder":"src/TypeScriptUI/nodes/PlaceHolder.ts","./nodes/Range":"src/TypeScriptUI/nodes/Range.ts","./nodes/Router":"src/TypeScriptUI/nodes/Router.ts","./nodes/String":"src/TypeScriptUI/nodes/String.ts","./nodes/Switch":"src/TypeScriptUI/nodes/Switch.ts","./nodes/nodeManipulations":"src/TypeScriptUI/nodes/nodeManipulations.ts","./lib/View":"src/TypeScriptUI/lib/View.ts","./lib/ZenPushStream":"src/TypeScriptUI/lib/ZenPushStream.ts"}],"node_modules/p5/lib/p5.min.js":[function(require,module,exports) {
 var define;
 var global = arguments[3];
 /*! p5.js v1.1.9 July 22, 2020 */
@@ -43530,23 +44828,180 @@ var Vector = _dereq_('../geometry/Vector');
 },{"../body/Composite":2,"../core/Common":14,"../core/Events":16,"../geometry/Bounds":26,"../geometry/Vector":28}]},{},[30])(30)
 });
 
-},{}],"src/types.ts":[function(require,module,exports) {
+},{}],"src/state/index.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.BodyID = void 0;
-var BodyID;
+exports.$dialog = exports.$collisionActive = exports.$collisionStart = void 0;
 
-(function (BodyID) {
-  BodyID[BodyID["Copter"] = 1] = "Copter";
-  BodyID[BodyID["Bonus"] = 2] = "Bonus";
-  BodyID[BodyID["Ground"] = 3] = "Ground";
-  BodyID[BodyID["DialogEmitter"] = 4] = "DialogEmitter";
-  BodyID[BodyID["MissionEmitter"] = 5] = "MissionEmitter";
-  BodyID[BodyID["MissionTarget"] = 6] = "MissionTarget";
-})(BodyID = exports.BodyID || (exports.BodyID = {}));
+var TypeScriptUI_1 = require("../TypeScriptUI");
+
+exports.$collisionStart = TypeScriptUI_1.createState([undefined, undefined]);
+exports.$collisionActive = TypeScriptUI_1.createState([undefined, undefined]);
+exports.$dialog = TypeScriptUI_1.createState([]);
+},{"../TypeScriptUI":"src/TypeScriptUI/index.ts"}],"src/types.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.BodyLabel = exports.Key = exports.SCALE = void 0;
+exports.SCALE = 3;
+var Key;
+
+(function (Key) {
+  Key[Key["Enter"] = 13] = "Enter";
+  Key[Key["Left"] = 37] = "Left";
+  Key[Key["Up"] = 38] = "Up";
+  Key[Key["Right"] = 39] = "Right";
+})(Key = exports.Key || (exports.Key = {}));
+
+;
+var BodyLabel;
+
+(function (BodyLabel) {
+  BodyLabel["Copter"] = "Copter";
+  BodyLabel["Bonus"] = "Bonus";
+  BodyLabel["Ground"] = "Ground";
+  BodyLabel["DialogEmitter"] = "DialogEmitter";
+  BodyLabel["MissionEmitter"] = "MissionEmitter";
+  BodyLabel["MissionTarget"] = "MissionTarget";
+})(BodyLabel = exports.BodyLabel || (exports.BodyLabel = {}));
+},{}],"src/hooks/withCollision.ts":[function(require,module,exports) {
+"use strict";
+
+var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  Object.defineProperty(o, k2, {
+    enumerable: true,
+    get: function get() {
+      return m[k];
+    }
+  });
+} : function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  o[k2] = m[k];
+});
+
+var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
+  Object.defineProperty(o, "default", {
+    enumerable: true,
+    value: v
+  });
+} : function (o, v) {
+  o["default"] = v;
+});
+
+var __importStar = this && this.__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) {
+    if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+  }
+
+  __setModuleDefault(result, mod);
+
+  return result;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.withCollision = void 0;
+
+var Matter = __importStar(require("matter-js"));
+
+var state_1 = require("../state");
+
+var types_1 = require("../types");
+
+exports.withCollision = function (engine) {
+  Matter.Events.on(engine, 'collisionActive', function (e) {
+    var _loop_1 = function _loop_1(pair) {
+      var labelA = pair.bodyA.label;
+      var labelB = pair.bodyB.label;
+      state_1.$collisionActive.next(function () {
+        return [types_1.BodyLabel[labelA], types_1.BodyLabel[labelB]];
+      });
+    };
+
+    for (var _i = 0, _a = e.pairs; _i < _a.length; _i++) {
+      var pair = _a[_i];
+
+      _loop_1(pair);
+    }
+  });
+  Matter.Events.on(engine, 'collisionStart', function (e) {
+    var _loop_2 = function _loop_2(pair) {
+      var labelA = pair.bodyA.label;
+      var labelB = pair.bodyB.label;
+      state_1.$collisionStart.next(function () {
+        return [types_1.BodyLabel[labelA], types_1.BodyLabel[labelB]];
+      });
+    };
+
+    for (var _i = 0, _a = e.pairs; _i < _a.length; _i++) {
+      var pair = _a[_i];
+
+      _loop_2(pair);
+    }
+  });
+};
+},{"matter-js":"node_modules/matter-js/build/matter.js","../state":"src/state/index.ts","../types":"src/types.ts"}],"src/entities/Gamepad/index.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.getAxe = exports.isButtonReleased = exports.isButtonPressed = exports.isButtonDown = exports.Gamepad = void 0;
+var prevButtons = {};
+var prevAxes = {};
+
+exports.Gamepad = function () {
+  return {
+    update: function update() {
+      var _a, _b;
+
+      var gamepad = navigator.getGamepads()[0];
+
+      for (var index = 0; (_a = index < (gamepad === null || gamepad === void 0 ? void 0 : gamepad.buttons.length)) !== null && _a !== void 0 ? _a : 0; index++) {
+        var button = gamepad.buttons[index];
+        prevButtons[index] = prevButtons[index] || [button.value, false];
+        prevButtons[index] = [button.value, button.value !== prevButtons[index][0]];
+      }
+
+      for (var index = 0; (_b = index < (gamepad === null || gamepad === void 0 ? void 0 : gamepad.axes.length)) !== null && _b !== void 0 ? _b : 0; index++) {
+        prevAxes[index] = gamepad.axes[index];
+      }
+    }
+  };
+};
+
+exports.isButtonDown = function (index) {
+  var _a, _b;
+
+  return (_b = (_a = prevButtons[index]) === null || _a === void 0 ? void 0 : _a[0]) !== null && _b !== void 0 ? _b : 0 > 0;
+};
+
+exports.isButtonPressed = function (index) {
+  var _a, _b;
+
+  return ((_a = prevButtons[index]) === null || _a === void 0 ? void 0 : _a[0]) && ((_b = prevButtons[index]) === null || _b === void 0 ? void 0 : _b[1]);
+};
+
+exports.isButtonReleased = function (index) {
+  var _a, _b;
+
+  return ((_a = !prevButtons[index]) === null || _a === void 0 ? void 0 : _a[0]) && ((_b = prevButtons[index]) === null || _b === void 0 ? void 0 : _b[1]);
+};
+
+exports.getAxe = function (index) {
+  var _a, _b;
+
+  return (_b = (_a = prevAxes[index]) === null || _a === void 0 ? void 0 : _a[0]) !== null && _b !== void 0 ? _b : 0;
+};
 },{}],"src/hooks/addToWorld.ts":[function(require,module,exports) {
 "use strict";
 
@@ -43647,6 +45102,8 @@ var types_1 = require("../../types");
 
 var addToWorld_1 = require("../../hooks/addToWorld");
 
+var imagePath = '/data/copter.png';
+var MAX_MAGNITUDE = 5;
 ;
 
 exports.Copter = function (p5, state, _a, _b) {
@@ -43658,15 +45115,20 @@ exports.Copter = function (p5, state, _a, _b) {
       w = _d[0],
       h = _d[1];
 
-  var body = Matter.Bodies.rectangle(x, y, w, h, {
-    id: types_1.BodyID.Copter
+  var imageData;
+  var body = Matter.Bodies.rectangle(x + w / 2, y + h / 2, w, h, {
+    label: 'copter'
   });
   var localState = {
+    power: 0.00007,
     pos: body.position,
     unsubs: [addToWorld_1.addToWorld(state.engine, [body])]
   };
   return {
     localState: localState,
+    preload: function preload() {
+      imageData = p5.loadImage(imagePath);
+    },
     update: function update() {
       var _a, _b;
 
@@ -43676,12 +45138,16 @@ exports.Copter = function (p5, state, _a, _b) {
 
       localState.pos = body.position;
       var gamepad = navigator.getGamepads()[0];
-      var upValue = (_a = gamepad === null || gamepad === void 0 ? void 0 : gamepad.buttons[7].value) !== null && _a !== void 0 ? _a : 0;
-      var rotateValue = (_b = gamepad === null || gamepad === void 0 ? void 0 : gamepad.axes[0]) !== null && _b !== void 0 ? _b : 0;
-      var direction = p5.createVector(0, -(0.003 * upValue)).rotate(body.angle);
+      var upValue = p5.keyIsDown(types_1.Key.Up) ? 1 : (_a = gamepad === null || gamepad === void 0 ? void 0 : gamepad.buttons[7].value) !== null && _a !== void 0 ? _a : 0;
+      var rotateValue = p5.keyIsDown(types_1.Key.Left) ? -1 : p5.keyIsDown(types_1.Key.Right) ? 1 : (_b = gamepad === null || gamepad === void 0 ? void 0 : gamepad.axes[0]) !== null && _b !== void 0 ? _b : 0;
+      var direction = p5.createVector(0, -(localState.power * upValue)).rotate(body.angle);
 
       if (state.health > 0) {
         Matter.Body.applyForce(body, body.position, direction);
+      }
+
+      if (Matter.Vector.magnitude(body.velocity) > MAX_MAGNITUDE) {
+        Matter.Body.setVelocity(body, body.velocity = Matter.Vector.mult(Matter.Vector.normalise(body.velocity), MAX_MAGNITUDE));
       }
 
       if (rotateValue !== 0) {
@@ -43689,856 +45155,20 @@ exports.Copter = function (p5, state, _a, _b) {
         Matter.Body.setAngularVelocity(body, 0);
       }
 
-      if (upValue !== 0) {
-        state.health = Math.max(0, state.health - upValue / 1000);
-      }
+      if (upValue !== 0) {}
     },
     draw: function draw() {
       p5.push();
       {
         p5.translate(body.position.x, body.position.y);
         p5.rotate(body.angle);
-        p5.rect(-w / 2, -h / 2, w, h);
+        p5.image(imageData, -w / 2, -h / 4);
       }
       p5.pop();
     }
   };
 };
-},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Ground/index.ts":[function(require,module,exports) {
-"use strict";
-
-var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  Object.defineProperty(o, k2, {
-    enumerable: true,
-    get: function get() {
-      return m[k];
-    }
-  });
-} : function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  o[k2] = m[k];
-});
-
-var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
-  Object.defineProperty(o, "default", {
-    enumerable: true,
-    value: v
-  });
-} : function (o, v) {
-  o["default"] = v;
-});
-
-var __importStar = this && this.__importStar || function (mod) {
-  if (mod && mod.__esModule) return mod;
-  var result = {};
-  if (mod != null) for (var k in mod) {
-    if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-  }
-
-  __setModuleDefault(result, mod);
-
-  return result;
-};
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.Grounds = void 0;
-
-var Matter = __importStar(require("matter-js"));
-
-var types_1 = require("../../types");
-
-var addToWorld_1 = require("../../hooks/addToWorld");
-
-exports.Grounds = function (p5, state, data) {
-  var bodies = data.map(function (_a) {
-    var x = _a[0],
-        y = _a[1],
-        w = _a[2],
-        h = _a[3];
-    return Matter.Bodies.rectangle(x, y, w, h, {
-      isStatic: true,
-      id: types_1.BodyID.Ground
-    });
-  });
-  var localState = {
-    unsubs: [addToWorld_1.addToWorld(state.engine, bodies)]
-  };
-  return {
-    localState: localState,
-    update: function update() {},
-    draw: function draw() {
-      bodies.forEach(function (body) {
-        var _a = body.position,
-            x = _a.x,
-            y = _a.y;
-        var _b = body.bounds,
-            min = _b.min,
-            max = _b.max;
-        var _c = [max.x - min.x, max.y - min.y],
-            w = _c[0],
-            h = _c[1];
-        p5.push();
-        p5.translate(x, y);
-        p5.rect(-w / 2, -h / 2, w, h);
-        p5.pop();
-      });
-    }
-  };
-};
-},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"node_modules/zen-observable/lib/Observable.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.Observable = void 0;
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
-// === Symbol Support ===
-var hasSymbols = function () {
-  return typeof Symbol === 'function';
-};
-
-var hasSymbol = function (name) {
-  return hasSymbols() && Boolean(Symbol[name]);
-};
-
-var getSymbol = function (name) {
-  return hasSymbol(name) ? Symbol[name] : '@@' + name;
-};
-
-if (hasSymbols() && !hasSymbol('observable')) {
-  Symbol.observable = Symbol('observable');
-}
-
-var SymbolIterator = getSymbol('iterator');
-var SymbolObservable = getSymbol('observable');
-var SymbolSpecies = getSymbol('species'); // === Abstract Operations ===
-
-function getMethod(obj, key) {
-  var value = obj[key];
-  if (value == null) return undefined;
-  if (typeof value !== 'function') throw new TypeError(value + ' is not a function');
-  return value;
-}
-
-function getSpecies(obj) {
-  var ctor = obj.constructor;
-
-  if (ctor !== undefined) {
-    ctor = ctor[SymbolSpecies];
-
-    if (ctor === null) {
-      ctor = undefined;
-    }
-  }
-
-  return ctor !== undefined ? ctor : Observable;
-}
-
-function isObservable(x) {
-  return x instanceof Observable; // SPEC: Brand check
-}
-
-function hostReportError(e) {
-  if (hostReportError.log) {
-    hostReportError.log(e);
-  } else {
-    setTimeout(function () {
-      throw e;
-    });
-  }
-}
-
-function enqueue(fn) {
-  Promise.resolve().then(function () {
-    try {
-      fn();
-    } catch (e) {
-      hostReportError(e);
-    }
-  });
-}
-
-function cleanupSubscription(subscription) {
-  var cleanup = subscription._cleanup;
-  if (cleanup === undefined) return;
-  subscription._cleanup = undefined;
-
-  if (!cleanup) {
-    return;
-  }
-
-  try {
-    if (typeof cleanup === 'function') {
-      cleanup();
-    } else {
-      var unsubscribe = getMethod(cleanup, 'unsubscribe');
-
-      if (unsubscribe) {
-        unsubscribe.call(cleanup);
-      }
-    }
-  } catch (e) {
-    hostReportError(e);
-  }
-}
-
-function closeSubscription(subscription) {
-  subscription._observer = undefined;
-  subscription._queue = undefined;
-  subscription._state = 'closed';
-}
-
-function flushSubscription(subscription) {
-  var queue = subscription._queue;
-
-  if (!queue) {
-    return;
-  }
-
-  subscription._queue = undefined;
-  subscription._state = 'ready';
-
-  for (var i = 0; i < queue.length; ++i) {
-    notifySubscription(subscription, queue[i].type, queue[i].value);
-    if (subscription._state === 'closed') break;
-  }
-}
-
-function notifySubscription(subscription, type, value) {
-  subscription._state = 'running';
-  var observer = subscription._observer;
-
-  try {
-    var m = getMethod(observer, type);
-
-    switch (type) {
-      case 'next':
-        if (m) m.call(observer, value);
-        break;
-
-      case 'error':
-        closeSubscription(subscription);
-        if (m) m.call(observer, value);else throw value;
-        break;
-
-      case 'complete':
-        closeSubscription(subscription);
-        if (m) m.call(observer);
-        break;
-    }
-  } catch (e) {
-    hostReportError(e);
-  }
-
-  if (subscription._state === 'closed') cleanupSubscription(subscription);else if (subscription._state === 'running') subscription._state = 'ready';
-}
-
-function onNotify(subscription, type, value) {
-  if (subscription._state === 'closed') return;
-
-  if (subscription._state === 'buffering') {
-    subscription._queue.push({
-      type: type,
-      value: value
-    });
-
-    return;
-  }
-
-  if (subscription._state !== 'ready') {
-    subscription._state = 'buffering';
-    subscription._queue = [{
-      type: type,
-      value: value
-    }];
-    enqueue(function () {
-      return flushSubscription(subscription);
-    });
-    return;
-  }
-
-  notifySubscription(subscription, type, value);
-}
-
-var Subscription =
-/*#__PURE__*/
-function () {
-  function Subscription(observer, subscriber) {
-    _classCallCheck(this, Subscription);
-
-    // ASSERT: observer is an object
-    // ASSERT: subscriber is callable
-    this._cleanup = undefined;
-    this._observer = observer;
-    this._queue = undefined;
-    this._state = 'initializing';
-    var subscriptionObserver = new SubscriptionObserver(this);
-
-    try {
-      this._cleanup = subscriber.call(undefined, subscriptionObserver);
-    } catch (e) {
-      subscriptionObserver.error(e);
-    }
-
-    if (this._state === 'initializing') this._state = 'ready';
-  }
-
-  _createClass(Subscription, [{
-    key: "unsubscribe",
-    value: function unsubscribe() {
-      if (this._state !== 'closed') {
-        closeSubscription(this);
-        cleanupSubscription(this);
-      }
-    }
-  }, {
-    key: "closed",
-    get: function () {
-      return this._state === 'closed';
-    }
-  }]);
-
-  return Subscription;
-}();
-
-var SubscriptionObserver =
-/*#__PURE__*/
-function () {
-  function SubscriptionObserver(subscription) {
-    _classCallCheck(this, SubscriptionObserver);
-
-    this._subscription = subscription;
-  }
-
-  _createClass(SubscriptionObserver, [{
-    key: "next",
-    value: function next(value) {
-      onNotify(this._subscription, 'next', value);
-    }
-  }, {
-    key: "error",
-    value: function error(value) {
-      onNotify(this._subscription, 'error', value);
-    }
-  }, {
-    key: "complete",
-    value: function complete() {
-      onNotify(this._subscription, 'complete');
-    }
-  }, {
-    key: "closed",
-    get: function () {
-      return this._subscription._state === 'closed';
-    }
-  }]);
-
-  return SubscriptionObserver;
-}();
-
-var Observable =
-/*#__PURE__*/
-function () {
-  function Observable(subscriber) {
-    _classCallCheck(this, Observable);
-
-    if (!(this instanceof Observable)) throw new TypeError('Observable cannot be called as a function');
-    if (typeof subscriber !== 'function') throw new TypeError('Observable initializer must be a function');
-    this._subscriber = subscriber;
-  }
-
-  _createClass(Observable, [{
-    key: "subscribe",
-    value: function subscribe(observer) {
-      if (typeof observer !== 'object' || observer === null) {
-        observer = {
-          next: observer,
-          error: arguments[1],
-          complete: arguments[2]
-        };
-      }
-
-      return new Subscription(observer, this._subscriber);
-    }
-  }, {
-    key: "forEach",
-    value: function forEach(fn) {
-      var _this = this;
-
-      return new Promise(function (resolve, reject) {
-        if (typeof fn !== 'function') {
-          reject(new TypeError(fn + ' is not a function'));
-          return;
-        }
-
-        function done() {
-          subscription.unsubscribe();
-          resolve();
-        }
-
-        var subscription = _this.subscribe({
-          next: function (value) {
-            try {
-              fn(value, done);
-            } catch (e) {
-              reject(e);
-              subscription.unsubscribe();
-            }
-          },
-          error: reject,
-          complete: resolve
-        });
-      });
-    }
-  }, {
-    key: "map",
-    value: function map(fn) {
-      var _this2 = this;
-
-      if (typeof fn !== 'function') throw new TypeError(fn + ' is not a function');
-      var C = getSpecies(this);
-      return new C(function (observer) {
-        return _this2.subscribe({
-          next: function (value) {
-            try {
-              value = fn(value);
-            } catch (e) {
-              return observer.error(e);
-            }
-
-            observer.next(value);
-          },
-          error: function (e) {
-            observer.error(e);
-          },
-          complete: function () {
-            observer.complete();
-          }
-        });
-      });
-    }
-  }, {
-    key: "filter",
-    value: function filter(fn) {
-      var _this3 = this;
-
-      if (typeof fn !== 'function') throw new TypeError(fn + ' is not a function');
-      var C = getSpecies(this);
-      return new C(function (observer) {
-        return _this3.subscribe({
-          next: function (value) {
-            try {
-              if (!fn(value)) return;
-            } catch (e) {
-              return observer.error(e);
-            }
-
-            observer.next(value);
-          },
-          error: function (e) {
-            observer.error(e);
-          },
-          complete: function () {
-            observer.complete();
-          }
-        });
-      });
-    }
-  }, {
-    key: "reduce",
-    value: function reduce(fn) {
-      var _this4 = this;
-
-      if (typeof fn !== 'function') throw new TypeError(fn + ' is not a function');
-      var C = getSpecies(this);
-      var hasSeed = arguments.length > 1;
-      var hasValue = false;
-      var seed = arguments[1];
-      var acc = seed;
-      return new C(function (observer) {
-        return _this4.subscribe({
-          next: function (value) {
-            var first = !hasValue;
-            hasValue = true;
-
-            if (!first || hasSeed) {
-              try {
-                acc = fn(acc, value);
-              } catch (e) {
-                return observer.error(e);
-              }
-            } else {
-              acc = value;
-            }
-          },
-          error: function (e) {
-            observer.error(e);
-          },
-          complete: function () {
-            if (!hasValue && !hasSeed) return observer.error(new TypeError('Cannot reduce an empty sequence'));
-            observer.next(acc);
-            observer.complete();
-          }
-        });
-      });
-    }
-  }, {
-    key: "concat",
-    value: function concat() {
-      var _this5 = this;
-
-      for (var _len = arguments.length, sources = new Array(_len), _key = 0; _key < _len; _key++) {
-        sources[_key] = arguments[_key];
-      }
-
-      var C = getSpecies(this);
-      return new C(function (observer) {
-        var subscription;
-        var index = 0;
-
-        function startNext(next) {
-          subscription = next.subscribe({
-            next: function (v) {
-              observer.next(v);
-            },
-            error: function (e) {
-              observer.error(e);
-            },
-            complete: function () {
-              if (index === sources.length) {
-                subscription = undefined;
-                observer.complete();
-              } else {
-                startNext(C.from(sources[index++]));
-              }
-            }
-          });
-        }
-
-        startNext(_this5);
-        return function () {
-          if (subscription) {
-            subscription.unsubscribe();
-            subscription = undefined;
-          }
-        };
-      });
-    }
-  }, {
-    key: "flatMap",
-    value: function flatMap(fn) {
-      var _this6 = this;
-
-      if (typeof fn !== 'function') throw new TypeError(fn + ' is not a function');
-      var C = getSpecies(this);
-      return new C(function (observer) {
-        var subscriptions = [];
-
-        var outer = _this6.subscribe({
-          next: function (value) {
-            if (fn) {
-              try {
-                value = fn(value);
-              } catch (e) {
-                return observer.error(e);
-              }
-            }
-
-            var inner = C.from(value).subscribe({
-              next: function (value) {
-                observer.next(value);
-              },
-              error: function (e) {
-                observer.error(e);
-              },
-              complete: function () {
-                var i = subscriptions.indexOf(inner);
-                if (i >= 0) subscriptions.splice(i, 1);
-                completeIfDone();
-              }
-            });
-            subscriptions.push(inner);
-          },
-          error: function (e) {
-            observer.error(e);
-          },
-          complete: function () {
-            completeIfDone();
-          }
-        });
-
-        function completeIfDone() {
-          if (outer.closed && subscriptions.length === 0) observer.complete();
-        }
-
-        return function () {
-          subscriptions.forEach(function (s) {
-            return s.unsubscribe();
-          });
-          outer.unsubscribe();
-        };
-      });
-    }
-  }, {
-    key: SymbolObservable,
-    value: function () {
-      return this;
-    }
-  }], [{
-    key: "from",
-    value: function from(x) {
-      var C = typeof this === 'function' ? this : Observable;
-      if (x == null) throw new TypeError(x + ' is not an object');
-      var method = getMethod(x, SymbolObservable);
-
-      if (method) {
-        var observable = method.call(x);
-        if (Object(observable) !== observable) throw new TypeError(observable + ' is not an object');
-        if (isObservable(observable) && observable.constructor === C) return observable;
-        return new C(function (observer) {
-          return observable.subscribe(observer);
-        });
-      }
-
-      if (hasSymbol('iterator')) {
-        method = getMethod(x, SymbolIterator);
-
-        if (method) {
-          return new C(function (observer) {
-            enqueue(function () {
-              if (observer.closed) return;
-              var _iteratorNormalCompletion = true;
-              var _didIteratorError = false;
-              var _iteratorError = undefined;
-
-              try {
-                for (var _iterator = method.call(x)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                  var _item = _step.value;
-                  observer.next(_item);
-                  if (observer.closed) return;
-                }
-              } catch (err) {
-                _didIteratorError = true;
-                _iteratorError = err;
-              } finally {
-                try {
-                  if (!_iteratorNormalCompletion && _iterator.return != null) {
-                    _iterator.return();
-                  }
-                } finally {
-                  if (_didIteratorError) {
-                    throw _iteratorError;
-                  }
-                }
-              }
-
-              observer.complete();
-            });
-          });
-        }
-      }
-
-      if (Array.isArray(x)) {
-        return new C(function (observer) {
-          enqueue(function () {
-            if (observer.closed) return;
-
-            for (var i = 0; i < x.length; ++i) {
-              observer.next(x[i]);
-              if (observer.closed) return;
-            }
-
-            observer.complete();
-          });
-        });
-      }
-
-      throw new TypeError(x + ' is not observable');
-    }
-  }, {
-    key: "of",
-    value: function of() {
-      for (var _len2 = arguments.length, items = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-        items[_key2] = arguments[_key2];
-      }
-
-      var C = typeof this === 'function' ? this : Observable;
-      return new C(function (observer) {
-        enqueue(function () {
-          if (observer.closed) return;
-
-          for (var i = 0; i < items.length; ++i) {
-            observer.next(items[i]);
-            if (observer.closed) return;
-          }
-
-          observer.complete();
-        });
-      });
-    }
-  }, {
-    key: SymbolSpecies,
-    get: function () {
-      return this;
-    }
-  }]);
-
-  return Observable;
-}();
-
-exports.Observable = Observable;
-
-if (hasSymbols()) {
-  Object.defineProperty(Observable, Symbol('extensions'), {
-    value: {
-      symbol: SymbolObservable,
-      hostReportError: hostReportError
-    },
-    configurable: true
-  });
-}
-},{}],"node_modules/zen-observable/index.js":[function(require,module,exports) {
-module.exports = require('./lib/Observable.js').Observable;
-
-},{"./lib/Observable.js":"node_modules/zen-observable/lib/Observable.js"}],"src/TypeScriptUI/lib/ZenPushStream.ts":[function(require,module,exports) {
-"use strict";
-
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
-};
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.ZenPushStream = void 0;
-
-var zen_observable_1 = __importDefault(require("zen-observable"));
-
-var ZenPushStream = function () {
-  function ZenPushStream(initialValue) {
-    var _this = this;
-
-    this.observer = null;
-    this.observers = null;
-
-    this.next = function (fn) {
-      _this.lastValue = fn(_this.lastValue);
-
-      _this.send('next', _this.lastValue);
-    };
-
-    this.send = function (message, value) {
-      if (_this.observer) {
-        _this.sendMessage(_this.observer, message, value);
-      } else if (_this.observers) {
-        var list = [];
-
-        _this.observers.forEach(function (to) {
-          return list.push(to);
-        });
-
-        list.forEach(function (to) {
-          return _this.sendMessage(to, message, value);
-        });
-      }
-    };
-
-    this.sendMessage = function (observer, message, value) {
-      if (observer.closed) {
-        return;
-      }
-
-      switch (message) {
-        case 'next':
-          return observer.next(value);
-
-        case 'error':
-          return observer.error(value);
-
-        case 'complete':
-          return observer.complete();
-      }
-    };
-
-    this.addObserver = function (observer) {
-      if (_this.observers) {
-        _this.observers.add(observer);
-      } else if (!_this.observer) {
-        _this.observer = observer;
-      } else {
-        _this.observers = new Set();
-
-        _this.observers.add(_this.observer);
-
-        _this.observers.add(observer);
-
-        _this.observer = null;
-      }
-    };
-
-    this.lastValue = initialValue;
-    this.observable = new zen_observable_1.default(function (observer) {
-      _this.addObserver(observer);
-
-      if (initialValue !== undefined) {
-        observer.next(_this.lastValue);
-      }
-
-      return function () {
-        _this.deleteObserver(observer);
-      };
-    });
-  }
-
-  ZenPushStream.prototype.deleteObserver = function (observer) {
-    if (this.observers) {
-      this.observers.delete(observer);
-    } else if (this.observer === observer) {
-      this.observer = null;
-    }
-  };
-
-  return ZenPushStream;
-}();
-
-exports.ZenPushStream = ZenPushStream;
-
-var createState = function createState(initialValue) {
-  return new ZenPushStream(initialValue);
-};
-
-exports.default = createState;
-},{"zen-observable":"node_modules/zen-observable/index.js"}],"src/state/index.ts":[function(require,module,exports) {
-"use strict";
-
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
-};
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.$dialog = exports.$collisionActive = exports.$collisionStart = void 0;
-
-var ZenPushStream_1 = __importDefault(require("../TypeScriptUI/lib/ZenPushStream"));
-
-exports.$collisionStart = ZenPushStream_1.default([0, 0]);
-exports.$collisionActive = ZenPushStream_1.default([0, 0]);
-exports.$dialog = ZenPushStream_1.default([]);
-},{"../TypeScriptUI/lib/ZenPushStream":"src/TypeScriptUI/lib/ZenPushStream.ts"}],"src/entities/Bonus/index.ts":[function(require,module,exports) {
+},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Bonus/index.ts":[function(require,module,exports) {
 "use strict";
 
 var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
@@ -44582,13 +45212,13 @@ exports.Bonuses = void 0;
 
 var Matter = __importStar(require("matter-js"));
 
-var state_1 = require("../../state");
-
 var types_1 = require("../../types");
+
+var state_1 = require("../../state");
 
 var addToWorld_1 = require("../../hooks/addToWorld");
 
-var RADIUS = 25;
+var RADIUS = 5;
 
 exports.Bonuses = function (p5, state, data) {
   var bodies = data.map(function (_a) {
@@ -44597,15 +45227,15 @@ exports.Bonuses = function (p5, state, data) {
     return Matter.Bodies.circle(x, y, RADIUS, {
       isStatic: true,
       isSensor: true,
-      id: types_1.BodyID.Bonus
+      label: types_1.BodyLabel.Bonus
     });
   });
   var localState = {
     unsubs: [addToWorld_1.addToWorld(state.engine, bodies), state_1.$collisionActive.observable.subscribe(function (_a) {
-      var id1 = _a[0],
-          id2 = _a[1];
+      var labelA = _a[0],
+          labelB = _a[1];
 
-      if (id1 === types_1.BodyID.Bonus || id2 === types_1.BodyID.Bonus) {
+      if (labelA === types_1.BodyLabel.Bonus || labelB === types_1.BodyLabel.Bonus) {
         state.health = Math.min(1, state.health + 0.005);
       }
     }).unsubscribe]
@@ -44620,13 +45250,15 @@ exports.Bonuses = function (p5, state, data) {
     }
   };
 };
-},{"matter-js":"node_modules/matter-js/build/matter.js","../../state":"src/state/index.ts","../../types":"src/types.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Camera/index.ts":[function(require,module,exports) {
+},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../state":"src/state/index.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Camera/index.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.Camera = void 0;
+
+var types_1 = require("../../types");
 
 exports.Camera = function (p5, state, getTargetPos) {
   var localState = {
@@ -44643,252 +45275,38 @@ exports.Camera = function (p5, state, getTargetPos) {
       localState.pos.lerp(x, y, 0, 0.1);
     },
     draw: function draw() {
-      p5.translate(-localState.pos.x + p5.width / 2, -localState.pos.y + p5.height / 2);
+      p5.translate(-localState.pos.x + p5.width / 2 / types_1.SCALE, -localState.pos.y + p5.height / 2 / types_1.SCALE);
     }
   };
 };
-},{}],"src/hooks/withCollision.ts":[function(require,module,exports) {
-"use strict";
-
-var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  Object.defineProperty(o, k2, {
-    enumerable: true,
-    get: function get() {
-      return m[k];
-    }
-  });
-} : function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  o[k2] = m[k];
-});
-
-var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
-  Object.defineProperty(o, "default", {
-    enumerable: true,
-    value: v
-  });
-} : function (o, v) {
-  o["default"] = v;
-});
-
-var __importStar = this && this.__importStar || function (mod) {
-  if (mod && mod.__esModule) return mod;
-  var result = {};
-  if (mod != null) for (var k in mod) {
-    if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-  }
-
-  __setModuleDefault(result, mod);
-
-  return result;
-};
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.withCollision = void 0;
-
-var Matter = __importStar(require("matter-js"));
-
-var state_1 = require("../state");
-
-exports.withCollision = function (engine) {
-  Matter.Events.on(engine, 'collisionActive', function (e) {
-    var _loop_1 = function _loop_1(pair) {
-      var a = pair.bodyA;
-      var b = pair.bodyB;
-      state_1.$collisionActive.next(function () {
-        return [a.id, b.id];
-      });
-    };
-
-    for (var _i = 0, _a = e.pairs; _i < _a.length; _i++) {
-      var pair = _a[_i];
-
-      _loop_1(pair);
-    }
-  });
-  Matter.Events.on(engine, 'collisionStart', function (e) {
-    var _loop_2 = function _loop_2(pair) {
-      var a = pair.bodyA;
-      var b = pair.bodyB;
-      state_1.$collisionStart.next(function () {
-        return [a.id, b.id];
-      });
-    };
-
-    for (var _i = 0, _a = e.pairs; _i < _a.length; _i++) {
-      var pair = _a[_i];
-
-      _loop_2(pair);
-    }
-  });
-};
-},{"matter-js":"node_modules/matter-js/build/matter.js","../state":"src/state/index.ts"}],"src/entities/Gamepad/index.ts":[function(require,module,exports) {
+},{"../../types":"src/types.ts"}],"src/entities/Health/index.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.getAxe = exports.isButtonReleased = exports.isButtonPressed = exports.isButtonDown = exports.Gamepad = void 0;
-var prevButtons = {};
-var prevAxes = {};
-
-exports.Gamepad = function () {
-  return {
-    update: function update() {
-      var _a, _b;
-
-      var gamepad = navigator.getGamepads()[0];
-
-      for (var index = 0; (_a = index < (gamepad === null || gamepad === void 0 ? void 0 : gamepad.buttons.length)) !== null && _a !== void 0 ? _a : 0; index++) {
-        var button = gamepad.buttons[index];
-        prevButtons[index] = prevButtons[index] || [button.value, false];
-        prevButtons[index] = [button.value, button.value !== prevButtons[index][0]];
-      }
-
-      for (var index = 0; (_b = index < (gamepad === null || gamepad === void 0 ? void 0 : gamepad.axes.length)) !== null && _b !== void 0 ? _b : 0; index++) {
-        prevAxes[index] = gamepad.axes[index];
-      }
-    }
-  };
-};
-
-exports.isButtonDown = function (index) {
-  var _a, _b;
-
-  return (_b = (_a = prevButtons[index]) === null || _a === void 0 ? void 0 : _a[0]) !== null && _b !== void 0 ? _b : 0 > 0;
-};
-
-exports.isButtonPressed = function (index) {
-  var _a, _b;
-
-  return ((_a = prevButtons[index]) === null || _a === void 0 ? void 0 : _a[0]) && ((_b = prevButtons[index]) === null || _b === void 0 ? void 0 : _b[1]);
-};
-
-exports.isButtonReleased = function (index) {
-  var _a, _b;
-
-  return ((_a = !prevButtons[index]) === null || _a === void 0 ? void 0 : _a[0]) && ((_b = prevButtons[index]) === null || _b === void 0 ? void 0 : _b[1]);
-};
-
-exports.getAxe = function (index) {
-  var _a, _b;
-
-  return (_b = (_a = prevAxes[index]) === null || _a === void 0 ? void 0 : _a[0]) !== null && _b !== void 0 ? _b : 0;
-};
-},{}],"src/entities/DialogEmitter/index.ts":[function(require,module,exports) {
-"use strict";
-
-var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  Object.defineProperty(o, k2, {
-    enumerable: true,
-    get: function get() {
-      return m[k];
-    }
-  });
-} : function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  o[k2] = m[k];
-});
-
-var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
-  Object.defineProperty(o, "default", {
-    enumerable: true,
-    value: v
-  });
-} : function (o, v) {
-  o["default"] = v;
-});
-
-var __importStar = this && this.__importStar || function (mod) {
-  if (mod && mod.__esModule) return mod;
-  var result = {};
-  if (mod != null) for (var k in mod) {
-    if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-  }
-
-  __setModuleDefault(result, mod);
-
-  return result;
-};
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.DialogEmitter = void 0;
-
-var Matter = __importStar(require("matter-js"));
+exports.Health = void 0;
 
 var types_1 = require("../../types");
 
-var state_1 = require("../../state");
-
-var Gamepad_1 = require("../Gamepad");
-
-var addToWorld_1 = require("../../hooks/addToWorld");
-
-var RADIUS = 25;
-
-exports.DialogEmitter = function (p5, state, dialog, _a) {
-  var x = _a[0],
-      y = _a[1];
-  var bodies = [Matter.Bodies.circle(x, y, RADIUS, {
-    isStatic: true,
-    isSensor: true,
-    id: types_1.BodyID.DialogEmitter
-  })];
+exports.Health = function (p5, state) {
   var localState = {
-    unsubs: [state_1.$collisionStart.observable.subscribe(function (_a) {
-      var id1 = _a[0],
-          id2 = _a[1];
-
-      if (id1 === types_1.BodyID.DialogEmitter || id2 === types_1.BodyID.DialogEmitter) {
-        if (state.dialog.length === 0) {
-          state.movable = false;
-          state.dialog = dialog;
-          state_1.$dialog.next(function () {
-            return dialog;
-          });
-        }
-      }
-    }).unsubscribe, addToWorld_1.addToWorld(state.engine, bodies)]
+    unsubs: []
   };
   return {
     localState: localState,
-    update: function update() {
-      var xButton = Gamepad_1.isButtonPressed(0);
-
-      if (xButton) {
-        if (state.dialog.length > 0) {
-          var newDialog_1 = state.dialog.slice(1);
-          state.dialog = newDialog_1;
-          state_1.$dialog.next(function () {
-            return newDialog_1;
-          });
-
-          if (newDialog_1.length === 0) {
-            state.movable = true;
-          }
-        }
-      }
-    },
+    update: function update() {},
     draw: function draw() {
       p5.push();
       {
-        p5.noStroke();
-        p5.fill(255, 255, 0);
-        bodies.forEach(function (body) {
-          p5.circle(body.position.x, body.position.y, RADIUS * 2);
-        });
+        p5.scale(1 / types_1.SCALE);
+        p5.rect(10, 10, state.health * 100, 20);
       }
       p5.pop();
     }
   };
 };
-},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../state":"src/state/index.ts","../Gamepad":"src/entities/Gamepad/index.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/MissionEmitter/index.ts":[function(require,module,exports) {
+},{"../../types":"src/types.ts"}],"src/entities/MissionEmitter/index.ts":[function(require,module,exports) {
 "use strict";
 
 var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
@@ -44952,7 +45370,7 @@ var state_1 = require("../../state");
 
 var addToWorld_1 = require("../../hooks/addToWorld");
 
-var RADIUS = 25;
+var RADIUS = 5;
 var MissionState;
 
 (function (MissionState) {
@@ -44969,18 +45387,18 @@ exports.MissionEmitter = function (p5, state, mission, _a) {
   var bodies = [Matter.Bodies.circle(x, y, RADIUS, {
     isStatic: true,
     isSensor: true,
-    id: types_1.BodyID.MissionEmitter
+    label: types_1.BodyLabel.MissionEmitter
   }), (_b = Matter.Bodies).circle.apply(_b, __spreadArrays(mission.target.pos, [RADIUS, {
     isStatic: true,
     isSensor: true,
-    id: types_1.BodyID.MissionTarget
+    label: types_1.BodyLabel.MissionTarget
   }]))];
   var localState = {
     unsubs: [state_1.$collisionStart.observable.subscribe(function (_a) {
-      var id1 = _a[0],
-          id2 = _a[1];
+      var labelA = _a[0],
+          labelB = _a[1];
 
-      if (id1 === types_1.BodyID.MissionEmitter || id2 === types_1.BodyID.MissionEmitter) {
+      if (labelA === types_1.BodyLabel.MissionEmitter || labelB === types_1.BodyLabel.MissionEmitter) {
         switch (localState.missionState) {
           case MissionState.New:
             localState.missionState = MissionState.Progress;
@@ -44995,10 +45413,10 @@ exports.MissionEmitter = function (p5, state, mission, _a) {
         }
       }
     }).unsubscribe, state_1.$collisionStart.observable.subscribe(function (_a) {
-      var id1 = _a[0],
-          id2 = _a[1];
+      var labelA = _a[0],
+          labelB = _a[1];
 
-      if (id1 === types_1.BodyID.MissionTarget || id2 === types_1.BodyID.MissionTarget) {
+      if (labelA === types_1.BodyLabel.MissionTarget || labelB === types_1.BodyLabel.MissionTarget) {
         if (localState.missionState === MissionState.Progress) {
           localState.missionState = MissionState.Done;
         }
@@ -45025,133 +45443,7 @@ exports.MissionEmitter = function (p5, state, mission, _a) {
     }
   };
 };
-},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../state":"src/state/index.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Health/index.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.Health = void 0;
-
-exports.Health = function (p5, state) {
-  var localState = {
-    unsubs: []
-  };
-  return {
-    localState: localState,
-    update: function update() {},
-    draw: function draw() {
-      p5.rect(10, 10, state.health * 100, 20);
-    }
-  };
-};
-},{}],"src/data/block.png":[function(require,module,exports) {
-module.exports = "/block.5633389d.png";
-},{}],"src/entities/TileMap/index.ts":[function(require,module,exports) {
-"use strict";
-
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
-};
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.TileMap = void 0;
-
-var block_png_1 = __importDefault(require("../../data/block.png"));
-
-exports.TileMap = function (p5, state, data) {
-  var imageData = p5.loadImage(block_png_1.default);
-  var localState = {
-    unsubs: []
-  };
-  console.log('hi');
-  return {
-    localState: localState,
-    update: function update() {},
-    draw: function draw() {
-      p5.push();
-      {
-        p5.scale(3);
-        p5.translate(-50, -50);
-        var width = data.width,
-            height = data.height,
-            layers = data.layers;
-
-        for (var _i = 0, layers_1 = layers; _i < layers_1.length; _i++) {
-          var layer = layers_1[_i];
-          var gridCellWidth = layer.gridCellWidth,
-              gridCellHeight = layer.gridCellHeight,
-              dataCoords2D = layer.dataCoords2D;
-          var rowSize = width / gridCellWidth;
-          var columnSize = height / gridCellHeight;
-
-          for (var y = 0; y < columnSize; y++) {
-            for (var x = 0; x < rowSize; x++) {
-              var xPos = x * gridCellWidth;
-              var yPos = y * gridCellHeight;
-              var _a = dataCoords2D[y][x],
-                  tileX = _a[0],
-                  tileY = _a[1];
-              p5.image(imageData, xPos, yPos, gridCellWidth, gridCellHeight, tileX * gridCellWidth, tileY * gridCellHeight, 8, 8);
-            }
-          }
-        }
-      }
-      p5.pop();
-    }
-  };
-};
-},{"../../data/block.png":"src/data/block.png"}],"src/data/level1.json":[function(require,module,exports) {
-module.exports = {
-  "mission": {
-    "id": 123,
-    "title": "first mission",
-    "description": "done your first mision ever!",
-    "target": {
-      "pos": [700, 300]
-    },
-    "progress": "new"
-  },
-  "dialog": [{
-    "speaker": "one",
-    "speach": "one speach of one speaker"
-  }, {
-    "speaker": "two",
-    "speach": "two speach of two speaker"
-  }, {
-    "speaker": "three",
-    "speach": "three speach of three speaker"
-  }],
-  "bonuses": [[300, 300], [500, 300]],
-  "grounds": [[100, 100, 400, 50], [500, 500, 400, 50], [1000, 1500, 400, 50], [4000, 4000, 400, 50]]
-};
-},{}],"src/data/level3_tilemap.json":[function(require,module,exports) {
-module.exports = {
-  "ogmoVersion": "3.3.0",
-  "width": 136,
-  "height": 128,
-  "offsetX": 0,
-  "offsetY": 0,
-  "layers": [{
-    "name": "new_layer",
-    "_eid": "21949250",
-    "offsetX": 0,
-    "offsetY": 0,
-    "gridCellWidth": 8,
-    "gridCellHeight": 8,
-    "gridCellsX": 17,
-    "gridCellsY": 16,
-    "tileset": "New Tileset",
-    "dataCoords2D": [[[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [2, 0], [4, 2], [4, 2], [4, 2], [5, 2], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [2, 4], [2, 2], [2, 2], [2, 2], [3, 4], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [2, 4], [2, 2], [2, 2], [2, 2], [3, 4], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [2, 4], [2, 2], [2, 2], [2, 2], [3, 4], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [2, 5], [4, 3], [4, 3], [4, 3], [3, 5], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]],
-    "exportMode": 1,
-    "arrayMode": 1
-  }]
-};
-},{}],"src/canvas.ts":[function(require,module,exports) {
+},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../state":"src/state/index.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Ground/index.ts":[function(require,module,exports) {
 "use strict";
 
 var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
@@ -45188,10 +45480,383 @@ var __importStar = this && this.__importStar || function (mod) {
   return result;
 };
 
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Grounds = void 0;
+
+var Matter = __importStar(require("matter-js"));
+
+var addToWorld_1 = require("../../hooks/addToWorld");
+
+exports.Grounds = function (p5, state, data) {
+  var bodies = data.map(function (_a) {
+    var x = _a[0],
+        y = _a[1],
+        w = _a[2],
+        h = _a[3];
+    return Matter.Bodies.rectangle(x + w / 2, y + h / 2, w, h, {
+      isStatic: true
+    });
+  });
+  var localState = {
+    unsubs: [addToWorld_1.addToWorld(state.engine, bodies)]
   };
+  return {
+    localState: localState,
+    update: function update() {},
+    draw: function draw() {}
+  };
+};
+},{"matter-js":"node_modules/matter-js/build/matter.js","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/DialogEmitter/index.ts":[function(require,module,exports) {
+"use strict";
+
+var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  Object.defineProperty(o, k2, {
+    enumerable: true,
+    get: function get() {
+      return m[k];
+    }
+  });
+} : function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  o[k2] = m[k];
+});
+
+var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
+  Object.defineProperty(o, "default", {
+    enumerable: true,
+    value: v
+  });
+} : function (o, v) {
+  o["default"] = v;
+});
+
+var __importStar = this && this.__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) {
+    if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+  }
+
+  __setModuleDefault(result, mod);
+
+  return result;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.DialogEmitter = void 0;
+
+var Matter = __importStar(require("matter-js"));
+
+var types_1 = require("../../types");
+
+var state_1 = require("../../state");
+
+var Gamepad_1 = require("../Gamepad");
+
+var addToWorld_1 = require("../../hooks/addToWorld");
+
+var RADIUS = 5;
+
+exports.DialogEmitter = function (p5, state, _a, dialogPath) {
+  var x = _a[0],
+      y = _a[1];
+  var bodies = [Matter.Bodies.circle(x, y, RADIUS, {
+    isStatic: true,
+    isSensor: true,
+    label: types_1.BodyLabel.DialogEmitter
+  })];
+  var localState = {
+    dialog: [],
+    unsubs: [state_1.$collisionStart.observable.subscribe(function (_a) {
+      var labelA = _a[0],
+          labelB = _a[1];
+
+      if (labelA === types_1.BodyLabel.DialogEmitter || labelB === types_1.BodyLabel.DialogEmitter) {
+        if (state.dialog.length === 0) {
+          state.movable = false;
+          state.dialog = localState.dialog;
+          state_1.$dialog.next(function () {
+            return localState.dialog;
+          });
+        }
+      }
+    }).unsubscribe, addToWorld_1.addToWorld(state.engine, bodies)]
+  };
+  fetch(dialogPath).then(function (data) {
+    return data.json();
+  }).then(function (dialog) {
+    return localState.dialog = dialog;
+  }).catch(console.log);
+  return {
+    localState: localState,
+    update: function update() {
+      var xButton = Gamepad_1.isButtonPressed(0);
+
+      if (xButton) {
+        if (state.dialog.length > 0) {
+          var newDialog_1 = state.dialog.slice(1);
+          state.dialog = newDialog_1;
+          state_1.$dialog.next(function () {
+            return newDialog_1;
+          });
+
+          if (newDialog_1.length === 0) {
+            state.movable = true;
+          }
+        }
+      }
+    },
+    draw: function draw() {
+      p5.push();
+      {
+        p5.noStroke();
+        p5.fill(0, 255, 0);
+        bodies.forEach(function (body) {
+          p5.circle(body.position.x, body.position.y, RADIUS * 2);
+        });
+      }
+      p5.pop();
+    }
+  };
+};
+},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../state":"src/state/index.ts","../Gamepad":"src/entities/Gamepad/index.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/TileMap/index.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.TileMap = void 0;
+
+var Copter_1 = require("../Copter");
+
+var Bonus_1 = require("../Bonus");
+
+var Camera_1 = require("../Camera");
+
+var Health_1 = require("../Health");
+
+var MissionEmitter_1 = require("../MissionEmitter");
+
+var Ground_1 = require("../Ground");
+
+var DialogEmitter_1 = require("../DialogEmitter");
+
+var img = '/data/block.png';
+
+var drawToBuffer = function drawToBuffer(data, tileBuffer, imageData) {
+  for (var _i = 0, _a = data.layers; _i < _a.length; _i++) {
+    var layer = _a[_i];
+
+    if (layer.name === 'tilemap') {
+      var gridCellWidth = layer.gridCellWidth,
+          gridCellHeight = layer.gridCellHeight,
+          dataCoords2D = layer.dataCoords2D;
+      var rowSize = data.width / gridCellWidth;
+      var columnSize = data.height / gridCellHeight;
+
+      for (var y = 0; y < columnSize; y++) {
+        for (var x = 0; x < rowSize; x++) {
+          var xPos = x * gridCellWidth;
+          var yPos = y * gridCellHeight;
+          var _b = dataCoords2D[y][x],
+              tileX = _b[0],
+              tileY = _b[1];
+          tileBuffer.image(imageData, xPos, yPos, gridCellWidth, gridCellHeight, tileX * gridCellWidth, tileY * gridCellHeight, 8, 8);
+        }
+      }
+    }
+  }
+};
+
+var getEntities = function getEntities(p5, state, levels) {
+  var copter;
+  var bonuses;
+  var missionEmitter;
+  var grounds;
+  var camera;
+  var health;
+  var dialogEmitter;
+
+  for (var _i = 0, levels_1 = levels; _i < levels_1.length; _i++) {
+    var level = levels_1[_i];
+
+    if (level.name === 'entity') {
+      var _a = level.entities.find(function (entity) {
+        return entity.name === 'copter';
+      }),
+          copterX = _a.x,
+          copterY = _a.y,
+          copterWidth = _a.width,
+          copterHeight = _a.height;
+
+      var bonusesData = level.entities.filter(function (entity) {
+        return entity.name === 'bonus';
+      });
+
+      var _b = level.entities.find(function (entity) {
+        return entity.name === 'mission_emitter';
+      }),
+          _c = _b.values,
+          title = _c.title,
+          description = _c.description,
+          missionEmitterX = _b.x,
+          missionEmitterY = _b.y;
+
+      var _d = level.entities.find(function (entity) {
+        return entity.name === 'mission_target';
+      }),
+          targetX = _d.x,
+          targetY = _d.y;
+
+      var _e = level.entities.find(function (entity) {
+        return entity.name === 'dialog_emitter';
+      }),
+          dialogPath = _e.values.path,
+          dialogX = _e.x,
+          dialogY = _e.y;
+
+      var groundPositions = level.entities.filter(function (entity) {
+        return entity.name === 'ground';
+      }).map(function (ground) {
+        return [ground.x, ground.y, ground.width, ground.height];
+      });
+      missionEmitter = MissionEmitter_1.MissionEmitter(p5, state, {
+        title: title,
+        description: description,
+        target: {
+          pos: [targetX, targetY]
+        },
+        id: Math.random(),
+        progress: 'new'
+      }, [missionEmitterX, missionEmitterY]);
+      copter = Copter_1.Copter(p5, state, [copterX, copterY], [copterWidth, copterHeight * .75]);
+      bonuses = Bonus_1.Bonuses(p5, state, bonusesData.map(function (data) {
+        return [data.x, data.y];
+      }));
+      grounds = Ground_1.Grounds(p5, state, groundPositions);
+      camera = Camera_1.Camera(p5, state, function () {
+        return copter.localState.pos;
+      });
+      health = Health_1.Health(p5, state);
+      dialogEmitter = DialogEmitter_1.DialogEmitter(p5, state, [dialogX, dialogY], dialogPath);
+    }
+  }
+
+  return {
+    copter: copter,
+    bonuses: bonuses,
+    missionEmitter: missionEmitter,
+    grounds: grounds,
+    camera: camera,
+    health: health,
+    dialogEmitter: dialogEmitter
+  };
+};
+
+exports.TileMap = function (p5, state, data) {
+  var width = data.width,
+      height = data.height,
+      layers = data.layers;
+  var tileBuffer = p5.createGraphics(width, height);
+  var imageData;
+  var bufferRendered = false;
+
+  var _a = getEntities(p5, state, layers),
+      health = _a.health,
+      camera = _a.camera,
+      copter = _a.copter,
+      bonuses = _a.bonuses,
+      missionEmitter = _a.missionEmitter,
+      grounds = _a.grounds,
+      dialogEmitter = _a.dialogEmitter;
+
+  var children = [grounds, bonuses, missionEmitter, dialogEmitter, copter];
+  var localState = {
+    unsubs: []
+  };
+  return {
+    localState: localState,
+    preload: function preload() {
+      var _a;
+
+      imageData = p5.loadImage(img);
+
+      for (var _i = 0, children_1 = children; _i < children_1.length; _i++) {
+        var child = children_1[_i];
+        (_a = child.preload) === null || _a === void 0 ? void 0 : _a.call(child);
+      }
+    },
+    update: function update() {
+      camera.update();
+      health.update();
+
+      for (var _i = 0, children_2 = children; _i < children_2.length; _i++) {
+        var child = children_2[_i];
+        child.update();
+      }
+    },
+    draw: function draw() {
+      if (!bufferRendered) {
+        tileBuffer.noSmooth();
+        drawToBuffer(data, tileBuffer, imageData);
+        bufferRendered = true;
+      }
+
+      p5.push();
+      {
+        camera.draw();
+        p5.image(tileBuffer, 0, 0);
+
+        for (var _i = 0, children_3 = children; _i < children_3.length; _i++) {
+          var child = children_3[_i];
+          child.draw();
+        }
+      }
+      p5.pop();
+      health.draw();
+    }
+  };
+};
+},{"../Copter":"src/entities/Copter/index.ts","../Bonus":"src/entities/Bonus/index.ts","../Camera":"src/entities/Camera/index.ts","../Health":"src/entities/Health/index.ts","../MissionEmitter":"src/entities/MissionEmitter/index.ts","../Ground":"src/entities/Ground/index.ts","../DialogEmitter":"src/entities/DialogEmitter/index.ts"}],"src/canvas.ts":[function(require,module,exports) {
+"use strict";
+
+var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  Object.defineProperty(o, k2, {
+    enumerable: true,
+    get: function get() {
+      return m[k];
+    }
+  });
+} : function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  o[k2] = m[k];
+});
+
+var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
+  Object.defineProperty(o, "default", {
+    enumerable: true,
+    value: v
+  });
+} : function (o, v) {
+  o["default"] = v;
+});
+
+var __importStar = this && this.__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) {
+    if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+  }
+
+  __setModuleDefault(result, mod);
+
+  return result;
 };
 
 Object.defineProperty(exports, "__esModule", {
@@ -45203,125 +45868,107 @@ var P5 = require("p5");
 
 var Matter = __importStar(require("matter-js"));
 
-var Copter_1 = require("./entities/Copter");
-
-var Ground_1 = require("./entities/Ground");
-
-var Bonus_1 = require("./entities/Bonus");
-
-var Camera_1 = require("./entities/Camera");
-
 var withCollision_1 = require("./hooks/withCollision");
-
-var DialogEmitter_1 = require("./entities/DialogEmitter");
-
-var MissionEmitter_1 = require("./entities/MissionEmitter");
-
-var Health_1 = require("./entities/Health");
 
 var Gamepad_1 = require("./entities/Gamepad");
 
 var TileMap_1 = require("./entities/TileMap");
 
-var level1_json_1 = __importDefault(require("./data/level1.json"));
+var types_1 = require("./types");
 
-var level3_tilemap_json_1 = __importDefault(require("./data/level3_tilemap.json"));
-
-var levelData = level1_json_1.default;
-var tileMapData = level3_tilemap_json_1.default;
 var canvas = document.querySelector('#canvas');
+var CANVAS_WIDTH = 800;
+var CANVAS_HEIGHT = 600;
 
-var drawBG = function drawBG(p5, xOffset, yOffset) {
-  var w = p5.width;
-  var h = p5.height;
-  var s = 60;
-  p5.push();
-  p5.noStroke();
-
-  for (var x = 0; x < w + s; x += s) {
-    for (var y = 0; y < h + s; y += s) {
-      p5.rect(x - xOffset % s, y - yOffset % s, 2, 2);
-    }
-  }
-
-  p5.pop();
-};
-
-exports.initCanvas = function () {
+exports.initCanvas = function (levelData) {
   new P5(function (p5) {
     var engine = Matter.Engine.create();
+    engine.world.gravity.y = 0.33;
     var state = {
       health: 1,
       dialog: [],
       movable: true,
       engine: engine
     };
-    var copter = Copter_1.Copter(p5, state);
-    var missionEmitter = MissionEmitter_1.MissionEmitter(p5, state, levelData.mission, [200, -50]);
-    var dialogEmitter = DialogEmitter_1.DialogEmitter(p5, state, levelData.dialog, [50, -50]);
-    var grounds = Ground_1.Grounds(p5, state, levelData.grounds);
-    var bonuses = Bonus_1.Bonuses(p5, state, levelData.bonuses);
-    var camera = Camera_1.Camera(p5, state, function () {
-      return copter.localState.pos;
-    });
-    var health = Health_1.Health(p5, state);
     var gamepad = Gamepad_1.Gamepad();
-    var tileMap = TileMap_1.TileMap(p5, state, tileMapData);
-    var children = [health, camera, tileMap, grounds, bonuses, missionEmitter, dialogEmitter, copter];
+    var tileMap = TileMap_1.TileMap(p5, state, levelData);
+    var children = [tileMap];
     Matter.Engine.run(engine);
     withCollision_1.withCollision(engine);
 
     p5.setup = function () {
-      p5.createCanvas(window.innerWidth, window.innerHeight);
+      p5.createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
     };
 
-    p5.draw = function () {
-      p5.background(0);
-      p5.noSmooth();
-      gamepad.update();
+    p5.preload = function () {
+      var _a;
 
       for (var _i = 0, children_1 = children; _i < children_1.length; _i++) {
         var child = children_1[_i];
+        (_a = child.preload) === null || _a === void 0 ? void 0 : _a.call(child);
+      }
+    };
+
+    p5.draw = function () {
+      gamepad.update();
+
+      for (var _i = 0, children_2 = children; _i < children_2.length; _i++) {
+        var child = children_2[_i];
         child.update();
       }
 
-      drawBG(p5, camera.localState.pos.x / 2, camera.localState.pos.y / 2);
       p5.push();
       {
-        for (var _a = 0, children_2 = children; _a < children_2.length; _a++) {
-          var child = children_2[_a];
+        p5.background('#54627e');
+        p5.noSmooth();
+        p5.scale(types_1.SCALE);
+
+        for (var _a = 0, children_3 = children; _a < children_3.length; _a++) {
+          var child = children_3[_a];
           child.draw();
         }
       }
       p5.pop();
-      health.draw();
     };
   }, canvas);
 };
-},{"p5":"node_modules/p5/lib/p5.min.js","matter-js":"node_modules/matter-js/build/matter.js","./entities/Copter":"src/entities/Copter/index.ts","./entities/Ground":"src/entities/Ground/index.ts","./entities/Bonus":"src/entities/Bonus/index.ts","./entities/Camera":"src/entities/Camera/index.ts","./hooks/withCollision":"src/hooks/withCollision.ts","./entities/DialogEmitter":"src/entities/DialogEmitter/index.ts","./entities/MissionEmitter":"src/entities/MissionEmitter/index.ts","./entities/Health":"src/entities/Health/index.ts","./entities/Gamepad":"src/entities/Gamepad/index.ts","./entities/TileMap":"src/entities/TileMap/index.ts","./data/level1.json":"src/data/level1.json","./data/level3_tilemap.json":"src/data/level3_tilemap.json"}],"src/index.ts":[function(require,module,exports) {
+},{"p5":"node_modules/p5/lib/p5.min.js","matter-js":"node_modules/matter-js/build/matter.js","./hooks/withCollision":"src/hooks/withCollision.ts","./entities/Gamepad":"src/entities/Gamepad/index.ts","./entities/TileMap":"src/entities/TileMap/index.ts","./types":"src/types.ts"}],"src/index.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.Observables = void 0;
 
-var nodes_1 = require("./TypeScriptUI/nodes");
+var TypeScriptUI_1 = require("./TypeScriptUI");
 
 var canvas_1 = require("./canvas");
 
 var state_1 = require("./state");
 
+exports.Observables = function (streams) {
+  return streams.map(function (_a) {
+    var name = _a[0],
+        $stream = _a[1];
+    return TypeScriptUI_1.Div(TypeScriptUI_1.String(name), TypeScriptUI_1.Range($stream.observable, $stream.next), TypeScriptUI_1.String($stream.observable));
+  });
+};
+
+var Dialog = function Dialog(item) {
+  return !item ? null : TypeScriptUI_1.Div(TypeScriptUI_1.Div(TypeScriptUI_1.Div(TypeScriptUI_1.String(item.speaker)).with(TypeScriptUI_1.className("title")), TypeScriptUI_1.Div(TypeScriptUI_1.String(item.speach)).with(TypeScriptUI_1.className("text"))), TypeScriptUI_1.Div(TypeScriptUI_1.String("next")).with(TypeScriptUI_1.className("next inner-box"))).with(TypeScriptUI_1.className("dialog outer-box"));
+};
+
 var App = function App() {
-  canvas_1.initCanvas();
-  return nodes_1.Div(nodes_1.String(state_1.$dialog.observable.map(function (items) {
-    return items.map(function (item) {
-      return item.speach;
-    }).join('!');
-  })));
+  fetch('/data/level1.json').then(function (data) {
+    return data.json();
+  }).then(canvas_1.initCanvas).catch(console.log);
+  return TypeScriptUI_1.Div(TypeScriptUI_1.Switch(state_1.$dialog.observable.map(function (items) {
+    return items[0];
+  }), Dialog));
 };
 
 document.querySelector('#root').appendChild(App().node);
-},{"./TypeScriptUI/nodes":"src/TypeScriptUI/nodes/index.ts","./canvas":"src/canvas.ts","./state":"src/state/index.ts"}],"../../../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./TypeScriptUI":"src/TypeScriptUI/index.ts","./canvas":"src/canvas.ts","./state":"src/state/index.ts"}],"../../../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -45349,7 +45996,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "60830" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57185" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

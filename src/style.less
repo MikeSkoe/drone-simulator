@@ -1,0 +1,73 @@
+@font-face {
+  font-family: 'CCRedAlertInet';
+  src: url('/static/data/fonts/c_c_red_alert_inet/C&C Red Alert [INET].ttf') 
+  format('truetype');
+}
+
+@indentThin: 8px;
+@indentSmall: 12px;
+@indentMedium: 24px;
+@indentBig: 32px;
+@indentLarge: 64px;
+
+@pixelSize: 2px;
+
+html,body {
+  margin: 0;
+  padding: 0;
+  font-family: CCRedAlertInet;
+}
+
+canvas {
+  position: absolute;
+  z-index: -1;
+}
+
+.pixel-outline (@color: black) {
+  box-shadow:
+    -@pixelSize 0px 0 0 @color,
+    0px -@pixelSize 0 0 @color,
+    @pixelSize 0px 0 0 @color,
+    0px @pixelSize 0 0 @color,
+    @pixelSize*2 @pixelSize 0 0 @color,
+    @pixelSize @pixelSize*2 0 0 @color
+    ;
+}
+
+.outer-box {
+  padding: @indentSmall @indentMedium @indentMedium;
+  background: rgba(0, 0, 0, 0.32);
+  border: @pixelSize solid #868686;
+  color: white;
+  display: flex;
+  font-size: 20px;
+  .pixel-outline(black);
+
+  .title {
+    font-weight: bold;
+    color: darkgray;
+    margin-bottom: @indentThin / 2;
+  }
+
+  .text {
+  }
+
+  .inner-box {
+    padding: @indentThin;
+    border: @pixelSize solid #868686;
+    background: rgba(110, 110, 110, 0.16);
+    // .pixel-outline(black);
+  }
+}
+
+.dialog {
+  position: absolute;
+  left: @indentMedium;
+  right: @indentMedium;
+  bottom: @indentBig;
+
+  .next {
+    margin-left: auto;
+    margin-top: auto;
+  }
+}
