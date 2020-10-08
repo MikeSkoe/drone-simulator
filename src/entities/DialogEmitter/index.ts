@@ -1,13 +1,13 @@
 import P5 = require('p5');
 import * as Matter from 'matter-js';
-import { Entity, BodyID, DialogItem, BaseState, MyState } from '../../types';
+import { Entity, DialogItem, BaseState, MyState, BodyLabel } from '../../types';
 import { $collisionStart, $dialog } from '../../state';
 import { isButtonPressed } from '../Gamepad';
 import { addToWorld } from '../../hooks/addToWorld';
 
-const RADIUS = 25;
+const RADIUS = 5;
 
-interface DialogEmitterState extends BaseState{ }
+export interface DialogEmitterState extends BaseState{ }
 
 export const DialogEmitter = (
   p5: P5,
@@ -21,7 +21,7 @@ export const DialogEmitter = (
       {
         isStatic: true,
         isSensor: true,
-        id: BodyID.DialogEmitter,
+        label: BodyLabel.DialogEmitter,
       },
     ),
   ];
@@ -29,9 +29,9 @@ export const DialogEmitter = (
   const localState = {
     unsubs: [
       $collisionStart
-        .observable.subscribe(([id1, id2]) => {
-          if (id1 === BodyID.DialogEmitter
-            || id2 === BodyID.DialogEmitter
+        .observable.subscribe(([labelA, labelB]) => {
+          if (labelA === BodyLabel.DialogEmitter
+            || labelB === BodyLabel.DialogEmitter
           ) {
             if (state.dialog.length === 0) {
               state.movable = false;
@@ -63,11 +63,12 @@ export const DialogEmitter = (
         }
       }
     },
+
     draw: () => {
       p5.push();
       {
         p5.noStroke();
-        p5.fill(255, 255, 0);
+        p5.fill(0, 255, 0);
         bodies.forEach(body => {
           p5.circle(
             body.position.x,

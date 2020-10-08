@@ -13,13 +13,13 @@ export interface Entity<LocalState extends BaseState> {
   preload?: () => void;
 }
 
-export enum BodyID {
-  Copter = 100,
-  Bonus,
-  Ground,
-  DialogEmitter,
-  MissionEmitter,
-  MissionTarget,
+export enum BodyLabel {
+  Copter = 'Copter',
+  Bonus = 'Bonus',
+  Ground = 'Ground',
+  DialogEmitter = 'DialogEmitter',
+  MissionEmitter = 'MissionEmitter',
+  MissionTarget = 'MissionTarget',
 }
 
 export interface DialogItem {
@@ -68,7 +68,7 @@ export type TileMapGroundLayer = {
   gridCellsX: number;
   gridCellsY: number;
   entities: {
-    name: 'copter' | 'ground' | 'bonus' | 'dialog_emitter' | 'mission_emitter' | 'mission_target';
+    name: 'copter' | 'ground' | 'bonus' | 'dialog_emitter' | 'mission_emitter' | 'mission_target' | 'dialog_emitter';
     x: number;
     y: number;
     width: number;

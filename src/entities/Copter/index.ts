@@ -1,9 +1,11 @@
 import P5 = require('p5');
 import * as Matter from 'matter-js';
-import { Entity, BodyID, BaseState, MyState } from '../../types';
+import { Entity, BaseState, MyState } from '../../types';
 import { addToWorld } from '../../hooks/addToWorld';
 // @ts-ignore
 import imagePath from '../../data/copter.png';
+
+const MAX_MAGNITUDE = 5;
 
 export interface CopterState extends BaseState {
   pos: {x: number, y: number};
@@ -19,11 +21,9 @@ export const Copter = (
   const body = Matter.Bodies.rectangle(
     x + w/2, y + h/2, w, h,
     {
-      id: BodyID.Copter,
       label: 'copter',
     },
   );
-  console.log(body);
 
   const localState: CopterState = {
     pos: body.position,
@@ -48,15 +48,41 @@ export const Copter = (
       const upValue = gamepad?.buttons[7].value ?? 0;
       const rotateValue = gamepad?.axes[0] ?? 0;
       const direction = p5
-        .createVector(0, -(0.0002 * upValue))
+        .createVector(0, -(0.00007 * upValue))
         .rotate(body.angle);
 
       // move
       if (state.health > 0) {
+        // body.force = direction;
         Matter.Body.applyForce(
           body,
           body.position,
           direction,
+        );
+      }
+
+      // set max velocity
+      const mag = Matter.Vector.magnitude(body.velocity) ;
+
+      if (mag > 3) {
+        Matter.Body.setVelocity(
+          body,
+          Matter.Vector.mult(
+            Matter.Vector.normalise(
+              body.velocity,
+            ),
+            3,
+          )
+        )
+      }
+
+      if (Matter.Vector.magnitude(body.velocity) > MAX_MAGNITUDE) {
+        Matter.Body.setVelocity(
+          body,
+          body.velocity = Matter.Vector.mult(
+            Matter.Vector.normalise(body.velocity),
+            MAX_MAGNITUDE,
+          ),
         );
       }
 
@@ -75,7 +101,7 @@ export const Copter = (
 
       // decrease nrg
       if (upValue !== 0) {
-        state.health = Math.max(0, state.health - upValue / 1000);
+        // state.health = Math.max(0, state.health - upValue / 1000);
         
       }
     },

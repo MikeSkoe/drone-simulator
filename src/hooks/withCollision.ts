@@ -1,5 +1,6 @@
 import * as Matter from 'matter-js';
 import { $collisionStart, $collisionActive } from '../state';
+import { BodyLabel } from '../types';
 
 export const withCollision = (
   engine: Matter.Engine,
@@ -9,10 +10,13 @@ export const withCollision = (
     'collisionActive',
     e => {
       for (const pair of e.pairs) {
-        const a = pair.bodyA;
-        const b = pair.bodyB;
+        const labelA = pair.bodyA.label;
+        const labelB = pair.bodyB.label;
 
-        $collisionActive.next(() => [a.id, b.id]);
+        $collisionActive.next(() => [
+          BodyLabel[labelA],
+          BodyLabel[labelB],
+        ]);
       }
     },
   );
@@ -22,10 +26,13 @@ export const withCollision = (
     'collisionStart',
     e => {
       for (const pair of e.pairs) {
-        const a = pair.bodyA;
-        const b = pair.bodyB;
+        const labelA = pair.bodyA.label;
+        const labelB = pair.bodyB.label;
 
-        $collisionStart.next(() => [a.id, b.id]);
+        $collisionStart.next(() => [
+          BodyLabel[labelA],
+          BodyLabel[labelB],
+        ]);
       }
     }
   )

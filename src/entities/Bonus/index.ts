@@ -1,8 +1,7 @@
 import P5 = require('p5');
 import * as Matter from 'matter-js';
-import { Entity, MyState, BaseState } from '../../types';
+import { Entity, MyState, BaseState, BodyLabel } from '../../types';
 import { $collisionActive } from '../../state';
-import { BodyID } from '../../types';
 import { addToWorld } from '../../hooks/addToWorld';
 
 const RADIUS = 5;
@@ -23,7 +22,7 @@ export const Bonuses = (
       {
         isStatic: true,
         isSensor: true,
-        id: BodyID.Bonus,
+        label: BodyLabel.Bonus,
       },
     ),
   );
@@ -33,10 +32,10 @@ export const Bonuses = (
       addToWorld(state.engine, bodies),
 
       $collisionActive.observable.subscribe(
-        ([id1, id2]) => {
+        ([labelA, labelB]) => {
           if (
-            id1 === BodyID.Bonus
-            || id2 === BodyID.Bonus
+            labelA === BodyLabel.Bonus
+            || labelB === BodyLabel.Bonus
           ) {
             state.health = Math.min(1, state.health + 0.005);
           }

@@ -16,7 +16,7 @@ export const initCanvas = () => {
     (p5: P5) => {
       // matter
       const engine = Matter.Engine.create();
-      engine.world.gravity.y = 0.5;
+      engine.world.gravity.y = 0.33;
       const state: MyState = {
         health: 1,
         dialog: [],

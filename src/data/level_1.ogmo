@@ -108,7 +108,9 @@
       "nodeDisplay": 0,
       "nodeGhost": true,
       "tags": [],
-      "values": []
+      "values": [],
+      "texture": "../../../../../../Pictures/copter/ground.png",
+      "textureImage": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAACXBIWXMAAA9hAAAPYQGoP6dpAAAAF0lEQVQYGWPMzsn5z4AHMOGRA0sNDwUAVvMCUijqtWgAAAAASUVORK5CYII="
     },
     {
       "exportID": "27344722",
@@ -180,7 +182,9 @@
       "nodeDisplay": 0,
       "nodeGhost": true,
       "tags": [],
-      "values": []
+      "values": [
+        {"name": "dialog_path", "definition": "String", "defaults": "", "maxLength": 0, "trimWhitespace": true}
+      ]
     },
     {
       "exportID": "27342426",

@@ -1,6 +1,6 @@
 import P5 = require('p5');
 import * as Matter from 'matter-js';
-import { Entity, BodyID, Mission, BaseState, MyState } from '../../types';
+import { Entity, Mission, BaseState, MyState, BodyLabel } from '../../types';
 import { $collisionStart } from '../../state';
 import { addToWorld } from '../../hooks/addToWorld';
 
@@ -28,7 +28,7 @@ export const MissionEmitter = (
       {
         isStatic: true,
         isSensor: true,
-        id: BodyID.MissionEmitter,
+        label: BodyLabel.MissionEmitter,
       },
     ),
     Matter.Bodies.circle(
@@ -36,7 +36,7 @@ export const MissionEmitter = (
       {
         isStatic: true,
         isSensor: true,
-        id: BodyID.MissionTarget,
+        label: BodyLabel.MissionTarget,
       }
     )
   ];
@@ -44,10 +44,10 @@ export const MissionEmitter = (
   const localState: MissionEmitterState = {
     unsubs: [
       $collisionStart
-        .observable.subscribe(([id1, id2]) => {
+        .observable.subscribe(([labelA, labelB]) => {
           if (
-            id1 === BodyID.MissionEmitter
-            || id2 === BodyID.MissionEmitter
+            labelA === BodyLabel.MissionEmitter
+            || labelB === BodyLabel.MissionEmitter
           ) {
             switch (localState.missionState) {
               case MissionState.New:
@@ -63,10 +63,10 @@ export const MissionEmitter = (
         .unsubscribe,
 
       $collisionStart
-        .observable.subscribe(([id1, id2]) => {
+        .observable.subscribe(([labelA, labelB]) => {
           if (
-            id1 === BodyID.MissionTarget
-            || id2 === BodyID.MissionTarget
+            labelA === BodyLabel.MissionTarget
+            || labelB === BodyLabel.MissionTarget
           ) {
             if (localState.missionState === MissionState.Progress) {
               localState.missionState = MissionState.Done;

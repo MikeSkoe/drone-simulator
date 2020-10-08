@@ -8,6 +8,7 @@ import { Camera, CameraState } from '../Camera';
 import { Health, HealthState } from '../Health';
 import { MissionEmitter, MissionEmitterState } from '../MissionEmitter';
 import { Grounds, GroundState } from '../Ground';
+import { DialogEmitter, DialogEmitterState } from '../DialogEmitter';
 
 const drawToBuffer = (
   data: LevelData,
@@ -46,16 +47,24 @@ const getEntities = (p5: P5, state: MyState, levels: LevelData['layers']) => {
   let grounds: Entity<GroundState>;
   let camera: Entity<CameraState>;
   let health: Entity<HealthState>;
+  let dialogEmitter: Entity<DialogEmitterState>;
 
   for (const level of levels) {
     if (level.name === 'entity') {
-      const {x: copterX, y: copterY, width: copterWidth, height: copterHeight} = level.entities.find(entity => entity.name === 'copter');
-      const bonusesData = level.entities.filter(entity => entity.name === 'bonus');
-      const {title, description, x: missionEmitterX, y: missionEmitterY} = level.entities.find(entity => entity.name === 'mission_emitter');
-      const {x: targetX, y: targetY} = level.entities.find(entity => entity.name === 'mission_target');
-      const groundPositions = level.entities
-        .filter(entity => entity.name === 'ground')
-        .map(ground => [ground.x, ground.y, ground.width, ground.height] as [x: number, y: number, w: number, h: number]);
+      const {x: copterX, y: copterY, width: copterWidth, height: copterHeight}
+        = level.entities.find(entity => entity.name === 'copter');
+      const bonusesData
+        = level.entities.filter(entity => entity.name === 'bonus');
+      const {title, description, x: missionEmitterX, y: missionEmitterY}
+        = level.entities.find(entity => entity.name === 'mission_emitter');
+      const {x: targetX, y: targetY}
+        = level.entities.find(entity => entity.name === 'mission_target');
+      const {x: dialogX, y: dialogY}
+        = level.entities.find(entity => entity.name === 'dialog_emitter');
+      const groundPositions
+        = level.entities
+          .filter(entity => entity.name === 'ground')
+          .map(ground => [ground.x, ground.y, ground.width, ground.height] as [x: number, y: number, w: number, h: number]);
 
       missionEmitter = MissionEmitter(
         p5,
@@ -63,15 +72,16 @@ const getEntities = (p5: P5, state: MyState, levels: LevelData['layers']) => {
         {title, description, target: { pos: [targetX, targetY]}, id: Math.random(), progress: 'new'},
         [missionEmitterX, missionEmitterY],
       );
-      copter = Copter(p5, state, [copterX, copterY], [copterWidth, copterHeight]);
+      copter = Copter(p5, state, [copterX, copterY], [copterWidth, copterHeight*.75]);
       bonuses = Bonuses(p5, state, bonusesData.map(data => [data.x, data.y]))
       grounds = Grounds(p5, state, groundPositions)
       camera = Camera(p5, state, () => copter.localState.pos);
       health = Health(p5, state);
+      dialogEmitter = DialogEmitter(p5, state, [{speach: 'one', speaker: 'ONE'}], [dialogX, dialogY]);
     }
   }
 
-  return {copter, bonuses, missionEmitter, grounds, camera, health};
+  return {copter, bonuses, missionEmitter, grounds, camera, health, dialogEmitter};
 }
 
 interface TileMapState extends BaseState { }
@@ -93,11 +103,13 @@ export const TileMap = (
     bonuses,
     missionEmitter,
     grounds,
+    dialogEmitter,
   } = getEntities(p5, state, layers);
   const children = [
     grounds,
     bonuses,
     missionEmitter,
+    dialogEmitter,
     copter,
   ];
   const localState: TileMapState = {

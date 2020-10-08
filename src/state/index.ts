@@ -1,7 +1,6 @@
 import createState from '../TypeScriptUI/lib/ZenPushStream';
-import { DialogItem } from '../types';
+import { BodyLabel, DialogItem } from '../types';
 
-export const $collisionStart = createState<[number, number]>([0, 0]);
-export const $collisionActive = createState<[number, number]>([0, 0]);
+export const $collisionStart = createState<[BodyLabel | undefined, BodyLabel | undefined]>([undefined, undefined]);
+export const $collisionActive = createState<[BodyLabel | undefined, BodyLabel | undefined]>([undefined, undefined]);
 export const $dialog = createState<DialogItem[]>([]);
-
