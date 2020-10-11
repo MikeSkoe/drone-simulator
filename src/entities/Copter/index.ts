@@ -23,6 +23,7 @@ export const Copter = (
     x + w/2, y + h/2, w, h,
     {
       label: 'copter',
+      friction: 0.05,
     },
   );
 

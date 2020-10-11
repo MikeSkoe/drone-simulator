@@ -21,7 +21,9 @@ export const Grounds = (
       (y + h/2),
       w,
       h,
-      { isStatic: true }),
+      {
+        isStatic: true,
+      }),
   );
 
   const localState: BaseState = {

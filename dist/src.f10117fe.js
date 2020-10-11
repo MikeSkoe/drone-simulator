@@ -45117,7 +45117,8 @@ exports.Copter = function (p5, state, _a, _b) {
 
   var imageData;
   var body = Matter.Bodies.rectangle(x + w / 2, y + h / 2, w, h, {
-    label: 'copter'
+    label: 'copter',
+    friction: 0.05
   });
   var localState = {
     power: 0.00007,
@@ -45877,7 +45878,7 @@ var TileMap_1 = require("./entities/TileMap");
 var types_1 = require("./types");
 
 var canvas = document.querySelector('#canvas');
-var CANVAS_WIDTH = 800;
+var CANVAS_WIDTH = 600;
 var CANVAS_HEIGHT = 600;
 
 exports.initCanvas = function (levelData) {
@@ -45898,6 +45899,7 @@ exports.initCanvas = function (levelData) {
 
     p5.setup = function () {
       p5.createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
+      p5.pixelDensity(4);
     };
 
     p5.preload = function () {
@@ -45919,7 +45921,7 @@ exports.initCanvas = function (levelData) {
 
       p5.push();
       {
-        p5.background('#54627e');
+        p5.background('black');
         p5.noSmooth();
         p5.scale(types_1.SCALE);
 
@@ -45996,7 +45998,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57185" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49155" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

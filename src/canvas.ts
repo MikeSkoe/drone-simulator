@@ -6,7 +6,7 @@ import { TileMap } from './entities/TileMap';
 import { LevelData, MyState, SCALE } from './types';
 
 const canvas = document.querySelector<HTMLDivElement>('#canvas');
-const CANVAS_WIDTH = 800;
+const CANVAS_WIDTH = 600;
 const CANVAS_HEIGHT = 600;
 
 export const initCanvas = (levelData: LevelData) => {
@@ -33,6 +33,7 @@ export const initCanvas = (levelData: LevelData) => {
 
       p5.setup = () => {
         p5.createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
+        p5.pixelDensity(4);
       };
 
       p5.preload = () => {
@@ -52,7 +53,9 @@ export const initCanvas = (levelData: LevelData) => {
         // draw
         p5.push();
         {
-          p5.background('#54627e');
+          // webgl offset
+          // p5.translate(-CANVAS_WIDTH/2, -CANVAS_HEIGHT/2)
+          p5.background('black');
           p5.noSmooth();
           p5.scale(SCALE);
 
