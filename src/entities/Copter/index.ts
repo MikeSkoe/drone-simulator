@@ -1,6 +1,7 @@
 import P5 = require('p5');
 import * as Matter from 'matter-js';
 import { Key, Entity, BaseState, MyState } from '../../types';
+import { $nrg } from '../../state';
 import { addToWorld } from '../../hooks/addToWorld';
 
 const imagePath = '/data/copter.png';
@@ -98,8 +99,8 @@ export const Copter = (
 
       // decrease nrg
       if (upValue !== 0) {
-        // state.health = Math.max(0, state.health - upValue / 1000);
-        
+        state.health = Math.max(0, state.health - upValue / 1000);
+        $nrg.next(() => state.health);
       }
     },
 

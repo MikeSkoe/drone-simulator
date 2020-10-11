@@ -6,8 +6,8 @@ import { TileMap } from './entities/TileMap';
 import { LevelData, MyState, SCALE } from './types';
 
 const canvas = document.querySelector<HTMLDivElement>('#canvas');
-const CANVAS_WIDTH = 600;
-const CANVAS_HEIGHT = 600;
+const CANVAS_WIDTH = 500;
+const CANVAS_HEIGHT = 500;
 
 export const initCanvas = (levelData: LevelData) => {
   new P5(

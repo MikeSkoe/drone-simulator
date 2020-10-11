@@ -3,7 +3,6 @@ import { Entity, MyState, BaseState, LevelData } from '../../types';
 import { CopterState, Copter } from '../Copter';
 import { Bonuses, BonusState } from '../Bonus';
 import { Camera, CameraState } from '../Camera';
-import { Health, HealthState } from '../Health';
 import { MissionEmitter, MissionEmitterState } from '../MissionEmitter';
 import { Grounds, GroundState } from '../Ground';
 import { DialogEmitter, DialogEmitterState } from '../DialogEmitter';
@@ -46,7 +45,6 @@ const getEntities = (p5: P5, state: MyState, levels: LevelData['layers']) => {
   let missionEmitter: Entity<MissionEmitterState>;
   let grounds: Entity<GroundState>;
   let camera: Entity<CameraState>;
-  let health: Entity<HealthState>;
   let dialogEmitter: Entity<DialogEmitterState>;
 
   for (const level of levels) {
@@ -76,12 +74,11 @@ const getEntities = (p5: P5, state: MyState, levels: LevelData['layers']) => {
       bonuses = Bonuses(p5, state, bonusesData.map(data => [data.x, data.y]))
       grounds = Grounds(p5, state, groundPositions)
       camera = Camera(p5, state, () => copter.localState.pos);
-      health = Health(p5, state);
       dialogEmitter = DialogEmitter(p5, state, [dialogX, dialogY], dialogPath);
     }
   }
 
-  return {copter, bonuses, missionEmitter, grounds, camera, health, dialogEmitter};
+  return {copter, bonuses, missionEmitter, grounds, camera, dialogEmitter};
 }
 
 interface TileMapState extends BaseState { }
@@ -97,7 +94,6 @@ export const TileMap = (
   let bufferRendered = false;
 
   const {
-    health,
     camera,
     copter,
     bonuses,
@@ -127,7 +123,6 @@ export const TileMap = (
     },
     update: () => {
       camera.update();
-      health.update();
 
       for (const child of children) {
         child.update();
@@ -151,7 +146,6 @@ export const TileMap = (
         }
       }
       p5.pop();
-      health.draw();
     },
   };
 };

@@ -44834,13 +44834,14 @@ var Vector = _dereq_('../geometry/Vector');
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.$dialog = exports.$collisionActive = exports.$collisionStart = void 0;
+exports.$nrg = exports.$dialog = exports.$collisionActive = exports.$collisionStart = void 0;
 
 var TypeScriptUI_1 = require("../TypeScriptUI");
 
 exports.$collisionStart = TypeScriptUI_1.createState([undefined, undefined]);
 exports.$collisionActive = TypeScriptUI_1.createState([undefined, undefined]);
 exports.$dialog = TypeScriptUI_1.createState([]);
+exports.$nrg = TypeScriptUI_1.createState(1);
 },{"../TypeScriptUI":"src/TypeScriptUI/index.ts"}],"src/types.ts":[function(require,module,exports) {
 "use strict";
 
@@ -44848,7 +44849,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.BodyLabel = exports.Key = exports.SCALE = void 0;
-exports.SCALE = 3;
+exports.SCALE = 2;
 var Key;
 
 (function (Key) {
@@ -45100,6 +45101,8 @@ var Matter = __importStar(require("matter-js"));
 
 var types_1 = require("../../types");
 
+var state_1 = require("../../state");
+
 var addToWorld_1 = require("../../hooks/addToWorld");
 
 var imagePath = '/data/copter.png';
@@ -45156,7 +45159,12 @@ exports.Copter = function (p5, state, _a, _b) {
         Matter.Body.setAngularVelocity(body, 0);
       }
 
-      if (upValue !== 0) {}
+      if (upValue !== 0) {
+        state.health = Math.max(0, state.health - upValue / 1000);
+        state_1.$nrg.next(function () {
+          return state.health;
+        });
+      }
     },
     draw: function draw() {
       p5.push();
@@ -45169,7 +45177,7 @@ exports.Copter = function (p5, state, _a, _b) {
     }
   };
 };
-},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Bonus/index.ts":[function(require,module,exports) {
+},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../state":"src/state/index.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Bonus/index.ts":[function(require,module,exports) {
 "use strict";
 
 var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
@@ -45277,33 +45285,6 @@ exports.Camera = function (p5, state, getTargetPos) {
     },
     draw: function draw() {
       p5.translate(-localState.pos.x + p5.width / 2 / types_1.SCALE, -localState.pos.y + p5.height / 2 / types_1.SCALE);
-    }
-  };
-};
-},{"../../types":"src/types.ts"}],"src/entities/Health/index.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.Health = void 0;
-
-var types_1 = require("../../types");
-
-exports.Health = function (p5, state) {
-  var localState = {
-    unsubs: []
-  };
-  return {
-    localState: localState,
-    update: function update() {},
-    draw: function draw() {
-      p5.push();
-      {
-        p5.scale(1 / types_1.SCALE);
-        p5.rect(10, 10, state.health * 100, 20);
-      }
-      p5.pop();
     }
   };
 };
@@ -45563,6 +45544,41 @@ var addToWorld_1 = require("../../hooks/addToWorld");
 
 var RADIUS = 5;
 
+var nextDialog = function nextDialog(state) {
+  if (state.dialog.length > 0) {
+    var newDialog_1 = state.dialog.slice(1);
+    state.dialog = newDialog_1;
+    state_1.$dialog.next(function () {
+      return newDialog_1;
+    });
+
+    if (newDialog_1.length === 0) {
+      state.movable = true;
+    }
+  }
+};
+
+var newDialog = function newDialog(state, dialog) {
+  if (state.dialog.length === 0) {
+    state.movable = false;
+    state.dialog = dialog;
+    state_1.$dialog.next(function () {
+      return dialog;
+    });
+  }
+};
+
+var nextDialogOnEnter = function nextDialogOnEnter(state) {
+  var nextDialogEvent = function nextDialogEvent(e) {
+    nextDialog(state);
+  };
+
+  document.addEventListener('keypress', nextDialogEvent);
+  return function () {
+    document.removeEventListener('keypress', nextDialogEvent);
+  };
+};
+
 exports.DialogEmitter = function (p5, state, _a, dialogPath) {
   var x = _a[0],
       y = _a[1];
@@ -45578,15 +45594,9 @@ exports.DialogEmitter = function (p5, state, _a, dialogPath) {
           labelB = _a[1];
 
       if (labelA === types_1.BodyLabel.DialogEmitter || labelB === types_1.BodyLabel.DialogEmitter) {
-        if (state.dialog.length === 0) {
-          state.movable = false;
-          state.dialog = localState.dialog;
-          state_1.$dialog.next(function () {
-            return localState.dialog;
-          });
-        }
+        newDialog(state, localState.dialog);
       }
-    }).unsubscribe, addToWorld_1.addToWorld(state.engine, bodies)]
+    }).unsubscribe, addToWorld_1.addToWorld(state.engine, bodies), nextDialogOnEnter(state)]
   };
   fetch(dialogPath).then(function (data) {
     return data.json();
@@ -45600,15 +45610,7 @@ exports.DialogEmitter = function (p5, state, _a, dialogPath) {
 
       if (xButton) {
         if (state.dialog.length > 0) {
-          var newDialog_1 = state.dialog.slice(1);
-          state.dialog = newDialog_1;
-          state_1.$dialog.next(function () {
-            return newDialog_1;
-          });
-
-          if (newDialog_1.length === 0) {
-            state.movable = true;
-          }
+          nextDialog(state);
         }
       }
     },
@@ -45638,8 +45640,6 @@ var Copter_1 = require("../Copter");
 var Bonus_1 = require("../Bonus");
 
 var Camera_1 = require("../Camera");
-
-var Health_1 = require("../Health");
 
 var MissionEmitter_1 = require("../MissionEmitter");
 
@@ -45680,7 +45680,6 @@ var getEntities = function getEntities(p5, state, levels) {
   var missionEmitter;
   var grounds;
   var camera;
-  var health;
   var dialogEmitter;
 
   for (var _i = 0, levels_1 = levels; _i < levels_1.length; _i++) {
@@ -45743,7 +45742,6 @@ var getEntities = function getEntities(p5, state, levels) {
       camera = Camera_1.Camera(p5, state, function () {
         return copter.localState.pos;
       });
-      health = Health_1.Health(p5, state);
       dialogEmitter = DialogEmitter_1.DialogEmitter(p5, state, [dialogX, dialogY], dialogPath);
     }
   }
@@ -45754,7 +45752,6 @@ var getEntities = function getEntities(p5, state, levels) {
     missionEmitter: missionEmitter,
     grounds: grounds,
     camera: camera,
-    health: health,
     dialogEmitter: dialogEmitter
   };
 };
@@ -45768,7 +45765,6 @@ exports.TileMap = function (p5, state, data) {
   var bufferRendered = false;
 
   var _a = getEntities(p5, state, layers),
-      health = _a.health,
       camera = _a.camera,
       copter = _a.copter,
       bonuses = _a.bonuses,
@@ -45794,7 +45790,6 @@ exports.TileMap = function (p5, state, data) {
     },
     update: function update() {
       camera.update();
-      health.update();
 
       for (var _i = 0, children_2 = children; _i < children_2.length; _i++) {
         var child = children_2[_i];
@@ -45819,11 +45814,10 @@ exports.TileMap = function (p5, state, data) {
         }
       }
       p5.pop();
-      health.draw();
     }
   };
 };
-},{"../Copter":"src/entities/Copter/index.ts","../Bonus":"src/entities/Bonus/index.ts","../Camera":"src/entities/Camera/index.ts","../Health":"src/entities/Health/index.ts","../MissionEmitter":"src/entities/MissionEmitter/index.ts","../Ground":"src/entities/Ground/index.ts","../DialogEmitter":"src/entities/DialogEmitter/index.ts"}],"src/canvas.ts":[function(require,module,exports) {
+},{"../Copter":"src/entities/Copter/index.ts","../Bonus":"src/entities/Bonus/index.ts","../Camera":"src/entities/Camera/index.ts","../MissionEmitter":"src/entities/MissionEmitter/index.ts","../Ground":"src/entities/Ground/index.ts","../DialogEmitter":"src/entities/DialogEmitter/index.ts"}],"src/canvas.ts":[function(require,module,exports) {
 "use strict";
 
 var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
@@ -45878,8 +45872,8 @@ var TileMap_1 = require("./entities/TileMap");
 var types_1 = require("./types");
 
 var canvas = document.querySelector('#canvas');
-var CANVAS_WIDTH = 600;
-var CANVAS_HEIGHT = 600;
+var CANVAS_WIDTH = 500;
+var CANVAS_HEIGHT = 500;
 
 exports.initCanvas = function (levelData) {
   new P5(function (p5) {
@@ -45940,7 +45934,6 @@ exports.initCanvas = function (levelData) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.Observables = void 0;
 
 var TypeScriptUI_1 = require("./TypeScriptUI");
 
@@ -45948,17 +45941,15 @@ var canvas_1 = require("./canvas");
 
 var state_1 = require("./state");
 
-exports.Observables = function (streams) {
-  return streams.map(function (_a) {
-    var name = _a[0],
-        $stream = _a[1];
-    return TypeScriptUI_1.Div(TypeScriptUI_1.String(name), TypeScriptUI_1.Range($stream.observable, $stream.next), TypeScriptUI_1.String($stream.observable));
-  });
+var Dialog = function Dialog(item) {
+  return !item ? null : TypeScriptUI_1.Div(TypeScriptUI_1.Div(TypeScriptUI_1.Div(TypeScriptUI_1.String(item.speaker)).with(TypeScriptUI_1.className("title")), TypeScriptUI_1.Div(TypeScriptUI_1.String(item.speach)).with(TypeScriptUI_1.className("text"))), TypeScriptUI_1.Div(TypeScriptUI_1.String(">")).with(TypeScriptUI_1.className("next inner-box"))).with(TypeScriptUI_1.className("dialog outer-box"));
 };
 
-var Dialog = function Dialog(item) {
-  return !item ? null : TypeScriptUI_1.Div(TypeScriptUI_1.Div(TypeScriptUI_1.Div(TypeScriptUI_1.String(item.speaker)).with(TypeScriptUI_1.className("title")), TypeScriptUI_1.Div(TypeScriptUI_1.String(item.speach)).with(TypeScriptUI_1.className("text"))), TypeScriptUI_1.Div(TypeScriptUI_1.String("next")).with(TypeScriptUI_1.className("next inner-box"))).with(TypeScriptUI_1.className("dialog outer-box"));
-};
+var Health = TypeScriptUI_1.Div(TypeScriptUI_1.String("energy"), TypeScriptUI_1.Div(TypeScriptUI_1.Div().with(TypeScriptUI_1.className("progress-handle")).with(function (node) {
+  return state_1.$nrg.observable.subscribe(function (nrg) {
+    return node.style.width = nrg * 80 + "px";
+  }).unsubscribe;
+})).with(TypeScriptUI_1.className("progress-track"))).with(TypeScriptUI_1.className("health"));
 
 var App = function App() {
   fetch('/data/level1.json').then(function (data) {
@@ -45966,7 +45957,7 @@ var App = function App() {
   }).then(canvas_1.initCanvas).catch(console.log);
   return TypeScriptUI_1.Div(TypeScriptUI_1.Switch(state_1.$dialog.observable.map(function (items) {
     return items[0];
-  }), Dialog));
+  }), Dialog), Health);
 };
 
 document.querySelector('#root').appendChild(App().node);
@@ -45998,7 +45989,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49155" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50629" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

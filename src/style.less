@@ -5,7 +5,7 @@
 }
 
 @indentThin: 8px;
-@indentSmall: 12px;
+@indentSmall: 16px;
 @indentMedium: 24px;
 @indentBig: 32px;
 @indentLarge: 64px;
@@ -22,11 +22,14 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  background: black;
 }
 
 #app {
-  width: 600px;
-  height: 600px;
+  width: 500px;
+  height: 500px;
+  position: relative;
+  box-shadow: 0 0 25px black;
 }
 
 canvas {
@@ -34,7 +37,7 @@ canvas {
   z-index: -1;
 }
 
-.pixel-outline (@color: black) {
+.pixel-outline (@color: gray) {
   box-shadow:
     -@pixelSize 0px 0 0 @color,
     0px -@pixelSize 0 0 @color,
@@ -47,12 +50,11 @@ canvas {
 
 .outer-box {
   padding: @indentSmall @indentMedium @indentMedium;
-  background: rgba(0, 0, 0, 0.32);
-  border: @pixelSize solid #868686;
+  background: rgba(100, 100, 100, 0.32);
   color: white;
   display: flex;
   font-size: 20px;
-  .pixel-outline(black);
+  .pixel-outline(lightgray);
 
   .title {
     font-weight: bold;
@@ -67,7 +69,7 @@ canvas {
     padding: @indentThin;
     border: @pixelSize solid #868686;
     background: rgba(110, 110, 110, 0.16);
-    // .pixel-outline(black);
+    color: gray;
   }
 }
 
@@ -80,5 +82,30 @@ canvas {
   .next {
     margin-left: auto;
     margin-top: auto;
+    width: 8px;
+    height: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+.health {
+  color: white;
+}
+
+.progress-track {
+  width: 80px;
+  height: 8px;
+  background: gray;
+  position: relative;
+
+  .progress-handle {
+    width: 8px;
+    height: 8px;
+    background: white;
+    position: absolute;
+    left: 0;
+    top: 0;
   }
 }

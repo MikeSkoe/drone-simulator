@@ -1,6 +1,6 @@
 import * as Matter from 'matter-js';
 
-export const SCALE = 3;
+export const SCALE = 2;
 
 export enum Key {
   Enter = 13,
