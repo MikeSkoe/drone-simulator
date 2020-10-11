@@ -1,53 +1,15 @@
 import P5 = require('p5');
 import * as Matter from 'matter-js';
 import { Entity, DialogItem, BaseState, MyState, BodyLabel } from '../../types';
-import { $collisionStart, $dialog } from '../../state';
-import { isButtonPressed } from '../Gamepad';
+import { $collisionStart, $dialog, $keyPressed, $nextDialogItem, $padKeyPressed } from '../../state';
 import { addToWorld } from '../../hooks/addToWorld';
 
 const RADIUS = 5;
 
 export interface DialogEmitterState extends BaseState{
-  dialog: DialogItem[],
+  dialog: DialogItem[];
+  status: 'new' | 'speaking' | 'done';
 }
-
-const nextDialog = (state: MyState) => {
-  if (state.dialog.length > 0) {
-    const newDialog = state.dialog.slice(1);
-    state.dialog = newDialog;
-    $dialog.next(() => newDialog);
-
-    if (newDialog.length === 0) {
-      state.movable = true;
-    }
-  }
-}
-
-const newDialog = (state: MyState, dialog: MyState['dialog']) => {
-  if (state.dialog.length === 0) {
-    state.movable = false;
-    state.dialog = dialog;
-    $dialog.next(() => dialog);
-  }
-}
-
-const nextDialogOnEnter = (state: MyState) => {
-  const nextDialogEvent = e => {
-    nextDialog(state);
-  };
-
-  document.addEventListener(
-    'keypress',
-    nextDialogEvent,
-  );
-
-  return () => {
-    document.removeEventListener(
-      'keypress',
-      nextDialogEvent,
-    );
-  }
-};
 
 export const DialogEmitter = (
   p5: P5,
@@ -66,22 +28,49 @@ export const DialogEmitter = (
     ),
   ];
 
-  const localState = {
+  const localState: DialogEmitterState = {
+    status: 'new',
     dialog: [],
     unsubs: [
+      addToWorld(state.engine, bodies),
       $collisionStart.observable
         .subscribe(([labelA, labelB]) => {
+          if (localState.status !== 'new') {
+            return;
+          }
+
           if (labelA === BodyLabel.DialogEmitter
             || labelB === BodyLabel.DialogEmitter
           ) {
-            newDialog(state, localState.dialog);
+            $dialog.next(() => localState.dialog);
+            localState.status = 'speaking';
           }
         })
         .unsubscribe,
 
-      addToWorld(state.engine, bodies),
+      $padKeyPressed.observable
+        .subscribe(padKey => {
+          if (padKey === 'x') {
+            $nextDialogItem.next(() => void 0);
+          }
+        })
+        .unsubscribe,
+      
+      $keyPressed.observable
+        .subscribe(key => {
+          console.log('key', key);
 
-      nextDialogOnEnter(state),
+          if (key === 'Enter') {
+            $nextDialogItem.next(() => void 0);
+          }
+        })
+        .unsubscribe,
+
+      $nextDialogItem.observable
+        .subscribe(() => {
+          $dialog.next(dialog => dialog.slice(1));
+        })
+        .unsubscribe,
     ],
   };
 
@@ -93,15 +82,9 @@ export const DialogEmitter = (
   return {
     localState,
     update: () => {
-      const xButton = isButtonPressed(0);
-
-      if (xButton) {
-        if (state.dialog.length > 0) {
-          nextDialog(state);
-        }
+      if (localState.status !== 'done') {
       }
     },
-
     draw: () => {
       p5.push();
       {

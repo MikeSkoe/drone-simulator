@@ -18,7 +18,6 @@ export const initCanvas = (levelData: LevelData) => {
 
       const state: MyState = {
         health: 1,
-        dialog: [],
         movable: true,
         engine,
       };

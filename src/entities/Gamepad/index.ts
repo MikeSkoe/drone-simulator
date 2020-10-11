@@ -1,25 +1,54 @@
+import { $keyPressed, $padKeyPressed } from '../../state';
+
 const prevButtons: {[key: number]: [value: number, changed: boolean]} = {};
 const prevAxes: {[key: number]: number} = {};
 
-export const Gamepad = () => ({
-  update: () => {
-    const [gamepad] = navigator.getGamepads();
+export const Gamepad = () => {
+  const onKeyPressed = (event: KeyboardEvent) => {
+    $keyPressed.next(() => event.key);
+  };
 
-    for (let index = 0; index < gamepad?.buttons.length ?? 0; index++) {
-      const button = gamepad.buttons[index];
+  const unsubs = [
+    (
+      () => {
+        window.addEventListener('keypress', onKeyPressed);
 
-      prevButtons[index] = prevButtons[index] || [button.value, false];
-      prevButtons[index] = [
-        button.value,
-        button.value !== prevButtons[index][0],
-      ];
-    }
+        return () => {
+          window.removeEventListener('keypress', onKeyPressed);
+        }
+      }
+    )(),
+  ];
 
-    for (let index = 0; index < gamepad?.axes.length ?? 0; index ++) {
-      prevAxes[index] = gamepad.axes[index];
-    }
-  },
-});
+  return {
+    unsubs,
+    update: () => {
+      const [gamepad] = navigator.getGamepads();
+
+      for (let index = 0; index < gamepad?.buttons.length ?? 0; index++) {
+        const button = gamepad.buttons[index];
+
+        prevButtons[index] = prevButtons[index] || [button.value, false];
+        const pressed = button.value !== prevButtons[index][0];
+        prevButtons[index] = [
+          button.value,
+          pressed,
+        ];
+
+        switch (index) {
+          case 0: {
+            $padKeyPressed.next(() => 'x');
+          }
+          default: break;
+        }
+      }
+
+      for (let index = 0; index < gamepad?.axes.length ?? 0; index ++) {
+        prevAxes[index] = gamepad.axes[index];
+      }
+    },
+  }
+};
 
 export const isButtonDown = (index: number) => (prevButtons[index])?.[0] ?? 0 > 0;
 export const isButtonPressed = (index: number) => (prevButtons[index])?.[0] && (prevButtons[index])?.[1];

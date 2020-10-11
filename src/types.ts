@@ -44,19 +44,11 @@ export interface Mission {
   progress: 'new' | 'progress' | 'done';
 }
 
-export type MyState =
-  {
-    health: number;
-    engine: Matter.Engine,
-    dialog: [];
-    movable: true;
-  }
-  | {
-    health: number;
-    engine: Matter.Engine,
-    dialog: DialogItem[];
-    movable: false;
-  }
+export type MyState = {
+  health: number;
+  engine: Matter.Engine,
+  movable: boolean;
+};
 
 export type TileMapLayer = {
   name: 'tilemap';
