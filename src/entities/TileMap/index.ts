@@ -39,6 +39,28 @@ const drawToBuffer = (
   }
 }
 
+const drawBG = (p5: P5, xOffset: number, yOffset: number) => {
+  const w = p5.width;
+  const h = p5.height;
+  const s = 60;
+
+  p5.push();
+  {
+    p5.noStroke();
+    for (let x = 0; x < w + s; x += s) {
+      for (let y = 0; y < h + s; y += s) {
+        p5.rect(
+          x - xOffset % s,
+          y - yOffset % s,
+          2,
+          2,
+        );
+      }
+    }
+  }
+  p5.pop();
+};
+
 const getEntities = (p5: P5, state: MyState, levels: LevelData['layers']) => {
   let copter: Entity<CopterState>;
   let bonuses: Entity<BonusState>;
@@ -81,7 +103,10 @@ const getEntities = (p5: P5, state: MyState, levels: LevelData['layers']) => {
   return {copter, bonuses, missionEmitter, grounds, camera, dialogEmitter};
 }
 
-interface TileMapState extends BaseState { }
+interface TileMapState extends BaseState {
+  camera: Entity<CameraState>;
+  imageLoaded: boolean;
+}
 
 export const TileMap = (
   p5: P5,
@@ -89,55 +114,77 @@ export const TileMap = (
   data: LevelData,
 ): Entity<TileMapState> => {
   const {width, height, layers} = data;
-  const tileBuffer = p5.createGraphics(width, height);
+  const tileBuffer = p5.createGraphics(width, height, 'p2d');
+
   let imageData: P5.Image;
   let bufferRendered = false;
+  let preloaded = false;
 
-  const {
-    camera,
-    copter,
-    bonuses,
-    missionEmitter,
-    grounds,
-    dialogEmitter,
-  } = getEntities(p5, state, layers);
-  const children = [
-    grounds,
-    bonuses,
-    missionEmitter,
-    dialogEmitter,
-    copter,
-  ];
+  const children = [];
+
   const localState: TileMapState = {
     unsubs: [],
+    camera: null,
+    imageLoaded: false,
   };
 
   return {
     localState,
     preload: () => {
-      imageData = p5.loadImage(img);
+      const {
+        camera,
+        copter,
+        bonuses,
+        missionEmitter,
+        grounds,
+        dialogEmitter,
+      } = getEntities(p5, state, layers);
+
+      localState.camera = camera;
+
+      children.push(
+        grounds,
+        bonuses,
+        missionEmitter,
+        dialogEmitter,
+        copter,
+      )
+
+      imageData = p5.loadImage(
+        img,
+        () => {
+          localState.imageLoaded = true;
+        },
+      );
 
       for (const child of children) {
         child.preload?.();
       }
+
+      preloaded = true;
     },
     update: () => {
-      camera.update();
+      localState.camera?.update();
 
       for (const child of children) {
         child.update();
       }
     },
-    draw: () => {
-      if (!bufferRendered) {
-        tileBuffer.noSmooth();
-        drawToBuffer(data, tileBuffer, imageData);
-        bufferRendered = true;
-      }
 
+    draw: () => {
       p5.push();
       {
-        camera.draw();
+        const {x: cameraX, y: cameraY} = localState.camera?.localState?.pos ?? {x: 0, y: 0};
+
+        drawBG(p5, cameraX / 2, cameraY / 2);
+
+        if (localState.imageLoaded && !bufferRendered) {
+          tileBuffer.noSmooth();
+          drawToBuffer(data, tileBuffer, imageData);
+          bufferRendered = true;
+          console.log(tileBuffer);
+        }
+        localState.camera?.draw();
 
         p5.image(tileBuffer, 0, 0);
 

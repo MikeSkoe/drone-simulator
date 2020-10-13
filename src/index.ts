@@ -31,10 +31,7 @@ const Health = Div(
 ).with(className("health"))
 
 const App = () => {
-  fetch('/data/level1.json')
-    .then(data => data.json())
-    .then(initCanvas)
-    .catch(console.log);
+  initCanvas('/data/level1.json');
 
   return Div(
 

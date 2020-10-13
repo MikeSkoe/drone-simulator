@@ -71,6 +71,16 @@ export const DialogEmitter = (
           $dialog.next(dialog => dialog.slice(1));
         })
         .unsubscribe,
+
+      $dialog.observable
+        .subscribe(dialog => {
+          if (dialog.length > 0) {
+            state.movable = false;
+          } else {
+            state.movable = true;
+          }
+        })
+        .unsubscribe,
     ],
   };
 

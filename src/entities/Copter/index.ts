@@ -104,7 +104,6 @@ export const Copter = (
       }
     },
 
-
     draw: () => {
       p5.push();
       {

@@ -9,7 +9,7 @@ const canvas = document.querySelector<HTMLDivElement>('#canvas');
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
 
-export const initCanvas = (levelData: LevelData) => {
+export const initCanvas = (levelPath: string) => {
   new P5(
     (p5: P5) => {
       // matter
@@ -24,21 +24,30 @@ export const initCanvas = (levelData: LevelData) => {
 
       // entities
       const gamepad = Gamepad();
-      const tileMap = TileMap(p5, state, levelData);
-      const children = [tileMap];
+      const children = [];
 
       Matter.Engine.run(engine);
       withCollision(engine);
 
       p5.setup = () => {
-        p5.createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
-        p5.pixelDensity(4);
+        p5.createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT, 'p2d');
+        // p5.pixelDensity(4);
       };
 
       p5.preload = () => {
-        for (const child of children) {
-          child.preload?.();
-        }
+        fetch(levelPath)
+          .then(data => data.json())
+          .then((data: LevelData) => {
+            const tileMap = TileMap(p5, state, data);
+
+            children.push(tileMap);
+
+            for (const child of children) {
+              child.preload?.();
+            }
+          })
+          .catch(console.log);
+
       }
 
       p5.draw = () => {

@@ -44834,14 +44834,20 @@ var Vector = _dereq_('../geometry/Vector');
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.$nrg = exports.$dialog = exports.$collisionActive = exports.$collisionStart = void 0;
+exports.$gameState = exports.$padKeyPressed = exports.$keyPressed = exports.$nrg = exports.$nextDialogItem = exports.$dialog = exports.$collisionActive = exports.$collisionStart = void 0;
 
 var TypeScriptUI_1 = require("../TypeScriptUI");
 
 exports.$collisionStart = TypeScriptUI_1.createState([undefined, undefined]);
 exports.$collisionActive = TypeScriptUI_1.createState([undefined, undefined]);
 exports.$dialog = TypeScriptUI_1.createState([]);
+exports.$nextDialogItem = TypeScriptUI_1.createState();
 exports.$nrg = TypeScriptUI_1.createState(1);
+exports.$keyPressed = TypeScriptUI_1.createState('');
+exports.$padKeyPressed = TypeScriptUI_1.createState('');
+exports.$gameState = TypeScriptUI_1.createState({
+  type: 'game'
+});
 },{"../TypeScriptUI":"src/TypeScriptUI/index.ts"}],"src/types.ts":[function(require,module,exports) {
 "use strict";
 
@@ -44957,11 +44963,27 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.getAxe = exports.isButtonReleased = exports.isButtonPressed = exports.isButtonDown = exports.Gamepad = void 0;
+
+var state_1 = require("../../state");
+
 var prevButtons = {};
 var prevAxes = {};
 
 exports.Gamepad = function () {
+  var onKeyPressed = function onKeyPressed(event) {
+    state_1.$keyPressed.next(function () {
+      return event.key;
+    });
+  };
+
+  var unsubs = [function () {
+    window.addEventListener('keypress', onKeyPressed);
+    return function () {
+      window.removeEventListener('keypress', onKeyPressed);
+    };
+  }()];
   return {
+    unsubs: unsubs,
     update: function update() {
       var _a, _b;
 
@@ -44970,7 +44992,20 @@ exports.Gamepad = function () {
       for (var index = 0; (_a = index < (gamepad === null || gamepad === void 0 ? void 0 : gamepad.buttons.length)) !== null && _a !== void 0 ? _a : 0; index++) {
         var button = gamepad.buttons[index];
         prevButtons[index] = prevButtons[index] || [button.value, false];
-        prevButtons[index] = [button.value, button.value !== prevButtons[index][0]];
+        var pressed = button.value !== prevButtons[index][0];
+        prevButtons[index] = [button.value, pressed];
+
+        switch (index) {
+          case 0:
+            {
+              state_1.$padKeyPressed.next(function () {
+                return 'x';
+              });
+            }
+
+          default:
+            break;
+        }
       }
 
       for (var index = 0; (_b = index < (gamepad === null || gamepad === void 0 ? void 0 : gamepad.axes.length)) !== null && _b !== void 0 ? _b : 0; index++) {
@@ -45003,7 +45038,7 @@ exports.getAxe = function (index) {
 
   return (_b = (_a = prevAxes[index]) === null || _a === void 0 ? void 0 : _a[0]) !== null && _b !== void 0 ? _b : 0;
 };
-},{}],"src/hooks/addToWorld.ts":[function(require,module,exports) {
+},{"../../state":"src/state/index.ts"}],"src/hooks/addToWorld.ts":[function(require,module,exports) {
 "use strict";
 
 var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
@@ -45538,46 +45573,9 @@ var types_1 = require("../../types");
 
 var state_1 = require("../../state");
 
-var Gamepad_1 = require("../Gamepad");
-
 var addToWorld_1 = require("../../hooks/addToWorld");
 
 var RADIUS = 5;
-
-var nextDialog = function nextDialog(state) {
-  if (state.dialog.length > 0) {
-    var newDialog_1 = state.dialog.slice(1);
-    state.dialog = newDialog_1;
-    state_1.$dialog.next(function () {
-      return newDialog_1;
-    });
-
-    if (newDialog_1.length === 0) {
-      state.movable = true;
-    }
-  }
-};
-
-var newDialog = function newDialog(state, dialog) {
-  if (state.dialog.length === 0) {
-    state.movable = false;
-    state.dialog = dialog;
-    state_1.$dialog.next(function () {
-      return dialog;
-    });
-  }
-};
-
-var nextDialogOnEnter = function nextDialogOnEnter(state) {
-  var nextDialogEvent = function nextDialogEvent(e) {
-    nextDialog(state);
-  };
-
-  document.addEventListener('keypress', nextDialogEvent);
-  return function () {
-    document.removeEventListener('keypress', nextDialogEvent);
-  };
-};
 
 exports.DialogEmitter = function (p5, state, _a, dialogPath) {
   var x = _a[0],
@@ -45588,15 +45586,47 @@ exports.DialogEmitter = function (p5, state, _a, dialogPath) {
     label: types_1.BodyLabel.DialogEmitter
   })];
   var localState = {
+    status: 'new',
     dialog: [],
-    unsubs: [state_1.$collisionStart.observable.subscribe(function (_a) {
+    unsubs: [addToWorld_1.addToWorld(state.engine, bodies), state_1.$collisionStart.observable.subscribe(function (_a) {
       var labelA = _a[0],
           labelB = _a[1];
 
-      if (labelA === types_1.BodyLabel.DialogEmitter || labelB === types_1.BodyLabel.DialogEmitter) {
-        newDialog(state, localState.dialog);
+      if (localState.status !== 'new') {
+        return;
       }
-    }).unsubscribe, addToWorld_1.addToWorld(state.engine, bodies), nextDialogOnEnter(state)]
+
+      if (labelA === types_1.BodyLabel.DialogEmitter || labelB === types_1.BodyLabel.DialogEmitter) {
+        state_1.$dialog.next(function () {
+          return localState.dialog;
+        });
+        localState.status = 'speaking';
+      }
+    }).unsubscribe, state_1.$padKeyPressed.observable.subscribe(function (padKey) {
+      if (padKey === 'x') {
+        state_1.$nextDialogItem.next(function () {
+          return void 0;
+        });
+      }
+    }).unsubscribe, state_1.$keyPressed.observable.subscribe(function (key) {
+      console.log('key', key);
+
+      if (key === 'Enter') {
+        state_1.$nextDialogItem.next(function () {
+          return void 0;
+        });
+      }
+    }).unsubscribe, state_1.$nextDialogItem.observable.subscribe(function () {
+      state_1.$dialog.next(function (dialog) {
+        return dialog.slice(1);
+      });
+    }).unsubscribe, state_1.$dialog.observable.subscribe(function (dialog) {
+      if (dialog.length > 0) {
+        state.movable = false;
+      } else {
+        state.movable = true;
+      }
+    }).unsubscribe]
   };
   fetch(dialogPath).then(function (data) {
     return data.json();
@@ -45606,13 +45636,7 @@ exports.DialogEmitter = function (p5, state, _a, dialogPath) {
   return {
     localState: localState,
     update: function update() {
-      var xButton = Gamepad_1.isButtonPressed(0);
-
-      if (xButton) {
-        if (state.dialog.length > 0) {
-          nextDialog(state);
-        }
-      }
+      if (localState.status !== 'done') {}
     },
     draw: function draw() {
       p5.push();
@@ -45627,7 +45651,7 @@ exports.DialogEmitter = function (p5, state, _a, dialogPath) {
     }
   };
 };
-},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../state":"src/state/index.ts","../Gamepad":"src/entities/Gamepad/index.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/TileMap/index.ts":[function(require,module,exports) {
+},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../state":"src/state/index.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/TileMap/index.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -45672,6 +45696,23 @@ var drawToBuffer = function drawToBuffer(data, tileBuffer, imageData) {
       }
     }
   }
+};
+
+var drawBG = function drawBG(p5, xOffset, yOffset) {
+  var w = p5.width;
+  var h = p5.height;
+  var s = 60;
+  p5.push();
+  {
+    p5.noStroke();
+
+    for (var x = 0; x < w + s; x += s) {
+      for (var y = 0; y < h + s; y += s) {
+        p5.rect(x - xOffset % s, y - yOffset % s, 2, 2);
+      }
+    }
+  }
+  p5.pop();
 };
 
 var getEntities = function getEntities(p5, state, levels) {
@@ -45760,36 +45801,46 @@ exports.TileMap = function (p5, state, data) {
   var width = data.width,
       height = data.height,
       layers = data.layers;
-  var tileBuffer = p5.createGraphics(width, height);
+  var tileBuffer = p5.createGraphics(width, height, 'p2d');
   var imageData;
   var bufferRendered = false;
-
-  var _a = getEntities(p5, state, layers),
-      camera = _a.camera,
-      copter = _a.copter,
-      bonuses = _a.bonuses,
-      missionEmitter = _a.missionEmitter,
-      grounds = _a.grounds,
-      dialogEmitter = _a.dialogEmitter;
-
-  var children = [grounds, bonuses, missionEmitter, dialogEmitter, copter];
+  var preloaded = false;
+  var children = [];
   var localState = {
-    unsubs: []
+    unsubs: [],
+    camera: null,
+    imageLoaded: false
   };
   return {
     localState: localState,
     preload: function preload() {
       var _a;
 
-      imageData = p5.loadImage(img);
+      var _b = getEntities(p5, state, layers),
+          camera = _b.camera,
+          copter = _b.copter,
+          bonuses = _b.bonuses,
+          missionEmitter = _b.missionEmitter,
+          grounds = _b.grounds,
+          dialogEmitter = _b.dialogEmitter;
+
+      localState.camera = camera;
+      children.push(grounds, bonuses, missionEmitter, dialogEmitter, copter);
+      imageData = p5.loadImage(img, function () {
+        localState.imageLoaded = true;
+      });
 
       for (var _i = 0, children_1 = children; _i < children_1.length; _i++) {
         var child = children_1[_i];
         (_a = child.preload) === null || _a === void 0 ? void 0 : _a.call(child);
       }
+
+      preloaded = true;
     },
     update: function update() {
-      camera.update();
+      var _a;
+
+      (_a = localState.camera) === null || _a === void 0 ? void 0 : _a.update();
 
       for (var _i = 0, children_2 = children; _i < children_2.length; _i++) {
         var child = children_2[_i];
@@ -45797,15 +45848,27 @@ exports.TileMap = function (p5, state, data) {
       }
     },
     draw: function draw() {
-      if (!bufferRendered) {
-        tileBuffer.noSmooth();
-        drawToBuffer(data, tileBuffer, imageData);
-        bufferRendered = true;
-      }
+      var _a, _b, _c, _d;
 
       p5.push();
       {
-        camera.draw();
+        var _e = (_c = (_b = (_a = localState.camera) === null || _a === void 0 ? void 0 : _a.localState) === null || _b === void 0 ? void 0 : _b.pos) !== null && _c !== void 0 ? _c : {
+          x: 0,
+          y: 0
+        },
+            cameraX = _e.x,
+            cameraY = _e.y;
+
+        drawBG(p5, cameraX / 2, cameraY / 2);
+
+        if (localState.imageLoaded && !bufferRendered) {
+          tileBuffer.noSmooth();
+          drawToBuffer(data, tileBuffer, imageData);
+          bufferRendered = true;
+          console.log(tileBuffer);
+        }
+
+        (_d = localState.camera) === null || _d === void 0 ? void 0 : _d.draw();
         p5.image(tileBuffer, 0, 0);
 
         for (var _i = 0, children_3 = children; _i < children_3.length; _i++) {
@@ -45875,34 +45938,38 @@ var canvas = document.querySelector('#canvas');
 var CANVAS_WIDTH = 500;
 var CANVAS_HEIGHT = 500;
 
-exports.initCanvas = function (levelData) {
+exports.initCanvas = function (levelPath) {
   new P5(function (p5) {
     var engine = Matter.Engine.create();
     engine.world.gravity.y = 0.33;
     var state = {
       health: 1,
-      dialog: [],
       movable: true,
       engine: engine
     };
     var gamepad = Gamepad_1.Gamepad();
-    var tileMap = TileMap_1.TileMap(p5, state, levelData);
-    var children = [tileMap];
+    var children = [];
     Matter.Engine.run(engine);
     withCollision_1.withCollision(engine);
 
     p5.setup = function () {
-      p5.createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
-      p5.pixelDensity(4);
+      p5.createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT, 'p2d');
     };
 
     p5.preload = function () {
-      var _a;
+      fetch(levelPath).then(function (data) {
+        return data.json();
+      }).then(function (data) {
+        var _a;
 
-      for (var _i = 0, children_1 = children; _i < children_1.length; _i++) {
-        var child = children_1[_i];
-        (_a = child.preload) === null || _a === void 0 ? void 0 : _a.call(child);
-      }
+        var tileMap = TileMap_1.TileMap(p5, state, data);
+        children.push(tileMap);
+
+        for (var _i = 0, children_1 = children; _i < children_1.length; _i++) {
+          var child = children_1[_i];
+          (_a = child.preload) === null || _a === void 0 ? void 0 : _a.call(child);
+        }
+      }).catch(console.log);
     };
 
     p5.draw = function () {
@@ -45952,9 +46019,7 @@ var Health = TypeScriptUI_1.Div(TypeScriptUI_1.String("energy"), TypeScriptUI_1.
 })).with(TypeScriptUI_1.className("progress-track"))).with(TypeScriptUI_1.className("health"));
 
 var App = function App() {
-  fetch('/data/level1.json').then(function (data) {
-    return data.json();
-  }).then(canvas_1.initCanvas).catch(console.log);
+  canvas_1.initCanvas('/data/level1.json');
   return TypeScriptUI_1.Div(TypeScriptUI_1.Switch(state_1.$dialog.observable.map(function (items) {
     return items[0];
   }), Dialog), Health);
@@ -45989,7 +46054,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50629" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49394" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

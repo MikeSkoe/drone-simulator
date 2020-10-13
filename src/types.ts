@@ -9,6 +9,11 @@ export enum Key {
   Right,
 };
 
+export type GameState
+  = { type: 'game' }
+  | { type: 'menu' }
+  | { type: 'end', win: boolean }
+
 export interface BaseState {
   unsubs: (() => void)[];
 }
