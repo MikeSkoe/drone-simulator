@@ -44834,7 +44834,7 @@ var Vector = _dereq_('../geometry/Vector');
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.$gameState = exports.$padKeyPressed = exports.$keyPressed = exports.$nrg = exports.$nextDialogItem = exports.$dialog = exports.$collisionActive = exports.$collisionStart = void 0;
+exports.$pause = exports.$gameState = exports.$padKeyPressed = exports.$keyPressed = exports.$nrg = exports.$nextDialogItem = exports.$dialog = exports.$collisionActive = exports.$collisionStart = void 0;
 
 var TypeScriptUI_1 = require("../TypeScriptUI");
 
@@ -44846,16 +44846,24 @@ exports.$nrg = TypeScriptUI_1.createState(1);
 exports.$keyPressed = TypeScriptUI_1.createState('');
 exports.$padKeyPressed = TypeScriptUI_1.createState('');
 exports.$gameState = TypeScriptUI_1.createState({
-  type: 'game'
+  type: 'menu'
 });
+exports.$pause = TypeScriptUI_1.createState(true);
 },{"../TypeScriptUI":"src/TypeScriptUI/index.ts"}],"src/types.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.BodyLabel = exports.Key = exports.SCALE = void 0;
+exports.BodyLabel = exports.Key = exports.LevelPath = exports.SCALE = void 0;
 exports.SCALE = 2;
+var LevelPath;
+
+(function (LevelPath) {
+  LevelPath["First"] = "/data/level1.json";
+})(LevelPath = exports.LevelPath || (exports.LevelPath = {}));
+
+;
 var Key;
 
 (function (Key) {
@@ -44956,89 +44964,7 @@ exports.withCollision = function (engine) {
     }
   });
 };
-},{"matter-js":"node_modules/matter-js/build/matter.js","../state":"src/state/index.ts","../types":"src/types.ts"}],"src/entities/Gamepad/index.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.getAxe = exports.isButtonReleased = exports.isButtonPressed = exports.isButtonDown = exports.Gamepad = void 0;
-
-var state_1 = require("../../state");
-
-var prevButtons = {};
-var prevAxes = {};
-
-exports.Gamepad = function () {
-  var onKeyPressed = function onKeyPressed(event) {
-    state_1.$keyPressed.next(function () {
-      return event.key;
-    });
-  };
-
-  var unsubs = [function () {
-    window.addEventListener('keypress', onKeyPressed);
-    return function () {
-      window.removeEventListener('keypress', onKeyPressed);
-    };
-  }()];
-  return {
-    unsubs: unsubs,
-    update: function update() {
-      var _a, _b;
-
-      var gamepad = navigator.getGamepads()[0];
-
-      for (var index = 0; (_a = index < (gamepad === null || gamepad === void 0 ? void 0 : gamepad.buttons.length)) !== null && _a !== void 0 ? _a : 0; index++) {
-        var button = gamepad.buttons[index];
-        prevButtons[index] = prevButtons[index] || [button.value, false];
-        var pressed = button.value !== prevButtons[index][0];
-        prevButtons[index] = [button.value, pressed];
-
-        switch (index) {
-          case 0:
-            {
-              state_1.$padKeyPressed.next(function () {
-                return 'x';
-              });
-            }
-
-          default:
-            break;
-        }
-      }
-
-      for (var index = 0; (_b = index < (gamepad === null || gamepad === void 0 ? void 0 : gamepad.axes.length)) !== null && _b !== void 0 ? _b : 0; index++) {
-        prevAxes[index] = gamepad.axes[index];
-      }
-    }
-  };
-};
-
-exports.isButtonDown = function (index) {
-  var _a, _b;
-
-  return (_b = (_a = prevButtons[index]) === null || _a === void 0 ? void 0 : _a[0]) !== null && _b !== void 0 ? _b : 0 > 0;
-};
-
-exports.isButtonPressed = function (index) {
-  var _a, _b;
-
-  return ((_a = prevButtons[index]) === null || _a === void 0 ? void 0 : _a[0]) && ((_b = prevButtons[index]) === null || _b === void 0 ? void 0 : _b[1]);
-};
-
-exports.isButtonReleased = function (index) {
-  var _a, _b;
-
-  return ((_a = !prevButtons[index]) === null || _a === void 0 ? void 0 : _a[0]) && ((_b = prevButtons[index]) === null || _b === void 0 ? void 0 : _b[1]);
-};
-
-exports.getAxe = function (index) {
-  var _a, _b;
-
-  return (_b = (_a = prevAxes[index]) === null || _a === void 0 ? void 0 : _a[0]) !== null && _b !== void 0 ? _b : 0;
-};
-},{"../../state":"src/state/index.ts"}],"src/hooks/addToWorld.ts":[function(require,module,exports) {
+},{"matter-js":"node_modules/matter-js/build/matter.js","../state":"src/state/index.ts","../types":"src/types.ts"}],"src/hooks/addToWorld.ts":[function(require,module,exports) {
 "use strict";
 
 var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
@@ -45136,31 +45062,30 @@ var Matter = __importStar(require("matter-js"));
 
 var types_1 = require("../../types");
 
-var state_1 = require("../../state");
-
 var addToWorld_1 = require("../../hooks/addToWorld");
 
 var imagePath = '/data/copter.png';
 var MAX_MAGNITUDE = 5;
+var WIDTH = 16;
+var HEIGHT = 8 * .75;
 ;
 
-exports.Copter = function (p5, state, _a, _b) {
-  var _c = _a === void 0 ? [50, 50] : _a,
-      x = _c[0],
-      y = _c[1];
-
-  var _d = _b === void 0 ? [50, 25] : _b,
-      w = _d[0],
-      h = _d[1];
-
+exports.Copter = function (p5, state) {
   var imageData;
-  var body = Matter.Bodies.rectangle(x + w / 2, y + h / 2, w, h, {
+  var body = Matter.Bodies.rectangle(0, 0, WIDTH, HEIGHT, {
     label: 'copter',
     friction: 0.05
   });
   var localState = {
     power: 0.00007,
-    pos: body.position,
+    setPos: function setPos(_a) {
+      var x = _a[0],
+          y = _a[1];
+      Matter.Body.setPosition(body, Matter.Vector.create(x, y));
+    },
+    getPos: function getPos() {
+      return body.position;
+    },
     unsubs: [addToWorld_1.addToWorld(state.engine, [body])]
   };
   return {
@@ -45175,7 +45100,6 @@ exports.Copter = function (p5, state, _a, _b) {
         return;
       }
 
-      localState.pos = body.position;
       var gamepad = navigator.getGamepads()[0];
       var upValue = p5.keyIsDown(types_1.Key.Up) ? 1 : (_a = gamepad === null || gamepad === void 0 ? void 0 : gamepad.buttons[7].value) !== null && _a !== void 0 ? _a : 0;
       var rotateValue = p5.keyIsDown(types_1.Key.Left) ? -1 : p5.keyIsDown(types_1.Key.Right) ? 1 : (_b = gamepad === null || gamepad === void 0 ? void 0 : gamepad.axes[0]) !== null && _b !== void 0 ? _b : 0;
@@ -45193,26 +45117,19 @@ exports.Copter = function (p5, state, _a, _b) {
         Matter.Body.rotate(body, rotateValue / 8);
         Matter.Body.setAngularVelocity(body, 0);
       }
-
-      if (upValue !== 0) {
-        state.health = Math.max(0, state.health - upValue / 1000);
-        state_1.$nrg.next(function () {
-          return state.health;
-        });
-      }
     },
     draw: function draw() {
       p5.push();
       {
         p5.translate(body.position.x, body.position.y);
         p5.rotate(body.angle);
-        p5.image(imageData, -w / 2, -h / 4);
+        p5.image(imageData, -imageData.width / 2, -imageData.height / 2);
       }
       p5.pop();
     }
   };
 };
-},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../state":"src/state/index.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Bonus/index.ts":[function(require,module,exports) {
+},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Bonus/index.ts":[function(require,module,exports) {
 "use strict";
 
 var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
@@ -45264,25 +45181,27 @@ var addToWorld_1 = require("../../hooks/addToWorld");
 
 var RADIUS = 5;
 
-exports.Bonuses = function (p5, state, data) {
-  var bodies = data.map(function (_a) {
-    var x = _a[0],
-        y = _a[1];
-    return Matter.Bodies.circle(x, y, RADIUS, {
-      isStatic: true,
-      isSensor: true,
-      label: types_1.BodyLabel.Bonus
-    });
-  });
-  var localState = {
-    unsubs: [addToWorld_1.addToWorld(state.engine, bodies), state_1.$collisionActive.observable.subscribe(function (_a) {
-      var labelA = _a[0],
-          labelB = _a[1];
+exports.Bonuses = function (p5, state) {
+  var bodies = [];
+  var unsubs = [state_1.$collisionActive.observable.subscribe(function (_a) {
+    var labelA = _a[0],
+        labelB = _a[1];
 
-      if (labelA === types_1.BodyLabel.Bonus || labelB === types_1.BodyLabel.Bonus) {
-        state.health = Math.min(1, state.health + 0.005);
-      }
-    }).unsubscribe]
+    if (labelA === types_1.BodyLabel.Bonus || labelB === types_1.BodyLabel.Bonus) {
+      state.health = Math.min(1, state.health + 0.005);
+    }
+  }).unsubscribe];
+  var localState = {
+    addBonus: function addBonus(x, y) {
+      var body = Matter.Bodies.circle(x, y, RADIUS, {
+        isStatic: true,
+        isSensor: true,
+        label: types_1.BodyLabel.Bonus
+      });
+      bodies.push(body);
+      unsubs.push(addToWorld_1.addToWorld(state.engine, [body]));
+    },
+    unsubs: []
   };
   return {
     localState: localState,
@@ -45304,15 +45223,22 @@ exports.Camera = void 0;
 
 var types_1 = require("../../types");
 
-exports.Camera = function (p5, state, getTargetPos) {
+exports.Camera = function (p5, state) {
+  var pos = p5.createVector(0, 0);
   var localState = {
-    pos: p5.createVector(getTargetPos().x, getTargetPos().y),
+    pos: pos,
+    getTargetPos: function getTargetPos() {
+      return {
+        x: 0,
+        y: 0
+      };
+    },
     unsubs: []
   };
   return {
     localState: localState,
     update: function update() {
-      var _a = getTargetPos(),
+      var _a = localState.getTargetPos(),
           x = _a.x,
           y = _a.y;
 
@@ -45396,49 +45322,63 @@ var MissionState;
   MissionState[MissionState["Done"] = 2] = "Done";
 })(MissionState || (MissionState = {}));
 
-exports.MissionEmitter = function (p5, state, mission, _a) {
-  var _b;
+exports.MissionEmitter = function (p5, state) {
+  var emitterBodies = [];
+  var targetBodies = [];
+  var unsubs = [state_1.$collisionStart.observable.subscribe(function (_a) {
+    var labelA = _a[0],
+        labelB = _a[1];
 
-  var x = _a[0],
-      y = _a[1];
-  var bodies = [Matter.Bodies.circle(x, y, RADIUS, {
-    isStatic: true,
-    isSensor: true,
-    label: types_1.BodyLabel.MissionEmitter
-  }), (_b = Matter.Bodies).circle.apply(_b, __spreadArrays(mission.target.pos, [RADIUS, {
-    isStatic: true,
-    isSensor: true,
-    label: types_1.BodyLabel.MissionTarget
-  }]))];
+    if (labelA === types_1.BodyLabel.MissionEmitter || labelB === types_1.BodyLabel.MissionEmitter) {
+      switch (localState.missionState) {
+        case MissionState.New:
+          localState.missionState = MissionState.Progress;
+          break;
+
+        case MissionState.Done:
+          console.log('done!!!');
+          break;
+
+        default:
+          break;
+      }
+    }
+  }).unsubscribe, state_1.$collisionStart.observable.subscribe(function (_a) {
+    var labelA = _a[0],
+        labelB = _a[1];
+
+    if (labelA === types_1.BodyLabel.MissionTarget || labelB === types_1.BodyLabel.MissionTarget) {
+      if (localState.missionState === MissionState.Progress) {
+        localState.missionState = MissionState.Done;
+      }
+    }
+  }).unsubscribe];
   var localState = {
-    unsubs: [state_1.$collisionStart.observable.subscribe(function (_a) {
-      var labelA = _a[0],
-          labelB = _a[1];
+    addEmitter: function addEmitter(pos, mission) {
+      var _a;
 
-      if (labelA === types_1.BodyLabel.MissionEmitter || labelB === types_1.BodyLabel.MissionEmitter) {
-        switch (localState.missionState) {
-          case MissionState.New:
-            localState.missionState = MissionState.Progress;
-            break;
+      var emitterBody = (_a = Matter.Bodies).circle.apply(_a, __spreadArrays(pos, [RADIUS, {
+        isStatic: true,
+        isSensor: true,
+        label: types_1.BodyLabel.MissionEmitter
+      }]));
 
-          case MissionState.Done:
-            console.log('done!!!');
-            break;
+      emitterBodies.push(emitterBody);
+      addToWorld_1.addToWorld(state.engine, [emitterBody]);
+    },
+    addTarget: function addTarget(pos) {
+      var _a;
 
-          default:
-            break;
-        }
-      }
-    }).unsubscribe, state_1.$collisionStart.observable.subscribe(function (_a) {
-      var labelA = _a[0],
-          labelB = _a[1];
+      var targetBody = (_a = Matter.Bodies).circle.apply(_a, __spreadArrays(pos, [RADIUS, {
+        isStatic: true,
+        isSensor: true,
+        label: types_1.BodyLabel.MissionTarget
+      }]));
 
-      if (labelA === types_1.BodyLabel.MissionTarget || labelB === types_1.BodyLabel.MissionTarget) {
-        if (localState.missionState === MissionState.Progress) {
-          localState.missionState = MissionState.Done;
-        }
-      }
-    }).unsubscribe, addToWorld_1.addToWorld(state.engine, bodies)],
+      targetBodies.push(targetBody);
+      addToWorld_1.addToWorld(state.engine, [targetBody]);
+    },
+    unsubs: unsubs,
     missionState: MissionState.New
   };
   return {
@@ -45448,12 +45388,22 @@ exports.MissionEmitter = function (p5, state, mission, _a) {
       p5.push();
       {
         p5.noStroke();
-        p5.fill(255, 0, 255);
-        p5.circle(x, y, RADIUS * 2);
-        p5.fill(255, 255, 0);
 
-        if (localState.missionState === MissionState.Progress) {
-          p5.circle.apply(p5, __spreadArrays(mission.target.pos, [RADIUS * 2]));
+        for (var _i = 0, emitterBodies_1 = emitterBodies; _i < emitterBodies_1.length; _i++) {
+          var emitter = emitterBodies_1[_i];
+          p5.fill(255, 0, 255);
+          p5.circle(emitter.position.x, emitter.position.y, RADIUS * 2);
+        }
+
+        for (var _a = 0, targetBodies_1 = targetBodies; _a < targetBodies_1.length; _a++) {
+          var target = targetBodies_1[_a];
+          p5.fill(255, 255, 0);
+
+          if (localState.missionState === MissionState.Progress) {
+            p5.circle(target.position.x, target.position.y, RADIUS * 2);
+          }
+
+          ;
         }
       }
       p5.pop();
@@ -45504,20 +45454,27 @@ exports.Grounds = void 0;
 
 var Matter = __importStar(require("matter-js"));
 
+var types_1 = require("../../types");
+
 var addToWorld_1 = require("../../hooks/addToWorld");
 
-exports.Grounds = function (p5, state, data) {
-  var bodies = data.map(function (_a) {
-    var x = _a[0],
-        y = _a[1],
-        w = _a[2],
-        h = _a[3];
-    return Matter.Bodies.rectangle(x + w / 2, y + h / 2, w, h, {
-      isStatic: true
-    });
-  });
+exports.Grounds = function (p5, state) {
+  var unsubs = [];
+  var bodies = [];
   var localState = {
-    unsubs: [addToWorld_1.addToWorld(state.engine, bodies)]
+    addGround: function addGround(_a, _b) {
+      var x = _a[0],
+          y = _a[1];
+      var w = _b[0],
+          h = _b[1];
+      var body = Matter.Bodies.rectangle(x + w / 2, y + h / 2, w, h, {
+        isStatic: true,
+        label: types_1.BodyLabel.Ground
+      });
+      bodies.push(body);
+      unsubs.push(addToWorld_1.addToWorld(state.engine, [body]));
+    },
+    unsubs: unsubs
   };
   return {
     localState: localState,
@@ -45525,7 +45482,7 @@ exports.Grounds = function (p5, state, data) {
     draw: function draw() {}
   };
 };
-},{"matter-js":"node_modules/matter-js/build/matter.js","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/DialogEmitter/index.ts":[function(require,module,exports) {
+},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/DialogEmitter/index.ts":[function(require,module,exports) {
 "use strict";
 
 var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
@@ -45562,6 +45519,20 @@ var __importStar = this && this.__importStar || function (mod) {
   return result;
 };
 
+var __spreadArrays = this && this.__spreadArrays || function () {
+  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
+    s += arguments[i].length;
+  }
+
+  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
+    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
+      r[k] = a[j];
+    }
+  }
+
+  return r;
+};
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -45577,62 +45548,71 @@ var addToWorld_1 = require("../../hooks/addToWorld");
 
 var RADIUS = 5;
 
-exports.DialogEmitter = function (p5, state, _a, dialogPath) {
-  var x = _a[0],
-      y = _a[1];
-  var bodies = [Matter.Bodies.circle(x, y, RADIUS, {
-    isStatic: true,
-    isSensor: true,
-    label: types_1.BodyLabel.DialogEmitter
-  })];
+exports.DialogEmitter = function (p5, state) {
+  var bodies = [];
+  var dialog = [];
+  var unsubs = [state_1.$collisionStart.observable.subscribe(function (_a) {
+    var labelA = _a[0],
+        labelB = _a[1];
+
+    if (localState.status !== 'new') {
+      return;
+    }
+
+    if (labelA === types_1.BodyLabel.DialogEmitter || labelB === types_1.BodyLabel.DialogEmitter) {
+      state_1.$dialog.next(function () {
+        return localState.dialog;
+      });
+      localState.status = 'speaking';
+    }
+  }).unsubscribe, state_1.$padKeyPressed.observable.subscribe(function (padKey) {
+    if (padKey === 'x') {
+      state_1.$nextDialogItem.next(function () {
+        return void 0;
+      });
+    }
+  }).unsubscribe, state_1.$keyPressed.observable.subscribe(function (key) {
+    console.log('key', key);
+
+    if (key === 'Enter') {
+      state_1.$nextDialogItem.next(function () {
+        return void 0;
+      });
+    }
+  }).unsubscribe, state_1.$nextDialogItem.observable.subscribe(function () {
+    state_1.$dialog.next(function (dialog) {
+      return dialog.slice(1);
+    });
+  }).unsubscribe, state_1.$dialog.observable.subscribe(function (dialog) {
+    if (dialog.length > 0) {
+      state.movable = false;
+    } else {
+      state.movable = true;
+    }
+  }).unsubscribe];
   var localState = {
     status: 'new',
-    dialog: [],
-    unsubs: [addToWorld_1.addToWorld(state.engine, bodies), state_1.$collisionStart.observable.subscribe(function (_a) {
-      var labelA = _a[0],
-          labelB = _a[1];
+    addDialog: function addDialog(pos, dialogPath) {
+      fetch(dialogPath).then(function (data) {
+        return data.json();
+      }).then(function (dialog) {
+        var _a;
 
-      if (localState.status !== 'new') {
-        return;
-      }
+        localState.dialog = dialog;
 
-      if (labelA === types_1.BodyLabel.DialogEmitter || labelB === types_1.BodyLabel.DialogEmitter) {
-        state_1.$dialog.next(function () {
-          return localState.dialog;
-        });
-        localState.status = 'speaking';
-      }
-    }).unsubscribe, state_1.$padKeyPressed.observable.subscribe(function (padKey) {
-      if (padKey === 'x') {
-        state_1.$nextDialogItem.next(function () {
-          return void 0;
-        });
-      }
-    }).unsubscribe, state_1.$keyPressed.observable.subscribe(function (key) {
-      console.log('key', key);
+        var body = (_a = Matter.Bodies).circle.apply(_a, __spreadArrays(pos, [RADIUS, {
+          isStatic: true,
+          isSensor: true,
+          label: types_1.BodyLabel.DialogEmitter
+        }]));
 
-      if (key === 'Enter') {
-        state_1.$nextDialogItem.next(function () {
-          return void 0;
-        });
-      }
-    }).unsubscribe, state_1.$nextDialogItem.observable.subscribe(function () {
-      state_1.$dialog.next(function (dialog) {
-        return dialog.slice(1);
-      });
-    }).unsubscribe, state_1.$dialog.observable.subscribe(function (dialog) {
-      if (dialog.length > 0) {
-        state.movable = false;
-      } else {
-        state.movable = true;
-      }
-    }).unsubscribe]
+        bodies.push(body);
+        unsubs.push(addToWorld_1.addToWorld(state.engine, [body]));
+      }).catch(console.log);
+    },
+    dialog: dialog,
+    unsubs: unsubs
   };
-  fetch(dialogPath).then(function (data) {
-    return data.json();
-  }).then(function (dialog) {
-    return localState.dialog = dialog;
-  }).catch(console.log);
   return {
     localState: localState,
     update: function update() {
@@ -45643,21 +45623,165 @@ exports.DialogEmitter = function (p5, state, _a, dialogPath) {
       {
         p5.noStroke();
         p5.fill(0, 255, 0);
-        bodies.forEach(function (body) {
+
+        for (var _i = 0, bodies_1 = bodies; _i < bodies_1.length; _i++) {
+          var body = bodies_1[_i];
           p5.circle(body.position.x, body.position.y, RADIUS * 2);
-        });
+        }
       }
       p5.pop();
     }
   };
 };
-},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../state":"src/state/index.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/TileMap/index.ts":[function(require,module,exports) {
+},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../state":"src/state/index.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Gamepad/index.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.getAxe = exports.isButtonReleased = exports.isButtonPressed = exports.isButtonDown = exports.Gamepad = void 0;
+
+var state_1 = require("../../state");
+
+var prevButtons = {};
+var prevAxes = {};
+
+exports.Gamepad = function () {
+  var onKeyPressed = function onKeyPressed(event) {
+    state_1.$keyPressed.next(function () {
+      return event.key;
+    });
+  };
+
+  return {
+    localState: {
+      unsubs: [function () {
+        window.addEventListener('keypress', onKeyPressed);
+        return function () {
+          window.removeEventListener('keypress', onKeyPressed);
+        };
+      }()]
+    },
+    draw: function draw() {},
+    update: function update() {
+      var _a, _b;
+
+      var gamepad = navigator.getGamepads()[0];
+
+      for (var index = 0; (_a = index < (gamepad === null || gamepad === void 0 ? void 0 : gamepad.buttons.length)) !== null && _a !== void 0 ? _a : 0; index++) {
+        var button = gamepad.buttons[index];
+        prevButtons[index] = prevButtons[index] || [button.value, false];
+        var pressed = button.value !== prevButtons[index][0];
+        prevButtons[index] = [button.value, pressed];
+
+        switch (index) {
+          case 0:
+            {
+              state_1.$padKeyPressed.next(function () {
+                return 'x';
+              });
+            }
+
+          default:
+            break;
+        }
+      }
+
+      for (var index = 0; (_b = index < (gamepad === null || gamepad === void 0 ? void 0 : gamepad.axes.length)) !== null && _b !== void 0 ? _b : 0; index++) {
+        prevAxes[index] = gamepad.axes[index];
+      }
+    }
+  };
+};
+
+exports.isButtonDown = function (index) {
+  var _a, _b;
+
+  return (_b = (_a = prevButtons[index]) === null || _a === void 0 ? void 0 : _a[0]) !== null && _b !== void 0 ? _b : 0 > 0;
+};
+
+exports.isButtonPressed = function (index) {
+  var _a, _b;
+
+  return ((_a = prevButtons[index]) === null || _a === void 0 ? void 0 : _a[0]) && ((_b = prevButtons[index]) === null || _b === void 0 ? void 0 : _b[1]);
+};
+
+exports.isButtonReleased = function (index) {
+  var _a, _b;
+
+  return ((_a = !prevButtons[index]) === null || _a === void 0 ? void 0 : _a[0]) && ((_b = prevButtons[index]) === null || _b === void 0 ? void 0 : _b[1]);
+};
+
+exports.getAxe = function (index) {
+  var _a, _b;
+
+  return (_b = (_a = prevAxes[index]) === null || _a === void 0 ? void 0 : _a[0]) !== null && _b !== void 0 ? _b : 0;
+};
+},{"../../state":"src/state/index.ts"}],"src/entities/TileMap/index.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.TileMap = void 0;
+var img = '/data/block.png';
+
+var drawToBuffer = function drawToBuffer(_a, layer, tileBuffer, imageData) {
+  var width = _a[0],
+      height = _a[1];
+  var gridCellWidth = layer.gridCellWidth,
+      gridCellHeight = layer.gridCellHeight,
+      dataCoords2D = layer.dataCoords2D;
+  var rowSize = width / gridCellWidth;
+  var columnSize = height / gridCellHeight;
+
+  for (var y = 0; y < columnSize; y++) {
+    for (var x = 0; x < rowSize; x++) {
+      var xPos = x * gridCellWidth;
+      var yPos = y * gridCellHeight;
+      var _b = dataCoords2D[y][x],
+          tileX = _b[0],
+          tileY = _b[1];
+      tileBuffer.image(imageData, xPos, yPos, gridCellWidth, gridCellHeight, tileX * gridCellWidth, tileY * gridCellHeight, 8, 8);
+    }
+  }
+};
+
+exports.TileMap = function (p5, state) {
+  var unsubs = [];
+  var buffers = [];
+  var localState = {
+    buffers: buffers,
+    setTileMap: function setTileMap(size, layer) {
+      p5.loadImage(img, function (image) {
+        var graphics = p5.createGraphics.apply(p5, size);
+        drawToBuffer(size, layer, graphics, image);
+        buffers.push(graphics);
+        unsubs.push(graphics.remove);
+      });
+    },
+    unsubs: unsubs
+  };
+  return {
+    localState: localState,
+    update: function update() {},
+    draw: function draw() {
+      for (var _i = 0, buffers_1 = buffers; _i < buffers_1.length; _i++) {
+        var buffer = buffers_1[_i];
+        p5.image(buffer, 0, 0);
+      }
+    }
+  };
+};
+},{}],"src/entities/Level/index.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Level = void 0;
+
+var types_1 = require("../../types");
 
 var Copter_1 = require("../Copter");
 
@@ -45671,32 +45795,9 @@ var Ground_1 = require("../Ground");
 
 var DialogEmitter_1 = require("../DialogEmitter");
 
-var img = '/data/block.png';
+var Gamepad_1 = require("../Gamepad");
 
-var drawToBuffer = function drawToBuffer(data, tileBuffer, imageData) {
-  for (var _i = 0, _a = data.layers; _i < _a.length; _i++) {
-    var layer = _a[_i];
-
-    if (layer.name === 'tilemap') {
-      var gridCellWidth = layer.gridCellWidth,
-          gridCellHeight = layer.gridCellHeight,
-          dataCoords2D = layer.dataCoords2D;
-      var rowSize = data.width / gridCellWidth;
-      var columnSize = data.height / gridCellHeight;
-
-      for (var y = 0; y < columnSize; y++) {
-        for (var x = 0; x < rowSize; x++) {
-          var xPos = x * gridCellWidth;
-          var yPos = y * gridCellHeight;
-          var _b = dataCoords2D[y][x],
-              tileX = _b[0],
-              tileY = _b[1];
-          tileBuffer.image(imageData, xPos, yPos, gridCellWidth, gridCellHeight, tileX * gridCellWidth, tileY * gridCellHeight, 8, 8);
-        }
-      }
-    }
-  }
-};
+var TileMap_1 = require("../TileMap");
 
 var drawBG = function drawBG(p5, xOffset, yOffset) {
   var w = p5.width;
@@ -45715,164 +45816,138 @@ var drawBG = function drawBG(p5, xOffset, yOffset) {
   p5.pop();
 };
 
-var getEntities = function getEntities(p5, state, levels) {
-  var copter;
-  var bonuses;
-  var missionEmitter;
-  var grounds;
-  var camera;
-  var dialogEmitter;
+var getEntities = function getEntities(levelPath, _a) {
+  var tileMap = _a.tileMap,
+      copter = _a.copter,
+      bonuses = _a.bonuses,
+      missionEmitter = _a.missionEmitter,
+      grounds = _a.grounds,
+      dialogEmitter = _a.dialogEmitter;
+  fetch(levelPath).then(function (data) {
+    return data.json();
+  }).then(function (data) {
+    for (var _i = 0, _a = data.layers; _i < _a.length; _i++) {
+      var layer = _a[_i];
 
-  for (var _i = 0, levels_1 = levels; _i < levels_1.length; _i++) {
-    var level = levels_1[_i];
+      if (layer.name === 'tilemap') {
+        tileMap.localState.setTileMap([data.width, data.height], layer);
+      }
 
-    if (level.name === 'entity') {
-      var _a = level.entities.find(function (entity) {
-        return entity.name === 'copter';
-      }),
-          copterX = _a.x,
-          copterY = _a.y,
-          copterWidth = _a.width,
-          copterHeight = _a.height;
+      if (layer.name === 'entity') {
+        for (var _b = 0, _c = layer.entities; _b < _c.length; _b++) {
+          var entity = _c[_b];
 
-      var bonusesData = level.entities.filter(function (entity) {
-        return entity.name === 'bonus';
-      });
+          switch (entity.name) {
+            case 'copter':
+              copter.localState.setPos([entity.x, entity.y]);
+              break;
 
-      var _b = level.entities.find(function (entity) {
-        return entity.name === 'mission_emitter';
-      }),
-          _c = _b.values,
-          title = _c.title,
-          description = _c.description,
-          missionEmitterX = _b.x,
-          missionEmitterY = _b.y;
+            case 'bonus':
+              bonuses.localState.addBonus(entity.x, entity.y);
+              break;
 
-      var _d = level.entities.find(function (entity) {
-        return entity.name === 'mission_target';
-      }),
-          targetX = _d.x,
-          targetY = _d.y;
+            case 'mission_emitter':
+              missionEmitter.localState.addEmitter([entity.x, entity.y], {
+                id: Math.random(),
+                title: entity.values.title,
+                description: entity.values.description
+              });
+              break;
 
-      var _e = level.entities.find(function (entity) {
-        return entity.name === 'dialog_emitter';
-      }),
-          dialogPath = _e.values.path,
-          dialogX = _e.x,
-          dialogY = _e.y;
+            case 'mission_target':
+              missionEmitter.localState.addTarget([entity.x, entity.y]);
+              break;
 
-      var groundPositions = level.entities.filter(function (entity) {
-        return entity.name === 'ground';
-      }).map(function (ground) {
-        return [ground.x, ground.y, ground.width, ground.height];
-      });
-      missionEmitter = MissionEmitter_1.MissionEmitter(p5, state, {
-        title: title,
-        description: description,
-        target: {
-          pos: [targetX, targetY]
-        },
-        id: Math.random(),
-        progress: 'new'
-      }, [missionEmitterX, missionEmitterY]);
-      copter = Copter_1.Copter(p5, state, [copterX, copterY], [copterWidth, copterHeight * .75]);
-      bonuses = Bonus_1.Bonuses(p5, state, bonusesData.map(function (data) {
-        return [data.x, data.y];
-      }));
-      grounds = Ground_1.Grounds(p5, state, groundPositions);
-      camera = Camera_1.Camera(p5, state, function () {
-        return copter.localState.pos;
-      });
-      dialogEmitter = DialogEmitter_1.DialogEmitter(p5, state, [dialogX, dialogY], dialogPath);
+            case 'dialog_emitter':
+              dialogEmitter.localState.addDialog([entity.x, entity.y], entity.values.path);
+              break;
+
+            case 'ground':
+              grounds.localState.addGround([entity.x, entity.y], [entity.width, entity.height]);
+              break;
+
+            default:
+              break;
+          }
+        }
+      }
     }
-  }
-
-  return {
-    copter: copter,
-    bonuses: bonuses,
-    missionEmitter: missionEmitter,
-    grounds: grounds,
-    camera: camera,
-    dialogEmitter: dialogEmitter
-  };
+  }).catch(console.log);
 };
 
-exports.TileMap = function (p5, state, data) {
-  var width = data.width,
-      height = data.height,
-      layers = data.layers;
-  var tileBuffer = p5.createGraphics(width, height, 'p2d');
-  var imageData;
-  var bufferRendered = false;
-  var preloaded = false;
-  var children = [];
+exports.Level = function (p5, state) {
+  var gamepad = Gamepad_1.Gamepad();
+  var copter = Copter_1.Copter(p5, state);
+  var camera = Camera_1.Camera(p5, state);
+  var missionEmitter = MissionEmitter_1.MissionEmitter(p5, state);
+  var bonuses = Bonus_1.Bonuses(p5, state);
+  var grounds = Ground_1.Grounds(p5, state);
+  var dialogEmitter = DialogEmitter_1.DialogEmitter(p5, state);
+  var tileMap = TileMap_1.TileMap(p5, state);
+  var children = [tileMap, gamepad, copter, missionEmitter, bonuses, grounds, dialogEmitter];
   var localState = {
     unsubs: [],
-    camera: null,
-    imageLoaded: false
+    loadLevel: function loadLevel(path) {
+      getEntities(path, {
+        tileMap: tileMap,
+        copter: copter,
+        missionEmitter: missionEmitter,
+        bonuses: bonuses,
+        grounds: grounds,
+        dialogEmitter: dialogEmitter
+      });
+      camera.localState.getTargetPos = copter.localState.getPos;
+    },
+    unloadLevel: function unloadLevel() {
+      for (var _i = 0, children_1 = children; _i < children_1.length; _i++) {
+        var child = children_1[_i];
+
+        for (var _a = 0, _b = child.localState.unsubs; _a < _b.length; _a++) {
+          var unsub = _b[_a];
+          unsub();
+        }
+      }
+    }
   };
   return {
     localState: localState,
     preload: function preload() {
       var _a;
 
-      var _b = getEntities(p5, state, layers),
-          camera = _b.camera,
-          copter = _b.copter,
-          bonuses = _b.bonuses,
-          missionEmitter = _b.missionEmitter,
-          grounds = _b.grounds,
-          dialogEmitter = _b.dialogEmitter;
-
-      localState.camera = camera;
-      children.push(grounds, bonuses, missionEmitter, dialogEmitter, copter);
-      imageData = p5.loadImage(img, function () {
-        localState.imageLoaded = true;
-      });
-
-      for (var _i = 0, children_1 = children; _i < children_1.length; _i++) {
-        var child = children_1[_i];
-        (_a = child.preload) === null || _a === void 0 ? void 0 : _a.call(child);
-      }
-
-      preloaded = true;
-    },
-    update: function update() {
-      var _a;
-
-      (_a = localState.camera) === null || _a === void 0 ? void 0 : _a.update();
-
       for (var _i = 0, children_2 = children; _i < children_2.length; _i++) {
         var child = children_2[_i];
+        (_a = child.preload) === null || _a === void 0 ? void 0 : _a.call(child);
+      }
+    },
+    update: function update() {
+      if (state.paused || state.gameState !== 'game') {
+        return;
+      }
+
+      camera.update();
+
+      for (var _i = 0, children_3 = children; _i < children_3.length; _i++) {
+        var child = children_3[_i];
         child.update();
       }
     },
     draw: function draw() {
-      var _a, _b, _c, _d;
+      if (state.gameState !== 'game') {
+        return;
+      }
 
       p5.push();
       {
-        var _e = (_c = (_b = (_a = localState.camera) === null || _a === void 0 ? void 0 : _a.localState) === null || _b === void 0 ? void 0 : _b.pos) !== null && _c !== void 0 ? _c : {
-          x: 0,
-          y: 0
-        },
-            cameraX = _e.x,
-            cameraY = _e.y;
-
+        p5.noSmooth();
+        p5.scale(types_1.SCALE);
+        var _a = camera.localState.pos,
+            cameraX = _a.x,
+            cameraY = _a.y;
         drawBG(p5, cameraX / 2, cameraY / 2);
+        camera.draw();
 
-        if (localState.imageLoaded && !bufferRendered) {
-          tileBuffer.noSmooth();
-          drawToBuffer(data, tileBuffer, imageData);
-          bufferRendered = true;
-          console.log(tileBuffer);
-        }
-
-        (_d = localState.camera) === null || _d === void 0 ? void 0 : _d.draw();
-        p5.image(tileBuffer, 0, 0);
-
-        for (var _i = 0, children_3 = children; _i < children_3.length; _i++) {
-          var child = children_3[_i];
+        for (var _i = 0, children_4 = children; _i < children_4.length; _i++) {
+          var child = children_4[_i];
           child.draw();
         }
       }
@@ -45880,7 +45955,7 @@ exports.TileMap = function (p5, state, data) {
     }
   };
 };
-},{"../Copter":"src/entities/Copter/index.ts","../Bonus":"src/entities/Bonus/index.ts","../Camera":"src/entities/Camera/index.ts","../MissionEmitter":"src/entities/MissionEmitter/index.ts","../Ground":"src/entities/Ground/index.ts","../DialogEmitter":"src/entities/DialogEmitter/index.ts"}],"src/canvas.ts":[function(require,module,exports) {
+},{"../../types":"src/types.ts","../Copter":"src/entities/Copter/index.ts","../Bonus":"src/entities/Bonus/index.ts","../Camera":"src/entities/Camera/index.ts","../MissionEmitter":"src/entities/MissionEmitter/index.ts","../Ground":"src/entities/Ground/index.ts","../DialogEmitter":"src/entities/DialogEmitter/index.ts","../Gamepad":"src/entities/Gamepad/index.ts","../TileMap":"src/entities/TileMap/index.ts"}],"src/canvas.ts":[function(require,module,exports) {
 "use strict";
 
 var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
@@ -45928,74 +46003,146 @@ var Matter = __importStar(require("matter-js"));
 
 var withCollision_1 = require("./hooks/withCollision");
 
-var Gamepad_1 = require("./entities/Gamepad");
+var Level_1 = require("./entities/Level");
 
-var TileMap_1 = require("./entities/TileMap");
-
-var types_1 = require("./types");
+var state_1 = require("./state");
 
 var canvas = document.querySelector('#canvas');
 var CANVAS_WIDTH = 500;
 var CANVAS_HEIGHT = 500;
 
-exports.initCanvas = function (levelPath) {
+exports.initCanvas = function () {
   new P5(function (p5) {
+    var runner = Matter.Runner.create();
     var engine = Matter.Engine.create();
     engine.world.gravity.y = 0.33;
     var state = {
       health: 1,
       movable: true,
-      engine: engine
+      engine: engine,
+      paused: false,
+      gameState: 'menu'
     };
-    var gamepad = Gamepad_1.Gamepad();
-    var children = [];
-    Matter.Engine.run(engine);
+    var level = Level_1.Level(p5, state);
+    var unsubs = [state_1.$gameState.observable.subscribe(function (gameState) {
+      state.gameState = gameState.type;
+
+      switch (gameState.type) {
+        case 'game':
+          level.localState.loadLevel(gameState.levelPath);
+          state_1.$pause.next(function () {
+            return false;
+          });
+          break;
+
+        case 'menu':
+          state_1.$pause.next(function () {
+            return true;
+          });
+          break;
+      }
+    }).unsubscribe, state_1.$pause.observable.subscribe(function (pause) {
+      state.paused = pause;
+      runner.enabled = !pause;
+    }).unsubscribe];
     withCollision_1.withCollision(engine);
 
     p5.setup = function () {
-      p5.createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT, 'p2d');
+      p5.createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
+      Matter.Runner.run(runner, engine);
     };
 
     p5.preload = function () {
-      fetch(levelPath).then(function (data) {
-        return data.json();
-      }).then(function (data) {
-        var _a;
-
-        var tileMap = TileMap_1.TileMap(p5, state, data);
-        children.push(tileMap);
-
-        for (var _i = 0, children_1 = children; _i < children_1.length; _i++) {
-          var child = children_1[_i];
-          (_a = child.preload) === null || _a === void 0 ? void 0 : _a.call(child);
-        }
-      }).catch(console.log);
+      level.preload();
     };
 
     p5.draw = function () {
-      gamepad.update();
-
-      for (var _i = 0, children_2 = children; _i < children_2.length; _i++) {
-        var child = children_2[_i];
-        child.update();
-      }
-
-      p5.push();
-      {
-        p5.background('black');
-        p5.noSmooth();
-        p5.scale(types_1.SCALE);
-
-        for (var _a = 0, children_3 = children; _a < children_3.length; _a++) {
-          var child = children_3[_a];
-          child.draw();
-        }
-      }
-      p5.pop();
+      p5.background('black');
+      level.update();
+      level.draw();
     };
   }, canvas);
 };
-},{"p5":"node_modules/p5/lib/p5.min.js","matter-js":"node_modules/matter-js/build/matter.js","./hooks/withCollision":"src/hooks/withCollision.ts","./entities/Gamepad":"src/entities/Gamepad/index.ts","./entities/TileMap":"src/entities/TileMap/index.ts","./types":"src/types.ts"}],"src/index.ts":[function(require,module,exports) {
+},{"p5":"node_modules/p5/lib/p5.min.js","matter-js":"node_modules/matter-js/build/matter.js","./hooks/withCollision":"src/hooks/withCollision.ts","./entities/Level":"src/entities/Level/index.ts","./state":"src/state/index.ts"}],"src/components/GameState.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.GameState = void 0;
+
+var TypeScriptUI_1 = require("../TypeScriptUI");
+
+var state_1 = require("../state");
+
+var Dialog = function Dialog(item) {
+  return !item ? null : TypeScriptUI_1.Div(TypeScriptUI_1.Div(TypeScriptUI_1.Div(TypeScriptUI_1.String(item.speaker)).with(TypeScriptUI_1.className("title")), TypeScriptUI_1.Div(TypeScriptUI_1.String(item.speach)).with(TypeScriptUI_1.className("text"))), TypeScriptUI_1.Div(TypeScriptUI_1.String(">")).with(TypeScriptUI_1.className("next inner-box"))).with(TypeScriptUI_1.className("dialog outer-box"));
+};
+
+var Health = function Health() {
+  return TypeScriptUI_1.Div(TypeScriptUI_1.String("energy"), TypeScriptUI_1.Div(TypeScriptUI_1.Div().with(TypeScriptUI_1.className("progress-handle")).with(function (node) {
+    return state_1.$nrg.observable.subscribe(function (nrg) {
+      return node.style.width = nrg * 80 + "px";
+    }).unsubscribe;
+  })).with(TypeScriptUI_1.className("progress-track"))).with(TypeScriptUI_1.className("health"));
+};
+
+var GoToMenu = function GoToMenu() {
+  return TypeScriptUI_1.Div(TypeScriptUI_1.Button('Go to menu', function () {
+    state_1.$gameState.next(function () {
+      return {
+        type: 'menu'
+      };
+    });
+  }));
+};
+
+var pause = function pause() {
+  return TypeScriptUI_1.Div(TypeScriptUI_1.If(state_1.$pause.observable, function () {
+    return TypeScriptUI_1.Button('play', function () {
+      return state_1.$pause.next(function () {
+        return false;
+      });
+    });
+  }, function () {
+    return TypeScriptUI_1.Button('pause', function () {
+      return state_1.$pause.next(function () {
+        return true;
+      });
+    });
+  }));
+};
+
+exports.GameState = function () {
+  return TypeScriptUI_1.Div(TypeScriptUI_1.Switch(state_1.$dialog.observable.map(function (items) {
+    return items[0];
+  }), Dialog), Health(), GoToMenu(), pause());
+};
+},{"../TypeScriptUI":"src/TypeScriptUI/index.ts","../state":"src/state/index.ts"}],"src/components/MenuState.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.MenuState = void 0;
+
+var state_1 = require("../state");
+
+var types_1 = require("../types");
+
+var TypeScriptUI_1 = require("../TypeScriptUI");
+
+exports.MenuState = function () {
+  return TypeScriptUI_1.Div(TypeScriptUI_1.Div(TypeScriptUI_1.String('menu')), TypeScriptUI_1.Button('Go to game', function () {
+    state_1.$gameState.next(function () {
+      return {
+        type: 'game',
+        levelPath: types_1.LevelPath.First
+      };
+    });
+  }));
+};
+},{"../state":"src/state/index.ts","../types":"src/types.ts","../TypeScriptUI":"src/TypeScriptUI/index.ts"}],"src/index.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -46008,25 +46155,27 @@ var canvas_1 = require("./canvas");
 
 var state_1 = require("./state");
 
-var Dialog = function Dialog(item) {
-  return !item ? null : TypeScriptUI_1.Div(TypeScriptUI_1.Div(TypeScriptUI_1.Div(TypeScriptUI_1.String(item.speaker)).with(TypeScriptUI_1.className("title")), TypeScriptUI_1.Div(TypeScriptUI_1.String(item.speach)).with(TypeScriptUI_1.className("text"))), TypeScriptUI_1.Div(TypeScriptUI_1.String(">")).with(TypeScriptUI_1.className("next inner-box"))).with(TypeScriptUI_1.className("dialog outer-box"));
-};
+var GameState_1 = require("./components/GameState");
 
-var Health = TypeScriptUI_1.Div(TypeScriptUI_1.String("energy"), TypeScriptUI_1.Div(TypeScriptUI_1.Div().with(TypeScriptUI_1.className("progress-handle")).with(function (node) {
-  return state_1.$nrg.observable.subscribe(function (nrg) {
-    return node.style.width = nrg * 80 + "px";
-  }).unsubscribe;
-})).with(TypeScriptUI_1.className("progress-track"))).with(TypeScriptUI_1.className("health"));
+var MenuState_1 = require("./components/MenuState");
 
 var App = function App() {
-  canvas_1.initCanvas('/data/level1.json');
-  return TypeScriptUI_1.Div(TypeScriptUI_1.Switch(state_1.$dialog.observable.map(function (items) {
-    return items[0];
-  }), Dialog), Health);
+  canvas_1.initCanvas();
+  return TypeScriptUI_1.Div(TypeScriptUI_1.Switch(state_1.$gameState.observable.map(function (gameState) {
+    return gameState.type;
+  }), function (type) {
+    switch (type) {
+      case 'game':
+        return GameState_1.GameState();
+
+      case 'menu':
+        return MenuState_1.MenuState();
+    }
+  }));
 };
 
 document.querySelector('#root').appendChild(App().node);
-},{"./TypeScriptUI":"src/TypeScriptUI/index.ts","./canvas":"src/canvas.ts","./state":"src/state/index.ts"}],"../../../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./TypeScriptUI":"src/TypeScriptUI/index.ts","./canvas":"src/canvas.ts","./state":"src/state/index.ts","./components/GameState":"src/components/GameState.ts","./components/MenuState":"src/components/MenuState.ts"}],"../../../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -46054,7 +46203,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49394" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "58444" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

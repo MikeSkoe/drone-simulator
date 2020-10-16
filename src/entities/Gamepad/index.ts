@@ -1,27 +1,29 @@
 import { $keyPressed, $padKeyPressed } from '../../state';
+import { Entity } from '../../types';
 
 const prevButtons: {[key: number]: [value: number, changed: boolean]} = {};
 const prevAxes: {[key: number]: number} = {};
 
-export const Gamepad = () => {
+export const Gamepad = (): Entity => {
   const onKeyPressed = (event: KeyboardEvent) => {
     $keyPressed.next(() => event.key);
   };
 
-  const unsubs = [
-    (
-      () => {
-        window.addEventListener('keypress', onKeyPressed);
-
-        return () => {
-          window.removeEventListener('keypress', onKeyPressed);
-        }
-      }
-    )(),
-  ];
-
   return {
-    unsubs,
+    localState: {
+      unsubs: [
+        (
+          () => {
+            window.addEventListener('keypress', onKeyPressed);
+
+            return () => {
+              window.removeEventListener('keypress', onKeyPressed);
+            }
+          }
+        )(),
+      ]
+    },
+    draw: () => {},
     update: () => {
       const [gamepad] = navigator.getGamepads();
 

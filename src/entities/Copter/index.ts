@@ -7,21 +7,22 @@ import { addToWorld } from '../../hooks/addToWorld';
 const imagePath = '/data/copter.png';
 
 const MAX_MAGNITUDE = 5;
+const WIDTH = 16;
+const HEIGHT = 8 * .75;
 
 export interface CopterState extends BaseState {
-  pos: {x: number, y: number};
   power: number;
+  setPos: (pos: [number, number]) => void;
+  getPos: () => {x: number, y: number};
 };
 
 export const Copter = (
   p5: P5,
   state: MyState,
-  [x, y]: [number, number] = [50, 50],
-  [w, h]: [number, number] = [50, 25],
 ): Entity<CopterState> => {
   let imageData: P5.Image;
   const body = Matter.Bodies.rectangle(
-    x + w/2, y + h/2, w, h,
+    0, 0, WIDTH, HEIGHT,
     {
       label: 'copter',
       friction: 0.05,
@@ -30,7 +31,13 @@ export const Copter = (
 
   const localState: CopterState = {
     power: 0.00007,
-    pos: body.position,
+    setPos: ([x, y]) => {
+      Matter.Body.setPosition(
+        body,
+        Matter.Vector.create(x, y),
+      );
+    },
+    getPos: () => body.position,
     unsubs: [
       addToWorld(state.engine, [body]),
     ],
@@ -46,13 +53,12 @@ export const Copter = (
         return;
       }
 
-      localState.pos = body.position;
-
       const [gamepad] = navigator.getGamepads();
       const upValue
         = p5.keyIsDown(Key.Up)
           ? 1
         : gamepad?.buttons[7].value ?? 0;
+      
       const rotateValue
         = p5.keyIsDown(Key.Left)
           ? -1
@@ -98,10 +104,10 @@ export const Copter = (
       }
 
       // decrease nrg
-      if (upValue !== 0) {
-        state.health = Math.max(0, state.health - upValue / 1000);
-        $nrg.next(() => state.health);
-      }
+      // if (upValue !== 0) {
+      //   state.health = Math.max(0, state.health - upValue / 1000);
+      //   $nrg.next(() => state.health);
+      // }
     },
 
     draw: () => {
@@ -109,10 +115,9 @@ export const Copter = (
       {
         p5.translate(body.position.x, body.position.y);
         p5.rotate(body.angle);
-        p5.image(imageData, -w/2, -h/4);
+        p5.image(imageData, -imageData.width/2, -imageData.height/2);
       }
       p5.pop();
     },
   }
 };
-

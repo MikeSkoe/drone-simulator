@@ -3,25 +3,24 @@ import { Entity, BaseState, MyState, SCALE } from '../../types';
 
 export interface CameraState extends BaseState {
   pos: P5.Vector;
+  getTargetPos: () => {x: number, y: number};
 }
 
 export const Camera = (
   p5: P5,
   state: MyState,
-  getTargetPos: () => Matter.Vector,
 ): Entity<CameraState> => {
+  const pos = p5.createVector(0, 0);
   const localState: CameraState = {
-    pos: p5.createVector(
-      getTargetPos().x,
-      getTargetPos().y,
-    ),
+    pos,
+    getTargetPos: () => ({x: 0, y: 0}),
     unsubs: [],
   };
 
   return {
     localState,
     update: () => {
-      const {x, y} = getTargetPos();
+      const {x, y} = localState.getTargetPos();
 
       localState.pos.lerp(x, y, 0, 0.1);
     },

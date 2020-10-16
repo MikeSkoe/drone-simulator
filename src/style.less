@@ -16,25 +16,28 @@ html,body {
   margin: 0;
   padding: 0;
   font-family: CCRedAlertInet;
+  font-size: @indentMedium;
 }
 
 body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: black;
+  background: rgb(24, 24, 24);
 }
 
 #app {
   width: 500px;
   height: 500px;
   position: relative;
-  box-shadow: 0 0 25px black;
+  box-shadow: 0 0 @indentMedium black;
+  border-radius: @indentMedium;
 }
 
 canvas {
   position: absolute;
   z-index: -1;
+  border-radius: @indentMedium;
 }
 
 .pixel-outline (@color: gray) {
@@ -48,64 +51,78 @@ canvas {
     ;
 }
 
-.outer-box {
-  padding: @indentSmall @indentMedium @indentMedium;
-  background: rgba(100, 100, 100, 0.32);
-  color: white;
-  display: flex;
-  font-size: 20px;
-  .pixel-outline(lightgray);
+#root {
+  margin: 15px;
 
-  .title {
-    font-weight: bold;
-    color: darkgray;
-    margin-bottom: @indentThin / 2;
+  button {
+    background: transparent;
+    outline: none;
+    border: none;
+    color: white;
+    font-family: CCRedAlertInet;
+    font-size: @indentSmall;
+    .pixel-outline(lightgray);
+    margin: @indentThin 0;
   }
 
-  .text {
-  }
-
-  .inner-box {
-    padding: @indentThin;
-    border: @pixelSize solid #868686;
-    background: rgba(110, 110, 110, 0.16);
-    color: gray;
-  }
-}
-
-.dialog {
-  position: absolute;
-  left: @indentMedium;
-  right: @indentMedium;
-  bottom: @indentBig;
-
-  .next {
-    margin-left: auto;
-    margin-top: auto;
-    width: 8px;
-    height: 8px;
+  .outer-box {
+    padding: @indentSmall @indentMedium @indentMedium;
+    background: rgba(100, 100, 100, 0.32);
+    color: white;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    .pixel-outline(lightgray);
+
+    .title {
+      font-weight: bold;
+      color: darkgray;
+      margin-bottom: @indentThin / 2;
+    }
+
+    .text {
+    }
+
+    .inner-box {
+      padding: @indentThin;
+      border: @pixelSize solid #868686;
+      background: rgba(110, 110, 110, 0.16);
+      color: gray;
+    }
   }
-}
 
-.health {
-  color: white;
-}
-
-.progress-track {
-  width: 80px;
-  height: 8px;
-  background: gray;
-  position: relative;
-
-  .progress-handle {
-    width: 8px;
-    height: 8px;
-    background: white;
+  .dialog {
     position: absolute;
-    left: 0;
-    top: 0;
+    left: @indentMedium;
+    right: @indentMedium;
+    bottom: @indentBig;
+
+    .next {
+      margin-left: auto;
+      margin-top: auto;
+      width: 8px;
+      height: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  }
+
+  .health {
+    color: white;
+  }
+
+  .progress-track {
+    width: 80px;
+    height: 8px;
+    background: gray;
+    position: relative;
+
+    .progress-handle {
+      width: 8px;
+      height: 8px;
+      background: white;
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
   }
 }

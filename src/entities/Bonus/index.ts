@@ -6,31 +6,16 @@ import { addToWorld } from '../../hooks/addToWorld';
 
 const RADIUS = 5;
 
-export interface BonusState extends BaseState { }
+export interface BonusState extends BaseState {
+  addBonus: (x, y) => void;
+}
 
 export const Bonuses = (
   p5: P5,
   state: MyState,
-  data: [
-    x: number,
-    y: number,
-  ][],
 ): Entity<BonusState> => {
-  const bodies = data.map(([x, y]) => 
-    Matter.Bodies.circle(
-      x, y, RADIUS,
-      {
-        isStatic: true,
-        isSensor: true,
-        label: BodyLabel.Bonus,
-      },
-    ),
-  );
-
-  const localState: BonusState = {
-    unsubs: [
-      addToWorld(state.engine, bodies),
-
+  const bodies: Matter.Body[] = [];
+  const unsubs = [
       $collisionActive.observable.subscribe(
         ([labelA, labelB]) => {
           if (
@@ -41,6 +26,23 @@ export const Bonuses = (
           }
         }
       ).unsubscribe,
+  ];
+
+  const localState: BonusState = {
+    addBonus: (x, y) => {
+      const body = Matter.Bodies.circle(
+        x, y, RADIUS,
+        {
+          isStatic: true,
+          isSensor: true,
+          label: BodyLabel.Bonus,
+        },
+      );
+
+      bodies.push(body);
+      unsubs.push(addToWorld(state.engine, [body]));
+    },
+    unsubs: [
     ],
   };
 

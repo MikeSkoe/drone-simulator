@@ -1,6 +1,9 @@
 import * as Matter from 'matter-js';
 
 export const SCALE = 2;
+export enum LevelPath {
+  First = '/data/level1.json',
+};
 
 export enum Key {
   Enter = 13,
@@ -10,15 +13,14 @@ export enum Key {
 };
 
 export type GameState
-  = { type: 'game' }
+  = { type: 'game', levelPath: string }
   | { type: 'menu' }
-  | { type: 'end', win: boolean }
 
 export interface BaseState {
   unsubs: (() => void)[];
 }
 
-export interface Entity<LocalState extends BaseState> {
+export interface Entity<LocalState extends BaseState = BaseState> {
   localState: LocalState;
   draw: () => void;
   update: () => void;
@@ -43,16 +45,14 @@ export interface Mission {
   id: number;
   title: string;
   description: string;
-  target: {
-    pos: [number, number];
-  };
-  progress: 'new' | 'progress' | 'done';
 }
 
 export type MyState = {
   health: number;
   engine: Matter.Engine,
   movable: boolean;
+  paused: boolean;
+  gameState: GameState['type'];
 };
 
 export type TileMapLayer = {

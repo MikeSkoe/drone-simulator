@@ -9,30 +9,16 @@ const RADIUS = 5;
 export interface DialogEmitterState extends BaseState{
   dialog: DialogItem[];
   status: 'new' | 'speaking' | 'done';
+  addDialog: (pos: [number, number], dialogPath: string) => void;
 }
 
 export const DialogEmitter = (
   p5: P5,
   state: MyState,
-  [x, y]: [number, number],
-  dialogPath: string,
 ): Entity<DialogEmitterState> => {
-  const bodies = [
-    Matter.Bodies.circle(
-      x, y, RADIUS,
-      {
-        isStatic: true,
-        isSensor: true,
-        label: BodyLabel.DialogEmitter,
-      },
-    ),
-  ];
-
-  const localState: DialogEmitterState = {
-    status: 'new',
-    dialog: [],
-    unsubs: [
-      addToWorld(state.engine, bodies),
+  const bodies: Matter.Body[] = [];
+  const dialog: DialogItem[] = [];
+  const unsubs: (() => void)[] = [
       $collisionStart.observable
         .subscribe(([labelA, labelB]) => {
           if (localState.status !== 'new') {
@@ -81,13 +67,34 @@ export const DialogEmitter = (
           }
         })
         .unsubscribe,
-    ],
+    ];
+
+  const localState: DialogEmitterState = {
+    status: 'new',
+    addDialog: (pos, dialogPath) => {
+      fetch(dialogPath)
+        .then(data => data.json())
+        .then(dialog => {
+          localState.dialog = dialog;
+
+          const body = Matter.Bodies.circle(
+            ...pos, RADIUS,
+            {
+              isStatic: true,
+              isSensor: true,
+              label: BodyLabel.DialogEmitter,
+            },
+          );
+
+          bodies.push(body);
+          unsubs.push(addToWorld(state.engine, [body]));
+        })
+        .catch(console.log);
+    },
+    dialog,
+    unsubs,
   };
 
-  fetch(dialogPath)
-    .then(data => data.json())
-    .then(dialog => localState.dialog = dialog)
-    .catch(console.log);
 
   return {
     localState,
@@ -100,13 +107,13 @@ export const DialogEmitter = (
       {
         p5.noStroke();
         p5.fill(0, 255, 0);
-        bodies.forEach(body => {
+        for (const body of bodies) {
           p5.circle(
             body.position.x,
             body.position.y,
             RADIUS * 2,
           );
-        });
+        }
       }
       p5.pop();
     },

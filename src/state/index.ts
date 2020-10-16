@@ -8,5 +8,5 @@ export const $nextDialogItem = createState<void>();
 export const $nrg = createState(1);
 export const $keyPressed = createState('');
 export const $padKeyPressed = createState('');
-export const $gameState = createState<GameState>({type: 'game'});
-
+export const $gameState = createState<GameState>({type: 'menu'});
+export const $pause = createState(true);

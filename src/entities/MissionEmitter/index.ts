@@ -14,35 +14,17 @@ enum MissionState {
 
 export interface MissionEmitterState extends BaseState {
   missionState: MissionState;
+  addEmitter: (pos: [number, number], mission: Mission) => void;
+  addTarget: (pos: [number, number]) => void;
 }
 
 export const MissionEmitter = (
   p5: P5,
   state: MyState,
-  mission: Mission,
-  [x, y]: [number, number],
 ): Entity<MissionEmitterState> => {
-  const bodies = [
-    Matter.Bodies.circle(
-      x, y, RADIUS,
-      {
-        isStatic: true,
-        isSensor: true,
-        label: BodyLabel.MissionEmitter,
-      },
-    ),
-    Matter.Bodies.circle(
-      ...mission.target.pos, RADIUS,
-      {
-        isStatic: true,
-        isSensor: true,
-        label: BodyLabel.MissionTarget,
-      }
-    )
-  ];
-
-  const localState: MissionEmitterState = {
-    unsubs: [
+  const emitterBodies: Matter.Body[] = [];
+  const targetBodies: Matter.Body[] = [];
+  const unsubs: (() => void)[] = [
       $collisionStart
         .observable.subscribe(([labelA, labelB]) => {
           if (
@@ -74,9 +56,36 @@ export const MissionEmitter = (
           }
         })
         .unsubscribe,
+  ]
 
-      addToWorld(state.engine, bodies),
-    ],
+  const localState: MissionEmitterState = {
+    addEmitter: (pos, mission) => {
+      const emitterBody = Matter.Bodies.circle(
+        ...pos, RADIUS,
+        {
+          isStatic: true,
+          isSensor: true,
+          label: BodyLabel.MissionEmitter,
+        },
+      );
+
+      emitterBodies.push(emitterBody);
+      addToWorld(state.engine, [emitterBody]);
+    },
+    addTarget: (pos) => {
+      const targetBody = Matter.Bodies.circle(
+        ...pos, RADIUS,
+        {
+          isStatic: true,
+          isSensor: true,
+          label: BodyLabel.MissionTarget,
+        }
+      );
+
+      targetBodies.push(targetBody);
+      addToWorld(state.engine, [targetBody]);
+    },
+    unsubs,
     missionState: MissionState.New,
   };
 
@@ -87,19 +96,25 @@ export const MissionEmitter = (
       p5.push();
       {
         p5.noStroke();
-        p5.fill(255, 0, 255);
-        p5.circle(
-          x,
-          y,
-          RADIUS * 2,
-        );
-        p5.fill(255, 255, 0);
 
-        if (localState.missionState === MissionState.Progress) {
+        for (const emitter of emitterBodies) {
+          p5.fill(255, 0, 255);
           p5.circle(
-            ...mission.target.pos,
+            emitter.position.x,
+            emitter.position.y,
             RADIUS * 2,
           );
+        }
+
+        for (const target of targetBodies) {
+          p5.fill(255, 255, 0);
+          if (localState.missionState === MissionState.Progress) {
+            p5.circle(
+              target.position.x,
+              target.position.y,
+              RADIUS * 2,
+            );
+          };
         }
       }
       p5.pop();

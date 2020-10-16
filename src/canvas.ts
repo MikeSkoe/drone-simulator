@@ -1,18 +1,19 @@
 import P5 = require('p5');
 import * as Matter from 'matter-js';
 import { withCollision } from './hooks/withCollision';
-import { Gamepad } from './entities/Gamepad';
-import { TileMap } from './entities/TileMap';
-import { LevelData, MyState, SCALE } from './types';
+import { Level as Level } from './entities/Level';
+import { MyState } from './types';
+import { $gameState, $pause } from './state';
 
 const canvas = document.querySelector<HTMLDivElement>('#canvas');
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
 
-export const initCanvas = (levelPath: string) => {
+export const initCanvas = () => {
   new P5(
     (p5: P5) => {
       // matter
+      const runner = Matter.Runner.create();
       const engine = Matter.Engine.create();
       engine.world.gravity.y = 0.33;
 
@@ -20,58 +21,58 @@ export const initCanvas = (levelPath: string) => {
         health: 1,
         movable: true,
         engine,
+        paused: false,
+        gameState: 'menu',
       };
 
       // entities
-      const gamepad = Gamepad();
-      const children = [];
+      const level = Level(p5, state);
+      const unsubs = [
+        $gameState.observable
+          .subscribe(gameState => {
+            state.gameState = gameState.type;
 
-      Matter.Engine.run(engine);
+            switch(gameState.type) {
+              case 'game':
+                level.localState.loadLevel(gameState.levelPath);
+                $pause.next(() => false);
+                break;
+              
+              case 'menu':
+                $pause.next(() => true);
+                break;
+            }
+          })
+          .unsubscribe,
+
+        $pause.observable
+          .subscribe(pause => {
+            state.paused = pause;
+            runner.enabled = !pause;
+          })
+          .unsubscribe,
+      ];
+
+      // hooks
       withCollision(engine);
 
       p5.setup = () => {
-        p5.createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT, 'p2d');
-        // p5.pixelDensity(4);
+        p5.createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
+        Matter.Runner.run(runner, engine);
       };
 
       p5.preload = () => {
-        fetch(levelPath)
-          .then(data => data.json())
-          .then((data: LevelData) => {
-            const tileMap = TileMap(p5, state, data);
-
-            children.push(tileMap);
-
-            for (const child of children) {
-              child.preload?.();
-            }
-          })
-          .catch(console.log);
-
+        level.preload();
       }
 
       p5.draw = () => {
-        // update
-        gamepad.update();
+        p5.background('black');
 
-        for (const child of children) {
-          child.update();
-        }
+        // update
+        level.update();
 
         // draw
-        p5.push();
-        {
-          // webgl offset
-          // p5.translate(-CANVAS_WIDTH/2, -CANVAS_HEIGHT/2)
-          p5.background('black');
-          p5.noSmooth();
-          p5.scale(SCALE);
-
-          for (const child of children) {
-            child.draw();
-          }
-        }
-        p5.pop();
+        level.draw();
       };
     },
     canvas,
