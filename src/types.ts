@@ -47,12 +47,27 @@ export interface Mission {
   description: string;
 }
 
+export enum InteractionStatus {
+  New,
+  CanInteract,
+  Speaking,
+  Doing,
+  Returning,
+  Done,
+}
+
+export enum PressKey {
+  Action,
+  Next,
+}
+
 export type MyState = {
   health: number;
   engine: Matter.Engine,
   movable: boolean;
   paused: boolean;
   gameState: GameState['type'];
+  targetPosition: {x: number, y: number};
 };
 
 export type TileMapLayer = {

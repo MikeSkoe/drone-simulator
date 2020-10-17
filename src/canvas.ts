@@ -4,6 +4,7 @@ import { withCollision } from './hooks/withCollision';
 import { Level as Level } from './entities/Level';
 import { MyState } from './types';
 import { $gameState, $pause } from './state';
+import { withDialogs } from './hooks/withDialogs';
 
 const canvas = document.querySelector<HTMLDivElement>('#canvas');
 const CANVAS_WIDTH = 500;
@@ -23,6 +24,7 @@ export const initCanvas = () => {
         engine,
         paused: false,
         gameState: 'menu',
+        targetPosition: {x: 0, y: 0},
       };
 
       // entities
@@ -51,10 +53,12 @@ export const initCanvas = () => {
             runner.enabled = !pause;
           })
           .unsubscribe,
+        
+        ...withCollision(engine),
+        ...withDialogs(state),
       ];
 
       // hooks
-      withCollision(engine);
 
       p5.setup = () => {
         p5.createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);

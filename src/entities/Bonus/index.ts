@@ -42,8 +42,7 @@ export const Bonuses = (
       bodies.push(body);
       unsubs.push(addToWorld(state.engine, [body]));
     },
-    unsubs: [
-    ],
+    unsubs,
   };
 
   return {

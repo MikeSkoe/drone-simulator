@@ -2,13 +2,13 @@ import P5 = require('p5');
 import { Entity, MyState, BaseState, LevelData, SCALE } from '../../types';
 import { CopterState, Copter } from '../Copter';
 import { Bonuses, BonusState } from '../Bonus';
+import { Arrow } from '../Arrow';
 import { Camera } from '../Camera';
 import { MissionEmitter, MissionEmitterState } from '../MissionEmitter';
 import { Grounds, GroundState } from '../Ground';
 import { DialogEmitter, DialogEmitterState } from '../DialogEmitter';
-import { Gamepad } from '../Gamepad';
+import { Gamepad } from '../Pressed';
 import { TileMap, TileMapState } from '../TileMap';
-import { GameState } from '../../components/GameState';
 
 const drawBG = (p5: P5, xOffset: number, yOffset: number) => {
   const w = p5.width;
@@ -119,6 +119,9 @@ export const Level = (
   const grounds = Grounds(p5, state);
   const dialogEmitter = DialogEmitter(p5, state);
   const tileMap = TileMap(p5, state);
+  const arrow = Arrow(p5, state);
+  arrow.localState.getPositionA = () => camera.localState.getTargetPos();
+  arrow.localState.getPositionB = () => state.targetPosition;
 
   const children: Entity[] = [
     tileMap,
@@ -162,10 +165,7 @@ export const Level = (
     },
 
     update: () => {
-      if (
-        state.paused
-        || state.gameState !== 'game'
-      ) {
+      if ( state.paused || state.gameState !== 'game') {
         return;
       }
 
@@ -174,6 +174,7 @@ export const Level = (
       for (const child of children) {
         child.update();
       }
+      arrow.update();
     },
 
     draw: () => {
@@ -185,18 +186,22 @@ export const Level = (
       {
         p5.noSmooth();
         p5.scale(SCALE);
-        const {x: cameraX, y: cameraY} = camera.localState.pos;
+        const {x: cameraX, y: cameraY} = camera.localState.getPos();
 
         drawBG(p5, cameraX / 2, cameraY / 2);
 
-        camera.draw();
-
-        for (const child of children) {
-          child.draw();
+        arrow.draw();
+        p5.push();
+        {
+          camera.draw();
+          for (const child of children) {
+            child.draw();
+          }
         }
+        p5.pop();
+
       }
       p5.pop();
     },
   };
 };
-

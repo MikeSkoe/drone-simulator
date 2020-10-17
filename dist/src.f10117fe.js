@@ -44828,34 +44828,13 @@ var Vector = _dereq_('../geometry/Vector');
 },{"../body/Composite":2,"../core/Common":14,"../core/Events":16,"../geometry/Bounds":26,"../geometry/Vector":28}]},{},[30])(30)
 });
 
-},{}],"src/state/index.ts":[function(require,module,exports) {
+},{}],"src/types.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.$pause = exports.$gameState = exports.$padKeyPressed = exports.$keyPressed = exports.$nrg = exports.$nextDialogItem = exports.$dialog = exports.$collisionActive = exports.$collisionStart = void 0;
-
-var TypeScriptUI_1 = require("../TypeScriptUI");
-
-exports.$collisionStart = TypeScriptUI_1.createState([undefined, undefined]);
-exports.$collisionActive = TypeScriptUI_1.createState([undefined, undefined]);
-exports.$dialog = TypeScriptUI_1.createState([]);
-exports.$nextDialogItem = TypeScriptUI_1.createState();
-exports.$nrg = TypeScriptUI_1.createState(1);
-exports.$keyPressed = TypeScriptUI_1.createState('');
-exports.$padKeyPressed = TypeScriptUI_1.createState('');
-exports.$gameState = TypeScriptUI_1.createState({
-  type: 'menu'
-});
-exports.$pause = TypeScriptUI_1.createState(true);
-},{"../TypeScriptUI":"src/TypeScriptUI/index.ts"}],"src/types.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.BodyLabel = exports.Key = exports.LevelPath = exports.SCALE = void 0;
+exports.PressKey = exports.InteractionStatus = exports.BodyLabel = exports.Key = exports.LevelPath = exports.SCALE = void 0;
 exports.SCALE = 2;
 var LevelPath;
 
@@ -44884,7 +44863,47 @@ var BodyLabel;
   BodyLabel["MissionEmitter"] = "MissionEmitter";
   BodyLabel["MissionTarget"] = "MissionTarget";
 })(BodyLabel = exports.BodyLabel || (exports.BodyLabel = {}));
-},{}],"src/hooks/withCollision.ts":[function(require,module,exports) {
+
+var InteractionStatus;
+
+(function (InteractionStatus) {
+  InteractionStatus[InteractionStatus["New"] = 0] = "New";
+  InteractionStatus[InteractionStatus["CanInteract"] = 1] = "CanInteract";
+  InteractionStatus[InteractionStatus["Speaking"] = 2] = "Speaking";
+  InteractionStatus[InteractionStatus["Doing"] = 3] = "Doing";
+  InteractionStatus[InteractionStatus["Returning"] = 4] = "Returning";
+  InteractionStatus[InteractionStatus["Done"] = 5] = "Done";
+})(InteractionStatus = exports.InteractionStatus || (exports.InteractionStatus = {}));
+
+var PressKey;
+
+(function (PressKey) {
+  PressKey[PressKey["Action"] = 0] = "Action";
+  PressKey[PressKey["Next"] = 1] = "Next";
+})(PressKey = exports.PressKey || (exports.PressKey = {}));
+},{}],"src/state/index.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.$pause = exports.$gameState = exports.$pressed = exports.$nrg = exports.$dialog = exports.$collisionActive = exports.$collisionEnd = exports.$collisionStart = void 0;
+
+var TypeScriptUI_1 = require("../TypeScriptUI");
+
+var types_1 = require("../types");
+
+exports.$collisionStart = TypeScriptUI_1.createState([undefined, undefined]);
+exports.$collisionEnd = TypeScriptUI_1.createState([undefined, undefined]);
+exports.$collisionActive = TypeScriptUI_1.createState([undefined, undefined]);
+exports.$dialog = TypeScriptUI_1.createState([]);
+exports.$nrg = TypeScriptUI_1.createState(1);
+exports.$pressed = TypeScriptUI_1.createState(types_1.PressKey.Action);
+exports.$gameState = TypeScriptUI_1.createState({
+  type: 'menu'
+});
+exports.$pause = TypeScriptUI_1.createState(true);
+},{"../TypeScriptUI":"src/TypeScriptUI/index.ts","../types":"src/types.ts"}],"src/hooks/withCollision.ts":[function(require,module,exports) {
 "use strict";
 
 var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
@@ -44932,37 +44951,63 @@ var state_1 = require("../state");
 
 var types_1 = require("../types");
 
+var onCollisionActive = function onCollisionActive(e) {
+  var _loop_1 = function _loop_1(pair) {
+    var labelA = pair.bodyA.label;
+    var labelB = pair.bodyB.label;
+    state_1.$collisionActive.next(function () {
+      return [types_1.BodyLabel[labelA], types_1.BodyLabel[labelB]];
+    });
+  };
+
+  for (var _i = 0, _a = e.pairs; _i < _a.length; _i++) {
+    var pair = _a[_i];
+
+    _loop_1(pair);
+  }
+};
+
+var onCollisionEnd = function onCollisionEnd(e) {
+  var _loop_2 = function _loop_2(pair) {
+    var labelA = pair.bodyA.label;
+    var labelB = pair.bodyB.label;
+    state_1.$collisionEnd.next(function () {
+      return [types_1.BodyLabel[labelA], types_1.BodyLabel[labelB]];
+    });
+  };
+
+  for (var _i = 0, _a = e.pairs; _i < _a.length; _i++) {
+    var pair = _a[_i];
+
+    _loop_2(pair);
+  }
+};
+
+var onCollisionStart = function onCollisionStart(e) {
+  var _loop_3 = function _loop_3(pair) {
+    var labelA = pair.bodyA.label;
+    var labelB = pair.bodyB.label;
+    state_1.$collisionStart.next(function () {
+      return [types_1.BodyLabel[labelA], types_1.BodyLabel[labelB]];
+    });
+  };
+
+  for (var _i = 0, _a = e.pairs; _i < _a.length; _i++) {
+    var pair = _a[_i];
+
+    _loop_3(pair);
+  }
+};
+
 exports.withCollision = function (engine) {
-  Matter.Events.on(engine, 'collisionActive', function (e) {
-    var _loop_1 = function _loop_1(pair) {
-      var labelA = pair.bodyA.label;
-      var labelB = pair.bodyB.label;
-      state_1.$collisionActive.next(function () {
-        return [types_1.BodyLabel[labelA], types_1.BodyLabel[labelB]];
-      });
-    };
-
-    for (var _i = 0, _a = e.pairs; _i < _a.length; _i++) {
-      var pair = _a[_i];
-
-      _loop_1(pair);
-    }
-  });
-  Matter.Events.on(engine, 'collisionStart', function (e) {
-    var _loop_2 = function _loop_2(pair) {
-      var labelA = pair.bodyA.label;
-      var labelB = pair.bodyB.label;
-      state_1.$collisionStart.next(function () {
-        return [types_1.BodyLabel[labelA], types_1.BodyLabel[labelB]];
-      });
-    };
-
-    for (var _i = 0, _a = e.pairs; _i < _a.length; _i++) {
-      var pair = _a[_i];
-
-      _loop_2(pair);
-    }
-  });
+  Matter.Events.on(engine, 'collisionStart', onCollisionStart);
+  Matter.Events.on(engine, 'collisionActive', onCollisionActive);
+  Matter.Events.on(engine, 'collisionEnd', onCollisionEnd);
+  return [function () {
+    Matter.Events.off(engine, 'collisionStart', onCollisionStart);
+    Matter.Events.off(engine, 'collisionActive', onCollisionActive);
+    Matter.Events.off(engine, 'collisionEnd', onCollisionEnd);
+  }];
 };
 },{"matter-js":"node_modules/matter-js/build/matter.js","../state":"src/state/index.ts","../types":"src/types.ts"}],"src/hooks/addToWorld.ts":[function(require,module,exports) {
 "use strict";
@@ -45201,7 +45246,7 @@ exports.Bonuses = function (p5, state) {
       bodies.push(body);
       unsubs.push(addToWorld_1.addToWorld(state.engine, [body]));
     },
-    unsubs: []
+    unsubs: unsubs
   };
   return {
     localState: localState,
@@ -45213,7 +45258,98 @@ exports.Bonuses = function (p5, state) {
     }
   };
 };
-},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../state":"src/state/index.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Camera/index.ts":[function(require,module,exports) {
+},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../state":"src/state/index.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Arrow/index.ts":[function(require,module,exports) {
+"use strict";
+
+var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  Object.defineProperty(o, k2, {
+    enumerable: true,
+    get: function get() {
+      return m[k];
+    }
+  });
+} : function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  o[k2] = m[k];
+});
+
+var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
+  Object.defineProperty(o, "default", {
+    enumerable: true,
+    value: v
+  });
+} : function (o, v) {
+  o["default"] = v;
+});
+
+var __importStar = this && this.__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) {
+    if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+  }
+
+  __setModuleDefault(result, mod);
+
+  return result;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Arrow = void 0;
+
+var Matter = __importStar(require("matter-js"));
+
+var types_1 = require("../../types");
+
+exports.Arrow = function (p5, state) {
+  var localState = {
+    unsubs: [],
+    getPositionA: function getPositionA() {
+      return {
+        x: 0,
+        y: 0
+      };
+    },
+    getPositionB: function getPositionB() {
+      return {
+        x: 0,
+        y: 0
+      };
+    }
+  };
+  return {
+    localState: localState,
+    update: function update() {},
+    draw: function draw() {
+      p5.push();
+      {
+        var posA = localState.getPositionA();
+        var posB = localState.getPositionB();
+        var angle = Matter.Vector.angle(posA, posB);
+        var distance = Matter.Vector.magnitude(Matter.Vector.sub(posA, posB));
+
+        var _a = localState.getPositionB(),
+            x = _a.x,
+            y = _a.y;
+
+        var offset = Matter.Vector.mult(Matter.Vector.rotate(Matter.Vector.create(1, 0), angle), p5.width * 0.48);
+
+        if (x !== 0 && y !== 0 && distance > 100) {
+          p5.fill('red');
+          p5.translate((p5.width / 2 + offset.x) / types_1.SCALE, (p5.height / 2 + offset.y) / types_1.SCALE);
+          p5.angleMode('radians');
+          p5.rotate(angle);
+          p5.circle(0, 0, 5);
+        }
+      }
+      p5.pop();
+    }
+  };
+};
+},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts"}],"src/entities/Camera/index.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -45224,16 +45360,20 @@ exports.Camera = void 0;
 var types_1 = require("../../types");
 
 exports.Camera = function (p5, state) {
-  var pos = p5.createVector(0, 0);
+  var privateState = {
+    pos: p5.createVector(0, 0)
+  };
   var localState = {
-    pos: pos,
     getTargetPos: function getTargetPos() {
       return {
         x: 0,
         y: 0
       };
     },
-    unsubs: []
+    unsubs: [],
+    getPos: function getPos() {
+      return privateState.pos;
+    }
   };
   return {
     localState: localState,
@@ -45242,10 +45382,10 @@ exports.Camera = function (p5, state) {
           x = _a.x,
           y = _a.y;
 
-      localState.pos.lerp(x, y, 0, 0.1);
+      privateState.pos.lerp(x, y, 0, 0.1);
     },
     draw: function draw() {
-      p5.translate(-localState.pos.x + p5.width / 2 / types_1.SCALE, -localState.pos.y + p5.height / 2 / types_1.SCALE);
+      p5.translate(-privateState.pos.x + p5.width / 2 / types_1.SCALE, -privateState.pos.y + p5.height / 2 / types_1.SCALE);
     }
   };
 };
@@ -45314,56 +45454,101 @@ var state_1 = require("../../state");
 var addToWorld_1 = require("../../hooks/addToWorld");
 
 var RADIUS = 5;
-var MissionState;
 
-(function (MissionState) {
-  MissionState[MissionState["New"] = 0] = "New";
-  MissionState[MissionState["Progress"] = 1] = "Progress";
-  MissionState[MissionState["Done"] = 2] = "Done";
-})(MissionState || (MissionState = {}));
+var onActionPressed = function onActionPressed(privateState) {
+  return function () {
+    switch (privateState.status) {
+      case types_1.InteractionStatus.CanInteract:
+        privateState.status = types_1.InteractionStatus.Speaking;
+        state_1.$dialog.next(function () {
+          return privateState.missions.map(function (mission) {
+            return {
+              speaker: mission.title,
+              speach: mission.description
+            };
+          });
+        });
+        break;
+
+      default:
+        break;
+    }
+  };
+};
+
+var onEndSpeaking = function onEndSpeaking(state, privateState) {
+  return function () {
+    if (privateState.status === types_1.InteractionStatus.Speaking) {
+      privateState.status = types_1.InteractionStatus.Doing;
+      state.targetPosition = privateState.targetBodies[0].position;
+    }
+  };
+};
+
+var onCollisionEnd = function onCollisionEnd(privateState) {
+  return function () {
+    if (privateState.status === types_1.InteractionStatus.CanInteract) {
+      privateState.status = types_1.InteractionStatus.New;
+    }
+  };
+};
+
+var onStartCollisionWithTarget = function onStartCollisionWithTarget(state, privateState) {
+  return function () {
+    if (privateState.status === types_1.InteractionStatus.Doing) {
+      privateState.status = types_1.InteractionStatus.Returning;
+      state.targetPosition = privateState.emitterBodies[0].position;
+    }
+  };
+};
+
+var onStartCollisionWithEmitter = function onStartCollisionWithEmitter(p5, state, privateState) {
+  return function () {
+    if (privateState.status === types_1.InteractionStatus.New) {
+      privateState.status = types_1.InteractionStatus.CanInteract;
+    } else if (privateState.status === types_1.InteractionStatus.Returning) {
+      privateState.status = types_1.InteractionStatus.Done;
+      state.targetPosition = p5.createVector();
+      state_1.$dialog.next(function () {
+        return [{
+          speaker: 'Speaker',
+          speach: 'Done! Thanks!'
+        }];
+      });
+    }
+  };
+};
 
 exports.MissionEmitter = function (p5, state) {
-  var emitterBodies = [];
-  var targetBodies = [];
-  var unsubs = [state_1.$collisionStart.observable.subscribe(function (_a) {
-    var labelA = _a[0],
-        labelB = _a[1];
-
-    if (labelA === types_1.BodyLabel.MissionEmitter || labelB === types_1.BodyLabel.MissionEmitter) {
-      switch (localState.missionState) {
-        case MissionState.New:
-          localState.missionState = MissionState.Progress;
-          break;
-
-        case MissionState.Done:
-          console.log('done!!!');
-          break;
-
-        default:
-          break;
-      }
-    }
-  }).unsubscribe, state_1.$collisionStart.observable.subscribe(function (_a) {
-    var labelA = _a[0],
-        labelB = _a[1];
-
-    if (labelA === types_1.BodyLabel.MissionTarget || labelB === types_1.BodyLabel.MissionTarget) {
-      if (localState.missionState === MissionState.Progress) {
-        localState.missionState = MissionState.Done;
-      }
-    }
-  }).unsubscribe];
+  var privateState = {
+    emitterBodies: [],
+    targetBodies: [],
+    status: types_1.InteractionStatus.New,
+    missions: []
+  };
+  var unsubs = [state_1.$collisionStart.observable.filter(function (labels) {
+    return labels.includes(types_1.BodyLabel.MissionEmitter);
+  }).subscribe(onStartCollisionWithEmitter(p5, state, privateState)).unsubscribe, state_1.$collisionStart.observable.filter(function (labels) {
+    return labels.includes(types_1.BodyLabel.MissionTarget);
+  }).subscribe(onStartCollisionWithTarget(state, privateState)).unsubscribe, state_1.$collisionEnd.observable.filter(function (labels) {
+    return labels.includes(types_1.BodyLabel.MissionEmitter);
+  }).subscribe(onCollisionEnd(privateState)).unsubscribe, state_1.$pressed.observable.filter(function (key) {
+    return key === types_1.PressKey.Action;
+  }).subscribe(onActionPressed(privateState)).unsubscribe, state_1.$dialog.observable.filter(function (dialog) {
+    return dialog.length === 0;
+  }).subscribe(onEndSpeaking(state, privateState)).unsubscribe];
   var localState = {
     addEmitter: function addEmitter(pos, mission) {
       var _a;
 
-      var emitterBody = (_a = Matter.Bodies).circle.apply(_a, __spreadArrays(pos, [RADIUS, {
+      var emitterBody = (_a = Matter.Bodies).circle.apply(_a, __spreadArrays(pos, [RADIUS * 4, {
         isStatic: true,
         isSensor: true,
         label: types_1.BodyLabel.MissionEmitter
       }]));
 
-      emitterBodies.push(emitterBody);
+      privateState.emitterBodies.push(emitterBody);
+      privateState.missions.push(mission);
       addToWorld_1.addToWorld(state.engine, [emitterBody]);
     },
     addTarget: function addTarget(pos) {
@@ -45375,11 +45560,10 @@ exports.MissionEmitter = function (p5, state) {
         label: types_1.BodyLabel.MissionTarget
       }]));
 
-      targetBodies.push(targetBody);
+      privateState.targetBodies.push(targetBody);
       addToWorld_1.addToWorld(state.engine, [targetBody]);
     },
-    unsubs: unsubs,
-    missionState: MissionState.New
+    unsubs: unsubs
   };
   return {
     localState: localState,
@@ -45389,17 +45573,22 @@ exports.MissionEmitter = function (p5, state) {
       {
         p5.noStroke();
 
-        for (var _i = 0, emitterBodies_1 = emitterBodies; _i < emitterBodies_1.length; _i++) {
-          var emitter = emitterBodies_1[_i];
+        for (var _i = 0, _a = privateState.emitterBodies; _i < _a.length; _i++) {
+          var emitter = _a[_i];
           p5.fill(255, 0, 255);
           p5.circle(emitter.position.x, emitter.position.y, RADIUS * 2);
+          p5.fill('yellow');
+
+          if (privateState.status === types_1.InteractionStatus.CanInteract) {
+            p5.rect(emitter.position.x - 2.5, emitter.position.y - 20, 5, 10);
+          }
         }
 
-        for (var _a = 0, targetBodies_1 = targetBodies; _a < targetBodies_1.length; _a++) {
-          var target = targetBodies_1[_a];
+        for (var _b = 0, _c = privateState.targetBodies; _b < _c.length; _b++) {
+          var target = _c[_b];
           p5.fill(255, 255, 0);
 
-          if (localState.missionState === MissionState.Progress) {
+          if (privateState.status === types_1.InteractionStatus.Doing) {
             p5.circle(target.position.x, target.position.y, RADIUS * 2);
           }
 
@@ -45548,92 +45737,97 @@ var addToWorld_1 = require("../../hooks/addToWorld");
 
 var RADIUS = 5;
 
-exports.DialogEmitter = function (p5, state) {
-  var bodies = [];
-  var dialog = [];
-  var unsubs = [state_1.$collisionStart.observable.subscribe(function (_a) {
-    var labelA = _a[0],
-        labelB = _a[1];
+var getOnActionPressed = function getOnActionPressed(privateState) {
+  return function () {
+    switch (privateState.status) {
+      case types_1.InteractionStatus.CanInteract:
+        privateState.status = types_1.InteractionStatus.Speaking;
+        state_1.$dialog.next(function () {
+          return privateState.dialog;
+        });
+        break;
 
-    if (localState.status !== 'new') {
+      default:
+        break;
+    }
+  };
+};
+
+exports.DialogEmitter = function (p5, state) {
+  var privateState = {
+    status: types_1.InteractionStatus.New,
+    dialog: [],
+    bodies: []
+  };
+  var onActionPressed = getOnActionPressed(privateState);
+  var unsubs = [state_1.$collisionStart.observable.filter(function (labels) {
+    return labels.includes(types_1.BodyLabel.DialogEmitter);
+  }).subscribe(function () {
+    if (privateState.status === types_1.InteractionStatus.Done) {
       return;
     }
 
-    if (labelA === types_1.BodyLabel.DialogEmitter || labelB === types_1.BodyLabel.DialogEmitter) {
-      state_1.$dialog.next(function () {
-        return localState.dialog;
-      });
-      localState.status = 'speaking';
+    privateState.status = types_1.InteractionStatus.CanInteract;
+  }).unsubscribe, state_1.$collisionEnd.observable.filter(function (labels) {
+    return labels.includes(types_1.BodyLabel.DialogEmitter);
+  }).subscribe(function () {
+    if (privateState.status === types_1.InteractionStatus.CanInteract) {
+      privateState.status = types_1.InteractionStatus.New;
     }
-  }).unsubscribe, state_1.$padKeyPressed.observable.subscribe(function (padKey) {
-    if (padKey === 'x') {
-      state_1.$nextDialogItem.next(function () {
-        return void 0;
-      });
-    }
-  }).unsubscribe, state_1.$keyPressed.observable.subscribe(function (key) {
-    console.log('key', key);
-
-    if (key === 'Enter') {
-      state_1.$nextDialogItem.next(function () {
-        return void 0;
-      });
-    }
-  }).unsubscribe, state_1.$nextDialogItem.observable.subscribe(function () {
-    state_1.$dialog.next(function (dialog) {
-      return dialog.slice(1);
-    });
-  }).unsubscribe, state_1.$dialog.observable.subscribe(function (dialog) {
-    if (dialog.length > 0) {
-      state.movable = false;
-    } else {
-      state.movable = true;
+  }).unsubscribe, state_1.$pressed.observable.filter(function (key) {
+    return key === types_1.PressKey.Action;
+  }).subscribe(onActionPressed).unsubscribe, state_1.$dialog.observable.filter(function (dialog) {
+    return dialog.length === 0;
+  }).subscribe(function () {
+    if (privateState.status === types_1.InteractionStatus.Speaking) {
+      privateState.status = types_1.InteractionStatus.Done;
     }
   }).unsubscribe];
   var localState = {
-    status: 'new',
     addDialog: function addDialog(pos, dialogPath) {
       fetch(dialogPath).then(function (data) {
         return data.json();
-      }).then(function (dialog) {
+      }).then(function (newDialog) {
         var _a;
 
-        localState.dialog = dialog;
+        privateState.dialog = newDialog;
 
-        var body = (_a = Matter.Bodies).circle.apply(_a, __spreadArrays(pos, [RADIUS, {
+        var body = (_a = Matter.Bodies).circle.apply(_a, __spreadArrays(pos, [RADIUS * 4, {
           isStatic: true,
           isSensor: true,
           label: types_1.BodyLabel.DialogEmitter
         }]));
 
-        bodies.push(body);
+        privateState.bodies.push(body);
         unsubs.push(addToWorld_1.addToWorld(state.engine, [body]));
       }).catch(console.log);
     },
-    dialog: dialog,
     unsubs: unsubs
   };
   return {
     localState: localState,
-    update: function update() {
-      if (localState.status !== 'done') {}
-    },
+    update: function update() {},
     draw: function draw() {
       p5.push();
       {
         p5.noStroke();
         p5.fill(0, 255, 0);
 
-        for (var _i = 0, bodies_1 = bodies; _i < bodies_1.length; _i++) {
-          var body = bodies_1[_i];
+        for (var _i = 0, _a = privateState.bodies; _i < _a.length; _i++) {
+          var body = _a[_i];
           p5.circle(body.position.x, body.position.y, RADIUS * 2);
+          p5.fill('yellow');
+
+          if (privateState.status === types_1.InteractionStatus.CanInteract) {
+            p5.rect(body.position.x - 2.5, body.position.y - 20, 5, 10);
+          }
         }
       }
       p5.pop();
     }
   };
 };
-},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../state":"src/state/index.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Gamepad/index.ts":[function(require,module,exports) {
+},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../state":"src/state/index.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Pressed/index.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -45643,22 +45837,32 @@ exports.getAxe = exports.isButtonReleased = exports.isButtonPressed = exports.is
 
 var state_1 = require("../../state");
 
+var types_1 = require("../../types");
+
 var prevButtons = {};
 var prevAxes = {};
 
 exports.Gamepad = function () {
   var onKeyPressed = function onKeyPressed(event) {
-    state_1.$keyPressed.next(function () {
-      return event.key;
-    });
+    if (event.key === 'Enter') {
+      state_1.$pressed.next(function () {
+        return types_1.PressKey.Action;
+      });
+    }
+
+    if (event.key === 'ArrowRight') {
+      state_1.$pressed.next(function () {
+        return types_1.PressKey.Next;
+      });
+    }
   };
 
   return {
     localState: {
       unsubs: [function () {
-        window.addEventListener('keypress', onKeyPressed);
+        window.addEventListener('keydown', onKeyPressed);
         return function () {
-          window.removeEventListener('keypress', onKeyPressed);
+          window.removeEventListener('keydown', onKeyPressed);
         };
       }()]
     },
@@ -45676,11 +45880,16 @@ exports.Gamepad = function () {
 
         switch (index) {
           case 0:
-            {
-              state_1.$padKeyPressed.next(function () {
-                return 'x';
-              });
-            }
+            state_1.$pressed.next(function () {
+              return types_1.PressKey.Action;
+            });
+            break;
+
+          case 2:
+            state_1.$pressed.next(function () {
+              return types_1.PressKey.Next;
+            });
+            break;
 
           default:
             break;
@@ -45717,7 +45926,7 @@ exports.getAxe = function (index) {
 
   return (_b = (_a = prevAxes[index]) === null || _a === void 0 ? void 0 : _a[0]) !== null && _b !== void 0 ? _b : 0;
 };
-},{"../../state":"src/state/index.ts"}],"src/entities/TileMap/index.ts":[function(require,module,exports) {
+},{"../../state":"src/state/index.ts","../../types":"src/types.ts"}],"src/entities/TileMap/index.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -45787,6 +45996,8 @@ var Copter_1 = require("../Copter");
 
 var Bonus_1 = require("../Bonus");
 
+var Arrow_1 = require("../Arrow");
+
 var Camera_1 = require("../Camera");
 
 var MissionEmitter_1 = require("../MissionEmitter");
@@ -45795,7 +46006,7 @@ var Ground_1 = require("../Ground");
 
 var DialogEmitter_1 = require("../DialogEmitter");
 
-var Gamepad_1 = require("../Gamepad");
+var Pressed_1 = require("../Pressed");
 
 var TileMap_1 = require("../TileMap");
 
@@ -45876,7 +46087,7 @@ var getEntities = function getEntities(levelPath, _a) {
 };
 
 exports.Level = function (p5, state) {
-  var gamepad = Gamepad_1.Gamepad();
+  var gamepad = Pressed_1.Gamepad();
   var copter = Copter_1.Copter(p5, state);
   var camera = Camera_1.Camera(p5, state);
   var missionEmitter = MissionEmitter_1.MissionEmitter(p5, state);
@@ -45884,6 +46095,16 @@ exports.Level = function (p5, state) {
   var grounds = Ground_1.Grounds(p5, state);
   var dialogEmitter = DialogEmitter_1.DialogEmitter(p5, state);
   var tileMap = TileMap_1.TileMap(p5, state);
+  var arrow = Arrow_1.Arrow(p5, state);
+
+  arrow.localState.getPositionA = function () {
+    return camera.localState.getTargetPos();
+  };
+
+  arrow.localState.getPositionB = function () {
+    return state.targetPosition;
+  };
+
   var children = [tileMap, gamepad, copter, missionEmitter, bonuses, grounds, dialogEmitter];
   var localState = {
     unsubs: [],
@@ -45930,6 +46151,8 @@ exports.Level = function (p5, state) {
         var child = children_3[_i];
         child.update();
       }
+
+      arrow.update();
     },
     draw: function draw() {
       if (state.gameState !== 'game') {
@@ -45940,22 +46163,57 @@ exports.Level = function (p5, state) {
       {
         p5.noSmooth();
         p5.scale(types_1.SCALE);
-        var _a = camera.localState.pos,
+
+        var _a = camera.localState.getPos(),
             cameraX = _a.x,
             cameraY = _a.y;
-        drawBG(p5, cameraX / 2, cameraY / 2);
-        camera.draw();
 
-        for (var _i = 0, children_4 = children; _i < children_4.length; _i++) {
-          var child = children_4[_i];
-          child.draw();
+        drawBG(p5, cameraX / 2, cameraY / 2);
+        arrow.draw();
+        p5.push();
+        {
+          camera.draw();
+
+          for (var _i = 0, children_4 = children; _i < children_4.length; _i++) {
+            var child = children_4[_i];
+            child.draw();
+          }
         }
+        p5.pop();
       }
       p5.pop();
     }
   };
 };
-},{"../../types":"src/types.ts","../Copter":"src/entities/Copter/index.ts","../Bonus":"src/entities/Bonus/index.ts","../Camera":"src/entities/Camera/index.ts","../MissionEmitter":"src/entities/MissionEmitter/index.ts","../Ground":"src/entities/Ground/index.ts","../DialogEmitter":"src/entities/DialogEmitter/index.ts","../Gamepad":"src/entities/Gamepad/index.ts","../TileMap":"src/entities/TileMap/index.ts"}],"src/canvas.ts":[function(require,module,exports) {
+},{"../../types":"src/types.ts","../Copter":"src/entities/Copter/index.ts","../Bonus":"src/entities/Bonus/index.ts","../Arrow":"src/entities/Arrow/index.ts","../Camera":"src/entities/Camera/index.ts","../MissionEmitter":"src/entities/MissionEmitter/index.ts","../Ground":"src/entities/Ground/index.ts","../DialogEmitter":"src/entities/DialogEmitter/index.ts","../Pressed":"src/entities/Pressed/index.ts","../TileMap":"src/entities/TileMap/index.ts"}],"src/hooks/withDialogs.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.withDialogs = void 0;
+
+var state_1 = require("../state");
+
+var types_1 = require("../types");
+
+exports.withDialogs = function (state) {
+  return [state_1.$pressed.observable.filter(function (key) {
+    return key === types_1.PressKey.Next;
+  }).subscribe(function () {
+    state_1.$dialog.next(function (dialog) {
+      var newDialog = dialog.slice(1);
+      return newDialog;
+    });
+  }).unsubscribe, state_1.$dialog.observable.subscribe(function (dialog) {
+    if (dialog.length > 0) {
+      state.movable = false;
+    } else {
+      state.movable = true;
+    }
+  }).unsubscribe];
+};
+},{"../state":"src/state/index.ts","../types":"src/types.ts"}],"src/canvas.ts":[function(require,module,exports) {
 "use strict";
 
 var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
@@ -45992,6 +46250,20 @@ var __importStar = this && this.__importStar || function (mod) {
   return result;
 };
 
+var __spreadArrays = this && this.__spreadArrays || function () {
+  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
+    s += arguments[i].length;
+  }
+
+  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
+    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
+      r[k] = a[j];
+    }
+  }
+
+  return r;
+};
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -46007,6 +46279,8 @@ var Level_1 = require("./entities/Level");
 
 var state_1 = require("./state");
 
+var withDialogs_1 = require("./hooks/withDialogs");
+
 var canvas = document.querySelector('#canvas');
 var CANVAS_WIDTH = 500;
 var CANVAS_HEIGHT = 500;
@@ -46021,10 +46295,15 @@ exports.initCanvas = function () {
       movable: true,
       engine: engine,
       paused: false,
-      gameState: 'menu'
+      gameState: 'menu',
+      targetPosition: {
+        x: 0,
+        y: 0
+      }
     };
     var level = Level_1.Level(p5, state);
-    var unsubs = [state_1.$gameState.observable.subscribe(function (gameState) {
+
+    var unsubs = __spreadArrays([state_1.$gameState.observable.subscribe(function (gameState) {
       state.gameState = gameState.type;
 
       switch (gameState.type) {
@@ -46044,8 +46323,7 @@ exports.initCanvas = function () {
     }).unsubscribe, state_1.$pause.observable.subscribe(function (pause) {
       state.paused = pause;
       runner.enabled = !pause;
-    }).unsubscribe];
-    withCollision_1.withCollision(engine);
+    }).unsubscribe], withCollision_1.withCollision(engine), withDialogs_1.withDialogs(state));
 
     p5.setup = function () {
       p5.createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -46063,7 +46341,7 @@ exports.initCanvas = function () {
     };
   }, canvas);
 };
-},{"p5":"node_modules/p5/lib/p5.min.js","matter-js":"node_modules/matter-js/build/matter.js","./hooks/withCollision":"src/hooks/withCollision.ts","./entities/Level":"src/entities/Level/index.ts","./state":"src/state/index.ts"}],"src/components/GameState.ts":[function(require,module,exports) {
+},{"p5":"node_modules/p5/lib/p5.min.js","matter-js":"node_modules/matter-js/build/matter.js","./hooks/withCollision":"src/hooks/withCollision.ts","./entities/Level":"src/entities/Level/index.ts","./state":"src/state/index.ts","./hooks/withDialogs":"src/hooks/withDialogs.ts"}],"src/components/GameState.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -46203,7 +46481,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "58444" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49706" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

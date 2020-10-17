@@ -1,12 +1,18 @@
-import { $keyPressed, $padKeyPressed } from '../../state';
-import { Entity } from '../../types';
+import { $pressed } from '../../state';
+import { Entity, PressKey } from '../../types';
 
 const prevButtons: {[key: number]: [value: number, changed: boolean]} = {};
 const prevAxes: {[key: number]: number} = {};
 
 export const Gamepad = (): Entity => {
   const onKeyPressed = (event: KeyboardEvent) => {
-    $keyPressed.next(() => event.key);
+    if (event.key === 'Enter') {
+      $pressed.next(() => PressKey.Action);
+    }
+
+    if (event.key === 'ArrowRight') {
+      $pressed.next(() => PressKey.Next);
+    }
   };
 
   return {
@@ -14,10 +20,10 @@ export const Gamepad = (): Entity => {
       unsubs: [
         (
           () => {
-            window.addEventListener('keypress', onKeyPressed);
+            window.addEventListener('keydown', onKeyPressed);
 
             return () => {
-              window.removeEventListener('keypress', onKeyPressed);
+              window.removeEventListener('keydown', onKeyPressed);
             }
           }
         )(),
@@ -32,15 +38,21 @@ export const Gamepad = (): Entity => {
 
         prevButtons[index] = prevButtons[index] || [button.value, false];
         const pressed = button.value !== prevButtons[index][0];
+
         prevButtons[index] = [
           button.value,
           pressed,
         ];
 
         switch (index) {
-          case 0: {
-            $padKeyPressed.next(() => 'x');
-          }
+          case 0:
+            $pressed.next(() => PressKey.Action);
+            break;
+
+          case 2:
+            $pressed.next(() => PressKey.Next);
+            break;
+
           default: break;
         }
       }
@@ -55,6 +67,4 @@ export const Gamepad = (): Entity => {
 export const isButtonDown = (index: number) => (prevButtons[index])?.[0] ?? 0 > 0;
 export const isButtonPressed = (index: number) => (prevButtons[index])?.[0] && (prevButtons[index])?.[1];
 export const isButtonReleased = (index: number) => (!prevButtons[index])?.[0] && (prevButtons[index])?.[1];
-
 export const getAxe = (index: number) => (prevAxes[index])?.[0] ?? 0;
-

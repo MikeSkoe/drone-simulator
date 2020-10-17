@@ -1,84 +1,89 @@
 import P5 = require('p5');
 import * as Matter from 'matter-js';
-import { Entity, DialogItem, BaseState, MyState, BodyLabel } from '../../types';
-import { $collisionStart, $dialog, $keyPressed, $nextDialogItem, $padKeyPressed } from '../../state';
+import { Entity, DialogItem, BaseState, MyState, BodyLabel, InteractionStatus, PressKey } from '../../types';
+import { $collisionEnd, $collisionStart, $dialog, $pressed } from '../../state';
 import { addToWorld } from '../../hooks/addToWorld';
 
 const RADIUS = 5;
 
 export interface DialogEmitterState extends BaseState{
-  dialog: DialogItem[];
-  status: 'new' | 'speaking' | 'done';
   addDialog: (pos: [number, number], dialogPath: string) => void;
+}
+
+const getOnActionPressed = (
+  privateState: PrivateState,
+) => () => {
+  switch (privateState.status) {
+    case InteractionStatus.CanInteract:
+      privateState.status = InteractionStatus.Speaking;
+      $dialog.next(() => privateState.dialog);
+      break;
+
+    default: break;
+  }
+}
+
+interface PrivateState {
+  status: InteractionStatus;
+  dialog: DialogItem[];
+  bodies: Matter.Body[];
 }
 
 export const DialogEmitter = (
   p5: P5,
   state: MyState,
 ): Entity<DialogEmitterState> => {
-  const bodies: Matter.Body[] = [];
-  const dialog: DialogItem[] = [];
+  const privateState: PrivateState = {
+    status: InteractionStatus.New,
+    dialog: [],
+    bodies: [],
+  }
+  const onActionPressed = getOnActionPressed(privateState);
   const unsubs: (() => void)[] = [
       $collisionStart.observable
-        .subscribe(([labelA, labelB]) => {
-          if (localState.status !== 'new') {
+        .filter(labels => labels.includes(BodyLabel.DialogEmitter))
+        .subscribe(() => {
+          if (privateState.status === InteractionStatus.Done) {
             return;
           }
 
-          if (labelA === BodyLabel.DialogEmitter
-            || labelB === BodyLabel.DialogEmitter
-          ) {
-            $dialog.next(() => localState.dialog);
-            localState.status = 'speaking';
-          }
+          privateState.status = InteractionStatus.CanInteract;
         })
         .unsubscribe,
 
-      $padKeyPressed.observable
-        .subscribe(padKey => {
-          if (padKey === 'x') {
-            $nextDialogItem.next(() => void 0);
-          }
-        })
-        .unsubscribe,
-      
-      $keyPressed.observable
-        .subscribe(key => {
-          console.log('key', key);
-
-          if (key === 'Enter') {
-            $nextDialogItem.next(() => void 0);
-          }
-        })
-        .unsubscribe,
-
-      $nextDialogItem.observable
+      $collisionEnd.observable
+        .filter(labels => labels.includes(BodyLabel.DialogEmitter))
         .subscribe(() => {
-          $dialog.next(dialog => dialog.slice(1));
+          if (privateState.status === InteractionStatus.CanInteract) {
+            privateState.status = InteractionStatus.New;
+          }
         })
+        .unsubscribe,
+
+      $pressed.observable
+        .filter(key => key === PressKey.Action)
+        .subscribe(onActionPressed)
         .unsubscribe,
 
       $dialog.observable
-        .subscribe(dialog => {
-          if (dialog.length > 0) {
-            state.movable = false;
-          } else {
-            state.movable = true;
+        .filter(dialog => dialog.length === 0)
+        .subscribe(() => {
+          if (privateState.status === InteractionStatus.Speaking) {
+            privateState.status = InteractionStatus.Done
           }
         })
         .unsubscribe,
     ];
 
   const localState: DialogEmitterState = {
-    status: 'new',
     addDialog: (pos, dialogPath) => {
       fetch(dialogPath)
         .then(data => data.json())
-        .then(dialog => {
-          localState.dialog = dialog;
+        .then((newDialog: DialogItem[]) => {
+          privateState.dialog = newDialog;
 
           const body = Matter.Bodies.circle(
-            ...pos, RADIUS,
+            ...pos, RADIUS * 4,
             {
               isStatic: true,
               isSensor: true,
@@ -86,33 +91,38 @@ export const DialogEmitter = (
             },
           );
 
-          bodies.push(body);
+          privateState.bodies.push(body);
           unsubs.push(addToWorld(state.engine, [body]));
         })
         .catch(console.log);
     },
-    dialog,
     unsubs,
   };
 
-
   return {
     localState,
-    update: () => {
-      if (localState.status !== 'done') {
-      }
-    },
+    update: () => { },
     draw: () => {
       p5.push();
       {
         p5.noStroke();
         p5.fill(0, 255, 0);
-        for (const body of bodies) {
+        for (const body of privateState.bodies) {
           p5.circle(
             body.position.x,
             body.position.y,
             RADIUS * 2,
           );
+
+          p5.fill('yellow');
+          if (privateState.status === InteractionStatus.CanInteract) {
+            p5.rect(
+              body.position.x - 2.5,
+              body.position.y - 20,
+              5,
+              10,
+            )
+          }
         }
       }
       p5.pop();

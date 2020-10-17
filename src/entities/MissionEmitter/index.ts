@@ -1,67 +1,112 @@
 import P5 = require('p5');
 import * as Matter from 'matter-js';
-import { Entity, Mission, BaseState, MyState, BodyLabel } from '../../types';
-import { $collisionStart } from '../../state';
+import { Entity, Mission, BaseState, MyState, BodyLabel, InteractionStatus, PressKey } from '../../types';
+import { $collisionEnd, $collisionStart, $dialog, $pressed } from '../../state';
 import { addToWorld } from '../../hooks/addToWorld';
 
 const RADIUS = 5;
 
-enum MissionState {
-  New,
-  Progress,
-  Done,
-}
-
 export interface MissionEmitterState extends BaseState {
-  missionState: MissionState;
   addEmitter: (pos: [number, number], mission: Mission) => void;
   addTarget: (pos: [number, number]) => void;
+}
+
+interface PrivateState {
+  emitterBodies: Matter.Body[];
+  targetBodies: Matter.Body[];
+  status: InteractionStatus;
+  missions: Mission[];
+}
+
+const onActionPressed = (privateState: PrivateState) => () => {
+  switch(privateState.status) {
+    case InteractionStatus.CanInteract:
+      privateState.status = InteractionStatus.Speaking;
+      $dialog.next(() => privateState.missions.map(mission => ({
+        speaker: mission.title,
+        speach: mission.description,
+      })));
+      break;
+
+    default: break;
+    
+  }
+}
+
+const onEndSpeaking = (state: MyState, privateState: PrivateState) => () => {
+  if (privateState.status === InteractionStatus.Speaking) {
+    privateState.status = InteractionStatus.Doing;
+    state.targetPosition = privateState.targetBodies[0].position;
+  }
+}
+
+const onCollisionEnd = (privateState: PrivateState) => () => {
+  if (privateState.status === InteractionStatus.CanInteract) {
+    privateState.status = InteractionStatus.New;
+  }
+}
+
+const onStartCollisionWithTarget = (state: MyState, privateState: PrivateState) => () => {
+  if (privateState.status === InteractionStatus.Doing) {
+    privateState.status = InteractionStatus.Returning;
+    state.targetPosition = privateState.emitterBodies[0].position;
+  }
+}
+
+const onStartCollisionWithEmitter = (p5: P5, state: MyState, privateState: PrivateState) => () => {
+  if (privateState.status === InteractionStatus.New) {
+    privateState.status = InteractionStatus.CanInteract;
+  } else if (privateState.status === InteractionStatus.Returning) {
+    privateState.status = InteractionStatus.Done;
+    state.targetPosition = p5.createVector();
+    $dialog.next(() => [{
+      speaker: 'Speaker',
+      speach: 'Done! Thanks!',
+    }])
+  }
 }
 
 export const MissionEmitter = (
   p5: P5,
   state: MyState,
 ): Entity<MissionEmitterState> => {
-  const emitterBodies: Matter.Body[] = [];
-  const targetBodies: Matter.Body[] = [];
+  const privateState: PrivateState = {
+    emitterBodies: [],
+    targetBodies: [],
+    status: InteractionStatus.New,
+    missions: [],
+  }
   const unsubs: (() => void)[] = [
-      $collisionStart
-        .observable.subscribe(([labelA, labelB]) => {
-          if (
-            labelA === BodyLabel.MissionEmitter
-            || labelB === BodyLabel.MissionEmitter
-          ) {
-            switch (localState.missionState) {
-              case MissionState.New:
-                localState.missionState = MissionState.Progress;
-                break;
-              case MissionState.Done:
-                console.log('done!!!');
-                break;
-              default: break;
-            }
-          }
-        })
+    $collisionStart.observable
+      .filter(labels => labels.includes(BodyLabel.MissionEmitter))
+      .subscribe(onStartCollisionWithEmitter(p5, state, privateState))
+      .unsubscribe,
+    
+    $collisionStart.observable
+      .filter(labels => labels.includes(BodyLabel.MissionTarget))
+      .subscribe(onStartCollisionWithTarget(state, privateState))
+      .unsubscribe,
+
+      $collisionEnd.observable
+        .filter(labels => labels.includes(BodyLabel.MissionEmitter))
+        .subscribe(onCollisionEnd(privateState))
         .unsubscribe,
 
-      $collisionStart
-        .observable.subscribe(([labelA, labelB]) => {
-          if (
-            labelA === BodyLabel.MissionTarget
-            || labelB === BodyLabel.MissionTarget
-          ) {
-            if (localState.missionState === MissionState.Progress) {
-              localState.missionState = MissionState.Done;
-            }
-          }
-        })
+      $pressed.observable
+        .filter(key => key === PressKey.Action)
+        .subscribe(onActionPressed(privateState))
+        .unsubscribe,
+      
+      $dialog.observable
+        .filter(dialog => dialog.length === 0)
+        .subscribe(onEndSpeaking(state, privateState))
         .unsubscribe,
   ]
 
   const localState: MissionEmitterState = {
     addEmitter: (pos, mission) => {
       const emitterBody = Matter.Bodies.circle(
-        ...pos, RADIUS,
+        ...pos, RADIUS * 4,
         {
           isStatic: true,
           isSensor: true,
@@ -69,9 +114,11 @@ export const MissionEmitter = (
         },
       );
 
-      emitterBodies.push(emitterBody);
+      privateState.emitterBodies.push(emitterBody);
+      privateState.missions.push(mission);
       addToWorld(state.engine, [emitterBody]);
     },
+
     addTarget: (pos) => {
       const targetBody = Matter.Bodies.circle(
         ...pos, RADIUS,
@@ -82,11 +129,10 @@ export const MissionEmitter = (
         }
       );
 
-      targetBodies.push(targetBody);
+      privateState.targetBodies.push(targetBody);
       addToWorld(state.engine, [targetBody]);
     },
     unsubs,
-    missionState: MissionState.New,
   };
 
   return {
@@ -97,18 +143,27 @@ export const MissionEmitter = (
       {
         p5.noStroke();
 
-        for (const emitter of emitterBodies) {
+        for (const emitter of privateState.emitterBodies) {
           p5.fill(255, 0, 255);
           p5.circle(
             emitter.position.x,
             emitter.position.y,
             RADIUS * 2,
           );
+          p5.fill('yellow');
+          if (privateState.status === InteractionStatus.CanInteract) {
+            p5.rect(
+              emitter.position.x - 2.5,
+              emitter.position.y - 20,
+              5,
+              10,
+            )
+          }
         }
 
-        for (const target of targetBodies) {
+        for (const target of privateState.targetBodies) {
           p5.fill(255, 255, 0);
-          if (localState.missionState === MissionState.Progress) {
+          if (privateState.status === InteractionStatus.Doing) {
             p5.circle(
               target.position.x,
               target.position.y,

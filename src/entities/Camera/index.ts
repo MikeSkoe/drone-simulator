@@ -2,19 +2,25 @@ import P5 = require('p5');
 import { Entity, BaseState, MyState, SCALE } from '../../types';
 
 export interface CameraState extends BaseState {
-  pos: P5.Vector;
+  getPos: () => {x: number, y: number}
   getTargetPos: () => {x: number, y: number};
+}
+
+interface PrivateState {
+  pos: P5.Vector;
 }
 
 export const Camera = (
   p5: P5,
   state: MyState,
 ): Entity<CameraState> => {
-  const pos = p5.createVector(0, 0);
+  const privateState: PrivateState = {
+    pos: p5.createVector(0, 0),
+  };
   const localState: CameraState = {
-    pos,
     getTargetPos: () => ({x: 0, y: 0}),
     unsubs: [],
+    getPos: () => privateState.pos,
   };
 
   return {
@@ -22,12 +28,12 @@ export const Camera = (
     update: () => {
       const {x, y} = localState.getTargetPos();
 
-      localState.pos.lerp(x, y, 0, 0.1);
+      privateState.pos.lerp(x, y, 0, 0.1);
     },
     draw: () => {
       p5.translate(
-        -localState.pos.x + p5.width/2/SCALE,
-        -localState.pos.y + p5.height/2/SCALE,
+        -privateState.pos.x + p5.width/2/SCALE,
+        -privateState.pos.y + p5.height/2/SCALE,
       );
     }
   }

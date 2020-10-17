@@ -1,7 +1,6 @@
 import P5 = require('p5');
 import * as Matter from 'matter-js';
 import { Key, Entity, BaseState, MyState } from '../../types';
-import { $nrg } from '../../state';
 import { addToWorld } from '../../hooks/addToWorld';
 
 const imagePath = '/data/copter.png';
