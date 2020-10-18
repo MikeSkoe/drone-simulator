@@ -81,4 +81,4 @@ var e,t=arguments[3];!function(n){if("object"==typeof exports&&"undefined"!=type
 },{"../state":"lPM7","../types":"Qd94","../TypeScriptUI":"IDgW"}],"B6dB":[function(require,module,exports) {
 "use strict";Object.defineProperty(exports,"__esModule",{value:!0});var e=require("./TypeScriptUI"),t=require("./canvas"),r=require("./state"),n=require("./components/GameState"),a=require("./components/MenuState"),u=function(){return t.initCanvas(),e.Div(e.Switch(r.$gameState.observable.map(function(e){return e.type}),function(e){switch(e){case"game":return n.GameState();case"menu":return a.MenuState()}}))};document.querySelector("#root").appendChild(u().node);
 },{"./TypeScriptUI":"IDgW","./canvas":"qKVu","./state":"lPM7","./components/GameState":"K8pr","./components/MenuState":"Of21"}]},{},["B6dB"], null)
-//# sourceMappingURL=/src.358d7eb8.js.map
+//# sourceMappingURL=https://mikeskoe.github.io/drone-simulator/src.358d7eb8.js.map
