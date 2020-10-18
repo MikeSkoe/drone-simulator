@@ -44787,13 +44787,9 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.PressKey = exports.InteractionStatus = exports.BodyLabel = exports.Key = exports.LevelPath = exports.SCALE = void 0;
 exports.SCALE = 2;
-var LevelPath;
-
-(function (LevelPath) {
-  LevelPath["First"] = "/data/level1.json";
-})(LevelPath = exports.LevelPath || (exports.LevelPath = {}));
-
-;
+exports.LevelPath = {
+  First: location.href + "data/level1.json"
+};
 var Key;
 
 (function (Key) {
@@ -44932,7 +44928,7 @@ var types_1 = require("../types");
 
 var addToWorld_1 = require("../hooks/addToWorld");
 
-var imagePath = '/data/copter.png';
+var imagePath = location.href + "data/copter.png";
 var MAX_MAGNITUDE = 5;
 var WIDTH = 16;
 var HEIGHT = 8 * .75;
@@ -45780,7 +45776,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.TileMap = void 0;
-var img = '/data/block.png';
+var img = location.href + "data/block.png";
 
 var drawToBuffer = function drawToBuffer(_a, layer, tileBuffer, imageData) {
   var width = _a[0],
@@ -46438,7 +46434,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "60416" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "52935" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

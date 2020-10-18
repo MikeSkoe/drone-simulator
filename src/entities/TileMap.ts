@@ -1,7 +1,7 @@
 import P5 = require('p5');
-import { Entity, BaseState, MyState, LevelData, TileMapLayer } from '../types';
+import { Entity, BaseState, MyState, TileMapLayer } from '../types';
 
-const img = '/data/block.png';
+const img = `${location.href}data/block.png`;
 
 const drawToBuffer = (
   [width, height]: [number, number],

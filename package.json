@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "parcel index.html",
+    "build": "parcel build index.html --out-dir docs --public-url https://mikeskoe.github.io/drone-simulator"
   },
   "author": "",
   "license": "ISC",

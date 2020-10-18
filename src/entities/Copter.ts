@@ -3,7 +3,7 @@ import * as Matter from 'matter-js';
 import { Key, Entity, BaseState, MyState } from '../types';
 import { addToWorld } from '../hooks/addToWorld';
 
-const imagePath = '/data/copter.png';
+const imagePath = `${location.href}data/copter.png`;
 
 const MAX_MAGNITUDE = 5;
 const WIDTH = 16;
