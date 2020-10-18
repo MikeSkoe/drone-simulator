@@ -1,5 +1,5 @@
 import { View } from '../lib/View';
-import { default as Observable } from 'zen-observable';
+import {Observable} from '../lib/Observable';
 
 class Range extends View<HTMLInputElement | HTMLProgressElement> {
     node: HTMLInputElement | HTMLProgressElement;
@@ -26,7 +26,7 @@ class Range extends View<HTMLInputElement | HTMLProgressElement> {
         this.pushUnsub(
             range.subscribe(
                 value => this.node.value = `${value}`
-            ).unsubscribe,
+            ).unsub,
         );
 
         this.node.oninput = (event: InputEvent) => {

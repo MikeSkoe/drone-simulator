@@ -1,5 +1,5 @@
 import { View } from '../lib/View';
-import {default as Observable} from 'zen-observable';
+import {Observable} from '../lib/Observable';
 
 class Link extends View<HTMLAnchorElement> {
     node = document.createElement('a');
@@ -15,7 +15,7 @@ class Link extends View<HTMLAnchorElement> {
             this.pushUnsub(
                 href.subscribe(
                     val => this.node.href = val,
-                ).unsubscribe
+                ).unsub
             );
         }
         children.forEach(child => this.node.appendChild(child.node));

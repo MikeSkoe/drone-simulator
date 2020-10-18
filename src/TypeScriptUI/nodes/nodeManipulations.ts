@@ -1,4 +1,4 @@
-import {default as Observable} from "zen-observable";
+import {Observable} from '../lib/Observable';
 
 export const className = (classNames: string) => (node: HTMLElement) => {
   classNames.split(' ').forEach(
@@ -43,6 +43,6 @@ export const classNameOn = (
                   className => node.classList.remove(className),
                 );
             }
-        }).unsubscribe
+        }).unsub
     }
 }

@@ -1,7 +1,7 @@
 import P5 = require('p5');
 import * as Matter from 'matter-js';
 import { withCollision } from './hooks/withCollision';
-import { Level as Level } from './entities/Level';
+import { Level } from './entities/Level';
 import { MyState } from './types';
 import { $gameState, $pause } from './state';
 import { withDialogs } from './hooks/withDialogs';
@@ -45,20 +45,15 @@ export const initCanvas = () => {
                 break;
             }
           })
-          .unsubscribe,
+          .unsub,
 
         $pause.observable
           .subscribe(pause => {
             state.paused = pause;
             runner.enabled = !pause;
           })
-          .unsubscribe,
-        
-        ...withCollision(engine),
-        ...withDialogs(state),
+          .unsub,
       ];
-
-      // hooks
 
       p5.setup = () => {
         p5.createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);

@@ -1,5 +1,5 @@
 import { View } from '../lib/View';
-import {default as Observable} from 'zen-observable';
+import {Observable} from '../lib/Observable';
 
 const isObservable = <T>(value: any): value is Observable<T> =>
     Object.keys(value).includes('_subscriber');
@@ -14,7 +14,7 @@ class String extends View<Text> {
             this.pushUnsub(
                 str.subscribe(
                     str => this.node.textContent = `${str}`,
-                ).unsubscribe,
+                ).unsub,
             )
         } else {
             this.node.textContent = `${str}`;

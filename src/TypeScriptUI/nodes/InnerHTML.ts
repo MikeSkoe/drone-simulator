@@ -11,7 +11,7 @@ class String extends View<HTMLDivElement> {
             this.node.innerHTML = str;
         } else {
             this.pushUnsub(
-                str.observable.subscribe(val => this.node.innerHTML = val).unsubscribe,
+                str.observable.subscribe(val => this.node.innerHTML = val).unsub,
             )
         }
     }

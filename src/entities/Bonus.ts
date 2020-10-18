@@ -1,8 +1,8 @@
 import P5 = require('p5');
 import * as Matter from 'matter-js';
-import { Entity, MyState, BaseState, BodyLabel } from '../../types';
-import { $collisionActive } from '../../state';
-import { addToWorld } from '../../hooks/addToWorld';
+import { Entity, MyState, BaseState, BodyLabel } from '../types';
+import { $collisionActive } from '../state';
+import { addToWorld } from '../hooks/addToWorld';
 
 const RADIUS = 5;
 
@@ -25,7 +25,7 @@ export const Bonuses = (
             state.health = Math.min(1, state.health + 0.005);
           }
         }
-      ).unsubscribe,
+      ).unsub,
   ];
 
   const localState: BonusState = {

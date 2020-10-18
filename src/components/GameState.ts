@@ -24,8 +24,8 @@ const Health = () => Div(
       .with(node => 
         $nrg.observable
           .subscribe(nrg => node.style.width = `${nrg * 80}px`)
-          .unsubscribe,
-    ),
+          .unsub,
+      ),
   ).with(className("progress-track")),
 ).with(className("health"))
 

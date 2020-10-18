@@ -1,5 +1,5 @@
 import P5 = require('p5');
-import { Entity, BaseState, MyState, SCALE } from '../../types';
+import { Entity, BaseState, MyState, SCALE } from '../types';
 
 export interface CameraState extends BaseState {
   getPos: () => {x: number, y: number}

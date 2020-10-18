@@ -1,6 +1,6 @@
 import * as Matter from 'matter-js';
 import P5 = require('p5');
-import { Entity, MyState, BaseState, SCALE } from '../../types';
+import { Entity, MyState, BaseState, SCALE } from '../types';
 
 export interface ArrowState extends BaseState {
   getPositionA: () => ({x: number, y: number});

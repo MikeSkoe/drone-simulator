@@ -8,7 +8,7 @@ class Input extends View<HTMLInputElement>{
         super();
 
         this.pushUnsub(
-            pub.observable.subscribe(value => this.node.value = value).unsubscribe,
+            pub.observable.subscribe(value => this.node.value = value).unsub,
         );
         this.node.oninput = (event: InputEvent) => {
             pub.next(() => (<HTMLInputElement>event.target).value);

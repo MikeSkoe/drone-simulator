@@ -1,7 +1,7 @@
 import P5 = require('p5');
 import * as Matter from 'matter-js';
-import { Entity, BaseState, MyState, BodyLabel } from '../../types';
-import { addToWorld } from '../../hooks/addToWorld';
+import { Entity, BaseState, MyState, BodyLabel } from '../types';
+import { addToWorld } from '../hooks/addToWorld';
 
 export interface GroundState extends BaseState {
   addGround: (pos: [number, number], size: [number, number]) => void;

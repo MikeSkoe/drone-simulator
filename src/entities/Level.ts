@@ -1,14 +1,16 @@
 import P5 = require('p5');
-import { Entity, MyState, BaseState, LevelData, SCALE } from '../../types';
-import { CopterState, Copter } from '../Copter';
-import { Bonuses, BonusState } from '../Bonus';
-import { Arrow } from '../Arrow';
-import { Camera } from '../Camera';
-import { MissionEmitter, MissionEmitterState } from '../MissionEmitter';
-import { Grounds, GroundState } from '../Ground';
-import { DialogEmitter, DialogEmitterState } from '../DialogEmitter';
-import { Gamepad } from '../Pressed';
-import { TileMap, TileMapState } from '../TileMap';
+import { Entity, MyState, BaseState, LevelData, SCALE } from '../types';
+import { CopterState, Copter } from './Copter';
+import { Bonuses, BonusState } from './Bonus';
+import { Arrow } from './Arrow';
+import { Camera } from './Camera';
+import { MissionEmitter, MissionEmitterState } from './MissionEmitter';
+import { Grounds, GroundState } from './Ground';
+import { DialogEmitter, DialogEmitterState } from './DialogEmitter';
+import { Pressed } from './Pressed';
+import { TileMap, TileMapState } from './TileMap';
+import { withCollision } from '../hooks/withCollision';
+import { withDialogs } from '../hooks/withDialogs';
 
 const drawBG = (p5: P5, xOffset: number, yOffset: number) => {
   const w = p5.width;
@@ -111,7 +113,6 @@ export const Level = (
   p5: P5,
   state: MyState,
 ): Entity<LevelState> => {
-  const gamepad = Gamepad();
   const copter = Copter(p5, state);
   const camera = Camera(p5, state);
   const missionEmitter = MissionEmitter(p5, state);
@@ -125,7 +126,6 @@ export const Level = (
 
   const children: Entity[] = [
     tileMap,
-    gamepad,
     copter,
     missionEmitter,
     bonuses,
@@ -134,7 +134,11 @@ export const Level = (
   ];
 
   const localState: LevelState = {
-    unsubs: [],
+    unsubs: [
+      ...Pressed(),
+      ...withCollision(state.engine),
+      ...withDialogs(state),
+    ],
     loadLevel: path => {
       getEntities(path, {
         tileMap,

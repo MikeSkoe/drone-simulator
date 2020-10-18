@@ -130,7 +130,10 @@ var View = function () {
     var _this = this;
 
     this.unsubs = [];
-    this.pushUnsub = this.unsubs.push;
+
+    this.pushUnsub = function (fn) {
+      _this.unsubs.push(fn);
+    };
 
     this.with = function (fn) {
       var callback = fn(_this.node);
@@ -432,7 +435,7 @@ var If = function (_super) {
         _this.currentNode = newNode;
 
         _this.node.appendChild(newNode.node);
-      }).unsubscribe);
+      }).unsub);
     }
 
     return _this;
@@ -492,7 +495,7 @@ var String = function (_super) {
     } else {
       _this.pushUnsub(str.observable.subscribe(function (val) {
         return _this.node.innerHTML = val;
-      }).unsubscribe);
+      }).unsub);
     }
 
     return _this;
@@ -549,7 +552,7 @@ var Input = function (_super) {
 
     _this.pushUnsub(pub.observable.subscribe(function (value) {
       return _this.node.value = value;
-    }).unsubscribe);
+    }).unsub);
 
     _this.node.oninput = function (event) {
       pub.next(function () {
@@ -634,7 +637,7 @@ var Link = function (_super) {
     } else {
       _this.pushUnsub(href.subscribe(function (val) {
         return _this.node.href = val;
-      }).unsubscribe);
+      }).unsub);
     }
 
     children.forEach(function (child) {
@@ -830,7 +833,7 @@ var List = function (_super) {
         }
       });
       _this.prevArr = newArr;
-    }).unsubscribe);
+    }).unsub);
 
     return _this;
   }
@@ -915,7 +918,7 @@ var Range = function (_super) {
 
     _this.pushUnsub(range.subscribe(function (value) {
       return _this.node.value = "" + value;
-    }).unsubscribe);
+    }).unsub);
 
     _this.node.oninput = function (event) {
       update(function () {
@@ -1083,7 +1086,7 @@ var String = function (_super) {
     if (isObservable(str)) {
       _this.pushUnsub(str.subscribe(function (str) {
         return _this.node.textContent = "" + str;
-      }).unsubscribe);
+      }).unsub);
     } else {
       _this.node.textContent = "" + str;
     }
@@ -1157,7 +1160,7 @@ var Switch = function (_super) {
       _this.currentNode = newNode;
 
       _this.node.appendChild(newNode.node);
-    }).unsubscribe);
+    }).unsub);
 
     return _this;
   }
@@ -1212,34 +1215,29 @@ exports.classNameOn = function (classNames, $bool) {
             return node.classList.remove(className);
           });
         }
-      }).unsubscribe;
+      }).unsub;
     }
   };
 };
-},{}],"node_modules/zen-observable/lib/Observable.js":[function(require,module,exports) {
+},{}],"src/TypeScriptUI/lib/Observable.ts":[function(require,module,exports) {
 "use strict";
+
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.Observable = void 0;
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
-// === Symbol Support ===
-var hasSymbols = function () {
+var hasSymbols = function hasSymbols() {
   return typeof Symbol === 'function';
 };
 
-var hasSymbol = function (name) {
+var hasSymbol = function hasSymbol(name) {
   return hasSymbols() && Boolean(Symbol[name]);
 };
 
-var getSymbol = function (name) {
+var getSymbol = function getSymbol(name) {
   return hasSymbol(name) ? Symbol[name] : '@@' + name;
 };
 
@@ -1249,7 +1247,7 @@ if (hasSymbols() && !hasSymbol('observable')) {
 
 var SymbolIterator = getSymbol('iterator');
 var SymbolObservable = getSymbol('observable');
-var SymbolSpecies = getSymbol('species'); // === Abstract Operations ===
+var SymbolSpecies = getSymbol('species');
 
 function getMethod(obj, key) {
   var value = obj[key];
@@ -1273,7 +1271,7 @@ function getSpecies(obj) {
 }
 
 function isObservable(x) {
-  return x instanceof Observable; // SPEC: Brand check
+  return x instanceof Observable;
 }
 
 function hostReportError(e) {
@@ -1398,19 +1396,23 @@ function onNotify(subscription, type, value) {
   notifySubscription(subscription, type, value);
 }
 
-var Subscription =
-/*#__PURE__*/
-function () {
+var Subscription = function () {
   function Subscription(observer, subscriber) {
-    _classCallCheck(this, Subscription);
+    var _this = this;
 
-    // ASSERT: observer is an object
-    // ASSERT: subscriber is callable
+    this.unsubscribe = function () {
+      if (_this._state !== 'closed') {
+        closeSubscription(_this);
+        cleanupSubscription(_this);
+      }
+    };
+
     this._cleanup = undefined;
     this._observer = observer;
     this._queue = undefined;
     this._state = 'initializing';
     var subscriptionObserver = new SubscriptionObserver(this);
+    this.unsub = this.unsubscribe.bind(this);
 
     try {
       this._cleanup = subscriber.call(undefined, subscriptionObserver);
@@ -1421,367 +1423,307 @@ function () {
     if (this._state === 'initializing') this._state = 'ready';
   }
 
-  _createClass(Subscription, [{
-    key: "unsubscribe",
-    value: function unsubscribe() {
-      if (this._state !== 'closed') {
-        closeSubscription(this);
-        cleanupSubscription(this);
-      }
-    }
-  }, {
-    key: "closed",
-    get: function () {
+  Object.defineProperty(Subscription.prototype, "closed", {
+    get: function get() {
       return this._state === 'closed';
-    }
-  }]);
-
+    },
+    enumerable: false,
+    configurable: true
+  });
   return Subscription;
 }();
 
-var SubscriptionObserver =
-/*#__PURE__*/
-function () {
+var SubscriptionObserver = function () {
   function SubscriptionObserver(subscription) {
-    _classCallCheck(this, SubscriptionObserver);
-
     this._subscription = subscription;
   }
 
-  _createClass(SubscriptionObserver, [{
-    key: "next",
-    value: function next(value) {
-      onNotify(this._subscription, 'next', value);
-    }
-  }, {
-    key: "error",
-    value: function error(value) {
-      onNotify(this._subscription, 'error', value);
-    }
-  }, {
-    key: "complete",
-    value: function complete() {
-      onNotify(this._subscription, 'complete');
-    }
-  }, {
-    key: "closed",
-    get: function () {
+  Object.defineProperty(SubscriptionObserver.prototype, "closed", {
+    get: function get() {
       return this._subscription._state === 'closed';
-    }
-  }]);
+    },
+    enumerable: false,
+    configurable: true
+  });
+
+  SubscriptionObserver.prototype.next = function (value) {
+    onNotify(this._subscription, 'next', value);
+  };
+
+  SubscriptionObserver.prototype.error = function (value) {
+    onNotify(this._subscription, 'error', value);
+  };
+
+  SubscriptionObserver.prototype.complete = function () {
+    onNotify(this._subscription, 'complete');
+  };
 
   return SubscriptionObserver;
 }();
 
-var Observable =
-/*#__PURE__*/
-function () {
+var Observable = function () {
   function Observable(subscriber) {
-    _classCallCheck(this, Observable);
-
     if (!(this instanceof Observable)) throw new TypeError('Observable cannot be called as a function');
     if (typeof subscriber !== 'function') throw new TypeError('Observable initializer must be a function');
     this._subscriber = subscriber;
   }
 
-  _createClass(Observable, [{
-    key: "subscribe",
-    value: function subscribe(observer) {
-      if (typeof observer !== 'object' || observer === null) {
-        observer = {
-          next: observer,
-          error: arguments[1],
-          complete: arguments[2]
-        };
+  Observable.prototype.subscribe = function (observer) {
+    if (_typeof(observer) !== 'object' || observer === null) {
+      observer = {
+        next: observer,
+        error: arguments[1],
+        complete: arguments[2]
+      };
+    }
+
+    return new Subscription(observer, this._subscriber);
+  };
+
+  Observable.prototype.forEach = function (fn) {
+    var _this = this;
+
+    return new Promise(function (resolve, reject) {
+      if (typeof fn !== 'function') {
+        reject(new TypeError(fn + ' is not a function'));
+        return;
       }
 
-      return new Subscription(observer, this._subscriber);
-    }
-  }, {
-    key: "forEach",
-    value: function forEach(fn) {
-      var _this = this;
+      function done() {
+        subscription.unsub();
+        resolve();
+      }
 
-      return new Promise(function (resolve, reject) {
-        if (typeof fn !== 'function') {
-          reject(new TypeError(fn + ' is not a function'));
-          return;
-        }
-
-        function done() {
-          subscription.unsubscribe();
-          resolve();
-        }
-
-        var subscription = _this.subscribe({
-          next: function (value) {
-            try {
-              fn(value, done);
-            } catch (e) {
-              reject(e);
-              subscription.unsubscribe();
-            }
-          },
-          error: reject,
-          complete: resolve
-        });
+      var subscription = _this.subscribe({
+        next: function next(value) {
+          try {
+            fn(value, done);
+          } catch (e) {
+            reject(e);
+            subscription.unsub();
+          }
+        },
+        error: reject,
+        complete: resolve
       });
-    }
-  }, {
-    key: "map",
-    value: function map(fn) {
-      var _this2 = this;
+    });
+  };
 
-      if (typeof fn !== 'function') throw new TypeError(fn + ' is not a function');
-      var C = getSpecies(this);
-      return new C(function (observer) {
-        return _this2.subscribe({
-          next: function (value) {
+  Observable.prototype.map = function (fn) {
+    var _this = this;
+
+    if (typeof fn !== 'function') throw new TypeError(fn + ' is not a function');
+    var C = getSpecies(this);
+    return new C(function (observer) {
+      return _this.subscribe({
+        next: function next(value) {
+          try {
+            value = fn(value);
+          } catch (e) {
+            return observer.error(e);
+          }
+
+          observer.next(value);
+        },
+        error: function error(e) {
+          observer.error(e);
+        },
+        complete: function complete() {
+          observer.complete();
+        }
+      });
+    });
+  };
+
+  Observable.prototype.filter = function (fn) {
+    var _this = this;
+
+    if (typeof fn !== 'function') throw new TypeError(fn + ' is not a function');
+    var C = getSpecies(this);
+    return new C(function (observer) {
+      return _this.subscribe({
+        next: function next(value) {
+          try {
+            if (!fn(value)) return;
+          } catch (e) {
+            return observer.error(e);
+          }
+
+          observer.next(value);
+        },
+        error: function error(e) {
+          observer.error(e);
+        },
+        complete: function complete() {
+          observer.complete();
+        }
+      });
+    });
+  };
+
+  Observable.prototype.reduce = function (fn) {
+    var _this = this;
+
+    if (typeof fn !== 'function') throw new TypeError(fn + ' is not a function');
+    var C = getSpecies(this);
+    var hasSeed = arguments.length > 1;
+    var hasValue = false;
+    var seed = arguments[1];
+    var acc = seed;
+    return new C(function (observer) {
+      return _this.subscribe({
+        next: function next(value) {
+          var first = !hasValue;
+          hasValue = true;
+
+          if (!first || hasSeed) {
+            try {
+              acc = fn(acc, value);
+            } catch (e) {
+              return observer.error(e);
+            }
+          } else {
+            acc = value;
+          }
+        },
+        error: function error(e) {
+          observer.error(e);
+        },
+        complete: function complete() {
+          if (!hasValue && !hasSeed) return observer.error(new TypeError('Cannot reduce an empty sequence'));
+          observer.next(acc);
+          observer.complete();
+        }
+      });
+    });
+  };
+
+  Observable.prototype.concat = function () {
+    var _this = this;
+
+    var sources = [];
+
+    for (var _i = 0; _i < arguments.length; _i++) {
+      sources[_i] = arguments[_i];
+    }
+
+    var C = getSpecies(this);
+    return new C(function (observer) {
+      var subscription;
+      var index = 0;
+
+      function startNext(next) {
+        subscription = next.subscribe({
+          next: function next(v) {
+            observer.next(v);
+          },
+          error: function error(e) {
+            observer.error(e);
+          },
+          complete: function complete() {
+            if (index === sources.length) {
+              subscription = undefined;
+              observer.complete();
+            } else {
+              startNext(C.from(sources[index++]));
+            }
+          }
+        });
+      }
+
+      startNext(_this);
+      return function () {
+        if (subscription) {
+          subscription.unsub();
+          subscription = undefined;
+        }
+      };
+    });
+  };
+
+  Observable.prototype.flatMap = function (fn) {
+    var _this = this;
+
+    if (typeof fn !== 'function') throw new TypeError(fn + ' is not a function');
+    var C = getSpecies(this);
+    return new C(function (observer) {
+      var subscriptions = [];
+
+      var outer = _this.subscribe({
+        next: function next(value) {
+          if (fn) {
             try {
               value = fn(value);
             } catch (e) {
               return observer.error(e);
             }
-
-            observer.next(value);
-          },
-          error: function (e) {
-            observer.error(e);
-          },
-          complete: function () {
-            observer.complete();
           }
-        });
-      });
-    }
-  }, {
-    key: "filter",
-    value: function filter(fn) {
-      var _this3 = this;
 
-      if (typeof fn !== 'function') throw new TypeError(fn + ' is not a function');
-      var C = getSpecies(this);
-      return new C(function (observer) {
-        return _this3.subscribe({
-          next: function (value) {
-            try {
-              if (!fn(value)) return;
-            } catch (e) {
-              return observer.error(e);
-            }
-
-            observer.next(value);
-          },
-          error: function (e) {
-            observer.error(e);
-          },
-          complete: function () {
-            observer.complete();
-          }
-        });
-      });
-    }
-  }, {
-    key: "reduce",
-    value: function reduce(fn) {
-      var _this4 = this;
-
-      if (typeof fn !== 'function') throw new TypeError(fn + ' is not a function');
-      var C = getSpecies(this);
-      var hasSeed = arguments.length > 1;
-      var hasValue = false;
-      var seed = arguments[1];
-      var acc = seed;
-      return new C(function (observer) {
-        return _this4.subscribe({
-          next: function (value) {
-            var first = !hasValue;
-            hasValue = true;
-
-            if (!first || hasSeed) {
-              try {
-                acc = fn(acc, value);
-              } catch (e) {
-                return observer.error(e);
-              }
-            } else {
-              acc = value;
-            }
-          },
-          error: function (e) {
-            observer.error(e);
-          },
-          complete: function () {
-            if (!hasValue && !hasSeed) return observer.error(new TypeError('Cannot reduce an empty sequence'));
-            observer.next(acc);
-            observer.complete();
-          }
-        });
-      });
-    }
-  }, {
-    key: "concat",
-    value: function concat() {
-      var _this5 = this;
-
-      for (var _len = arguments.length, sources = new Array(_len), _key = 0; _key < _len; _key++) {
-        sources[_key] = arguments[_key];
-      }
-
-      var C = getSpecies(this);
-      return new C(function (observer) {
-        var subscription;
-        var index = 0;
-
-        function startNext(next) {
-          subscription = next.subscribe({
-            next: function (v) {
-              observer.next(v);
+          var inner = C.from(value).subscribe({
+            next: function next(value) {
+              observer.next(value);
             },
-            error: function (e) {
+            error: function error(e) {
               observer.error(e);
             },
-            complete: function () {
-              if (index === sources.length) {
-                subscription = undefined;
-                observer.complete();
-              } else {
-                startNext(C.from(sources[index++]));
-              }
+            complete: function complete() {
+              var i = subscriptions.indexOf(inner);
+              if (i >= 0) subscriptions.splice(i, 1);
+              completeIfDone();
             }
           });
+          subscriptions.push(inner);
+        },
+        error: function error(e) {
+          observer.error(e);
+        },
+        complete: function complete() {
+          completeIfDone();
         }
-
-        startNext(_this5);
-        return function () {
-          if (subscription) {
-            subscription.unsubscribe();
-            subscription = undefined;
-          }
-        };
       });
-    }
-  }, {
-    key: "flatMap",
-    value: function flatMap(fn) {
-      var _this6 = this;
 
-      if (typeof fn !== 'function') throw new TypeError(fn + ' is not a function');
-      var C = getSpecies(this);
-      return new C(function (observer) {
-        var subscriptions = [];
+      function completeIfDone() {
+        if (outer.closed && subscriptions.length === 0) observer.complete();
+      }
 
-        var outer = _this6.subscribe({
-          next: function (value) {
-            if (fn) {
-              try {
-                value = fn(value);
-              } catch (e) {
-                return observer.error(e);
-              }
-            }
-
-            var inner = C.from(value).subscribe({
-              next: function (value) {
-                observer.next(value);
-              },
-              error: function (e) {
-                observer.error(e);
-              },
-              complete: function () {
-                var i = subscriptions.indexOf(inner);
-                if (i >= 0) subscriptions.splice(i, 1);
-                completeIfDone();
-              }
-            });
-            subscriptions.push(inner);
-          },
-          error: function (e) {
-            observer.error(e);
-          },
-          complete: function () {
-            completeIfDone();
-          }
+      return function () {
+        subscriptions.forEach(function (s) {
+          return s.unsub();
         });
+        outer.unsub();
+      };
+    });
+  };
 
-        function completeIfDone() {
-          if (outer.closed && subscriptions.length === 0) observer.complete();
-        }
+  Observable.prototype[SymbolObservable] = function () {
+    return this;
+  };
 
-        return function () {
-          subscriptions.forEach(function (s) {
-            return s.unsubscribe();
-          });
-          outer.unsubscribe();
-        };
+  Observable.from = function (x) {
+    var C = typeof this === 'function' ? this : Observable;
+    if (x == null) throw new TypeError(x + ' is not an object');
+    var method = getMethod(x, SymbolObservable);
+
+    if (method) {
+      var observable_1 = method.call(x);
+      if (Object(observable_1) !== observable_1) throw new TypeError(observable_1 + ' is not an object');
+      if (isObservable(observable_1) && observable_1.constructor === C) return observable_1;
+      return new C(function (observer) {
+        return observable_1.subscribe(observer);
       });
     }
-  }, {
-    key: SymbolObservable,
-    value: function () {
-      return this;
-    }
-  }], [{
-    key: "from",
-    value: function from(x) {
-      var C = typeof this === 'function' ? this : Observable;
-      if (x == null) throw new TypeError(x + ' is not an object');
-      var method = getMethod(x, SymbolObservable);
+
+    if (hasSymbol('iterator')) {
+      method = getMethod(x, SymbolIterator);
 
       if (method) {
-        var observable = method.call(x);
-        if (Object(observable) !== observable) throw new TypeError(observable + ' is not an object');
-        if (isObservable(observable) && observable.constructor === C) return observable;
-        return new C(function (observer) {
-          return observable.subscribe(observer);
-        });
-      }
-
-      if (hasSymbol('iterator')) {
-        method = getMethod(x, SymbolIterator);
-
-        if (method) {
-          return new C(function (observer) {
-            enqueue(function () {
-              if (observer.closed) return;
-              var _iteratorNormalCompletion = true;
-              var _didIteratorError = false;
-              var _iteratorError = undefined;
-
-              try {
-                for (var _iterator = method.call(x)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                  var _item = _step.value;
-                  observer.next(_item);
-                  if (observer.closed) return;
-                }
-              } catch (err) {
-                _didIteratorError = true;
-                _iteratorError = err;
-              } finally {
-                try {
-                  if (!_iteratorNormalCompletion && _iterator.return != null) {
-                    _iterator.return();
-                  }
-                } finally {
-                  if (_didIteratorError) {
-                    throw _iteratorError;
-                  }
-                }
-              }
-
-              observer.complete();
-            });
-          });
-        }
-      }
-
-      if (Array.isArray(x)) {
         return new C(function (observer) {
           enqueue(function () {
             if (observer.closed) return;
 
-            for (var i = 0; i < x.length; ++i) {
-              observer.next(x[i]);
+            for (var _i = 0, _a = method.call(x); _i < _a.length; _i++) {
+              var item = _a[_i];
+              observer.next(item);
               if (observer.closed) return;
             }
 
@@ -1789,23 +1731,15 @@ function () {
           });
         });
       }
-
-      throw new TypeError(x + ' is not observable');
     }
-  }, {
-    key: "of",
-    value: function of() {
-      for (var _len2 = arguments.length, items = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-        items[_key2] = arguments[_key2];
-      }
 
-      var C = typeof this === 'function' ? this : Observable;
+    if (Array.isArray(x)) {
       return new C(function (observer) {
         enqueue(function () {
           if (observer.closed) return;
 
-          for (var i = 0; i < items.length; ++i) {
-            observer.next(items[i]);
+          for (var i = 0; i < x.length; ++i) {
+            observer.next(x[i]);
             if (observer.closed) return;
           }
 
@@ -1813,13 +1747,39 @@ function () {
         });
       });
     }
-  }, {
-    key: SymbolSpecies,
-    get: function () {
-      return this;
-    }
-  }]);
 
+    throw new TypeError(x + ' is not observable');
+  };
+
+  Observable.of = function () {
+    var items = [];
+
+    for (var _i = 0; _i < arguments.length; _i++) {
+      items[_i] = arguments[_i];
+    }
+
+    var C = typeof this === 'function' ? this : Observable;
+    return new C(function (observer) {
+      enqueue(function () {
+        if (observer.closed) return;
+
+        for (var i = 0; i < items.length; ++i) {
+          observer.next(items[i]);
+          if (observer.closed) return;
+        }
+
+        observer.complete();
+      });
+    });
+  };
+
+  Object.defineProperty(Observable, SymbolSpecies, {
+    get: function get() {
+      return this;
+    },
+    enumerable: false,
+    configurable: true
+  });
   return Observable;
 }();
 
@@ -1834,24 +1794,15 @@ if (hasSymbols()) {
     configurable: true
   });
 }
-},{}],"node_modules/zen-observable/index.js":[function(require,module,exports) {
-module.exports = require('./lib/Observable.js').Observable;
-
-},{"./lib/Observable.js":"node_modules/zen-observable/lib/Observable.js"}],"src/TypeScriptUI/lib/ZenPushStream.ts":[function(require,module,exports) {
+},{}],"src/TypeScriptUI/lib/ZenPushStream.ts":[function(require,module,exports) {
 "use strict";
-
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
-};
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.createState = exports.ZenPushStream = void 0;
 
-var zen_observable_1 = __importDefault(require("zen-observable"));
+var Observable_1 = require("./Observable");
 
 var ZenPushStream = function () {
   function ZenPushStream(initialValue) {
@@ -1916,7 +1867,7 @@ var ZenPushStream = function () {
     };
 
     this.lastValue = initialValue;
-    this.observable = new zen_observable_1.default(function (observer) {
+    this.observable = new Observable_1.Observable(function (observer) {
       _this.addObserver(observer);
 
       if (initialValue !== undefined) {
@@ -1947,7 +1898,7 @@ exports.createState = function (initialValue) {
 };
 
 exports.default = exports.createState;
-},{"zen-observable":"node_modules/zen-observable/index.js"}],"src/TypeScriptUI/index.ts":[function(require,module,exports) {
+},{"./Observable":"src/TypeScriptUI/lib/Observable.ts"}],"src/TypeScriptUI/index.ts":[function(require,module,exports) {
 "use strict";
 
 var __importDefault = this && this.__importDefault || function (mod) {
@@ -44881,7 +44832,172 @@ var PressKey;
   PressKey[PressKey["Action"] = 0] = "Action";
   PressKey[PressKey["Next"] = 1] = "Next";
 })(PressKey = exports.PressKey || (exports.PressKey = {}));
-},{}],"src/state/index.ts":[function(require,module,exports) {
+},{}],"src/hooks/addToWorld.ts":[function(require,module,exports) {
+"use strict";
+
+var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  Object.defineProperty(o, k2, {
+    enumerable: true,
+    get: function get() {
+      return m[k];
+    }
+  });
+} : function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  o[k2] = m[k];
+});
+
+var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
+  Object.defineProperty(o, "default", {
+    enumerable: true,
+    value: v
+  });
+} : function (o, v) {
+  o["default"] = v;
+});
+
+var __importStar = this && this.__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) {
+    if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+  }
+
+  __setModuleDefault(result, mod);
+
+  return result;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.addToWorld = void 0;
+
+var Matter = __importStar(require("matter-js"));
+
+exports.addToWorld = function (engine, bodies) {
+  Matter.World.add(engine.world, bodies);
+  return function () {
+    bodies.forEach(function (body) {
+      Matter.Composite.remove(engine.world, body);
+    });
+  };
+};
+},{"matter-js":"node_modules/matter-js/build/matter.js"}],"src/entities/Copter.ts":[function(require,module,exports) {
+"use strict";
+
+var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  Object.defineProperty(o, k2, {
+    enumerable: true,
+    get: function get() {
+      return m[k];
+    }
+  });
+} : function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  o[k2] = m[k];
+});
+
+var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
+  Object.defineProperty(o, "default", {
+    enumerable: true,
+    value: v
+  });
+} : function (o, v) {
+  o["default"] = v;
+});
+
+var __importStar = this && this.__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) {
+    if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+  }
+
+  __setModuleDefault(result, mod);
+
+  return result;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Copter = void 0;
+
+var Matter = __importStar(require("matter-js"));
+
+var types_1 = require("../types");
+
+var addToWorld_1 = require("../hooks/addToWorld");
+
+var imagePath = '/data/copter.png';
+var MAX_MAGNITUDE = 5;
+var WIDTH = 16;
+var HEIGHT = 8 * .75;
+;
+
+exports.Copter = function (p5, state) {
+  var imageData;
+  var body = Matter.Bodies.rectangle(0, 0, WIDTH, HEIGHT, {
+    label: 'copter',
+    friction: 0.05
+  });
+  var localState = {
+    power: 0.00007,
+    setPos: function setPos(_a) {
+      var x = _a[0],
+          y = _a[1];
+      Matter.Body.setPosition(body, Matter.Vector.create(x, y));
+    },
+    getPos: function getPos() {
+      return body.position;
+    },
+    unsubs: [addToWorld_1.addToWorld(state.engine, [body])]
+  };
+  return {
+    localState: localState,
+    preload: function preload() {
+      imageData = p5.loadImage(imagePath);
+    },
+    update: function update() {
+      var _a, _b;
+
+      if (!state.movable) {
+        return;
+      }
+
+      var gamepad = navigator.getGamepads()[0];
+      var upValue = p5.keyIsDown(types_1.Key.Up) ? 1 : (_a = gamepad === null || gamepad === void 0 ? void 0 : gamepad.buttons[7].value) !== null && _a !== void 0 ? _a : 0;
+      var rotateValue = p5.keyIsDown(types_1.Key.Left) ? -1 : p5.keyIsDown(types_1.Key.Right) ? 1 : (_b = gamepad === null || gamepad === void 0 ? void 0 : gamepad.axes[0]) !== null && _b !== void 0 ? _b : 0;
+      var direction = p5.createVector(0, -(localState.power * upValue)).rotate(body.angle);
+
+      if (state.health > 0) {
+        Matter.Body.applyForce(body, body.position, direction);
+      }
+
+      if (Matter.Vector.magnitude(body.velocity) > MAX_MAGNITUDE) {
+        Matter.Body.setVelocity(body, body.velocity = Matter.Vector.mult(Matter.Vector.normalise(body.velocity), MAX_MAGNITUDE));
+      }
+
+      if (rotateValue !== 0) {
+        Matter.Body.rotate(body, rotateValue / 8);
+        Matter.Body.setAngularVelocity(body, 0);
+      }
+    },
+    draw: function draw() {
+      p5.push();
+      {
+        p5.translate(body.position.x, body.position.y);
+        p5.rotate(body.angle);
+        p5.image(imageData, -imageData.width / 2, -imageData.height / 2);
+      }
+      p5.pop();
+    }
+  };
+};
+},{"matter-js":"node_modules/matter-js/build/matter.js","../types":"src/types.ts","../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/state/index.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -44903,7 +45019,817 @@ exports.$gameState = TypeScriptUI_1.createState({
   type: 'menu'
 });
 exports.$pause = TypeScriptUI_1.createState(true);
-},{"../TypeScriptUI":"src/TypeScriptUI/index.ts","../types":"src/types.ts"}],"src/hooks/withCollision.ts":[function(require,module,exports) {
+},{"../TypeScriptUI":"src/TypeScriptUI/index.ts","../types":"src/types.ts"}],"src/entities/Bonus.ts":[function(require,module,exports) {
+"use strict";
+
+var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  Object.defineProperty(o, k2, {
+    enumerable: true,
+    get: function get() {
+      return m[k];
+    }
+  });
+} : function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  o[k2] = m[k];
+});
+
+var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
+  Object.defineProperty(o, "default", {
+    enumerable: true,
+    value: v
+  });
+} : function (o, v) {
+  o["default"] = v;
+});
+
+var __importStar = this && this.__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) {
+    if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+  }
+
+  __setModuleDefault(result, mod);
+
+  return result;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Bonuses = void 0;
+
+var Matter = __importStar(require("matter-js"));
+
+var types_1 = require("../types");
+
+var state_1 = require("../state");
+
+var addToWorld_1 = require("../hooks/addToWorld");
+
+var RADIUS = 5;
+
+exports.Bonuses = function (p5, state) {
+  var bodies = [];
+  var unsubs = [state_1.$collisionActive.observable.subscribe(function (_a) {
+    var labelA = _a[0],
+        labelB = _a[1];
+
+    if (labelA === types_1.BodyLabel.Bonus || labelB === types_1.BodyLabel.Bonus) {
+      state.health = Math.min(1, state.health + 0.005);
+    }
+  }).unsub];
+  var localState = {
+    addBonus: function addBonus(x, y) {
+      var body = Matter.Bodies.circle(x, y, RADIUS, {
+        isStatic: true,
+        isSensor: true,
+        label: types_1.BodyLabel.Bonus
+      });
+      bodies.push(body);
+      unsubs.push(addToWorld_1.addToWorld(state.engine, [body]));
+    },
+    unsubs: unsubs
+  };
+  return {
+    localState: localState,
+    update: function update() {},
+    draw: function draw() {
+      bodies.forEach(function (body) {
+        p5.circle(body.position.x, body.position.y, RADIUS * 2);
+      });
+    }
+  };
+};
+},{"matter-js":"node_modules/matter-js/build/matter.js","../types":"src/types.ts","../state":"src/state/index.ts","../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Arrow.ts":[function(require,module,exports) {
+"use strict";
+
+var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  Object.defineProperty(o, k2, {
+    enumerable: true,
+    get: function get() {
+      return m[k];
+    }
+  });
+} : function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  o[k2] = m[k];
+});
+
+var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
+  Object.defineProperty(o, "default", {
+    enumerable: true,
+    value: v
+  });
+} : function (o, v) {
+  o["default"] = v;
+});
+
+var __importStar = this && this.__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) {
+    if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+  }
+
+  __setModuleDefault(result, mod);
+
+  return result;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Arrow = void 0;
+
+var Matter = __importStar(require("matter-js"));
+
+var types_1 = require("../types");
+
+exports.Arrow = function (p5, state) {
+  var localState = {
+    unsubs: [],
+    getPositionA: function getPositionA() {
+      return {
+        x: 0,
+        y: 0
+      };
+    },
+    getPositionB: function getPositionB() {
+      return {
+        x: 0,
+        y: 0
+      };
+    }
+  };
+  return {
+    localState: localState,
+    update: function update() {},
+    draw: function draw() {
+      p5.push();
+      {
+        var posA = localState.getPositionA();
+        var posB = localState.getPositionB();
+        var angle = Matter.Vector.angle(posA, posB);
+        var distance = Matter.Vector.magnitude(Matter.Vector.sub(posA, posB));
+
+        var _a = localState.getPositionB(),
+            x = _a.x,
+            y = _a.y;
+
+        var offset = Matter.Vector.mult(Matter.Vector.rotate(Matter.Vector.create(1, 0), angle), p5.width * 0.48);
+
+        if (x !== 0 && y !== 0 && distance > 100) {
+          p5.fill('red');
+          p5.translate((p5.width / 2 + offset.x) / types_1.SCALE, (p5.height / 2 + offset.y) / types_1.SCALE);
+          p5.angleMode('radians');
+          p5.rotate(angle);
+          p5.circle(0, 0, 5);
+        }
+      }
+      p5.pop();
+    }
+  };
+};
+},{"matter-js":"node_modules/matter-js/build/matter.js","../types":"src/types.ts"}],"src/entities/Camera.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Camera = void 0;
+
+var types_1 = require("../types");
+
+exports.Camera = function (p5, state) {
+  var privateState = {
+    pos: p5.createVector(0, 0)
+  };
+  var localState = {
+    getTargetPos: function getTargetPos() {
+      return {
+        x: 0,
+        y: 0
+      };
+    },
+    unsubs: [],
+    getPos: function getPos() {
+      return privateState.pos;
+    }
+  };
+  return {
+    localState: localState,
+    update: function update() {
+      var _a = localState.getTargetPos(),
+          x = _a.x,
+          y = _a.y;
+
+      privateState.pos.lerp(x, y, 0, 0.1);
+    },
+    draw: function draw() {
+      p5.translate(-privateState.pos.x + p5.width / 2 / types_1.SCALE, -privateState.pos.y + p5.height / 2 / types_1.SCALE);
+    }
+  };
+};
+},{"../types":"src/types.ts"}],"src/entities/MissionEmitter.ts":[function(require,module,exports) {
+"use strict";
+
+var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  Object.defineProperty(o, k2, {
+    enumerable: true,
+    get: function get() {
+      return m[k];
+    }
+  });
+} : function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  o[k2] = m[k];
+});
+
+var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
+  Object.defineProperty(o, "default", {
+    enumerable: true,
+    value: v
+  });
+} : function (o, v) {
+  o["default"] = v;
+});
+
+var __importStar = this && this.__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) {
+    if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+  }
+
+  __setModuleDefault(result, mod);
+
+  return result;
+};
+
+var __spreadArrays = this && this.__spreadArrays || function () {
+  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
+    s += arguments[i].length;
+  }
+
+  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
+    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
+      r[k] = a[j];
+    }
+  }
+
+  return r;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.MissionEmitter = void 0;
+
+var Matter = __importStar(require("matter-js"));
+
+var types_1 = require("../types");
+
+var state_1 = require("../state");
+
+var addToWorld_1 = require("../hooks/addToWorld");
+
+var RADIUS = 5;
+
+var onActionPressed = function onActionPressed(privateState) {
+  return function () {
+    switch (privateState.status) {
+      case types_1.InteractionStatus.CanInteract:
+        privateState.status = types_1.InteractionStatus.Speaking;
+        state_1.$dialog.next(function () {
+          return privateState.missions.map(function (mission) {
+            return {
+              speaker: mission.title,
+              speach: mission.description
+            };
+          });
+        });
+        break;
+
+      default:
+        break;
+    }
+  };
+};
+
+var onEndSpeaking = function onEndSpeaking(state, privateState) {
+  return function () {
+    if (privateState.status === types_1.InteractionStatus.Speaking) {
+      privateState.status = types_1.InteractionStatus.Doing;
+      state.targetPosition = privateState.targetBodies[0].position;
+    }
+  };
+};
+
+var onCollisionEnd = function onCollisionEnd(privateState) {
+  return function () {
+    if (privateState.status === types_1.InteractionStatus.CanInteract) {
+      privateState.status = types_1.InteractionStatus.New;
+    }
+  };
+};
+
+var onStartCollisionWithTarget = function onStartCollisionWithTarget(state, privateState) {
+  return function () {
+    if (privateState.status === types_1.InteractionStatus.Doing) {
+      privateState.status = types_1.InteractionStatus.Returning;
+      state.targetPosition = privateState.emitterBodies[0].position;
+    }
+  };
+};
+
+var onStartCollisionWithEmitter = function onStartCollisionWithEmitter(p5, state, privateState) {
+  return function () {
+    if (privateState.status === types_1.InteractionStatus.New) {
+      privateState.status = types_1.InteractionStatus.CanInteract;
+    } else if (privateState.status === types_1.InteractionStatus.Returning) {
+      privateState.status = types_1.InteractionStatus.Done;
+      state.targetPosition = p5.createVector();
+      state_1.$dialog.next(function () {
+        return [{
+          speaker: 'Speaker',
+          speach: 'Done! Thanks!'
+        }];
+      });
+    }
+  };
+};
+
+exports.MissionEmitter = function (p5, state) {
+  var privateState = {
+    emitterBodies: [],
+    targetBodies: [],
+    status: types_1.InteractionStatus.New,
+    missions: []
+  };
+  var unsubs = [state_1.$collisionStart.observable.filter(function (labels) {
+    return labels.includes(types_1.BodyLabel.MissionEmitter);
+  }).subscribe(onStartCollisionWithEmitter(p5, state, privateState)).unsub, state_1.$collisionStart.observable.filter(function (labels) {
+    return labels.includes(types_1.BodyLabel.MissionTarget);
+  }).subscribe(onStartCollisionWithTarget(state, privateState)).unsub, state_1.$collisionEnd.observable.filter(function (labels) {
+    return labels.includes(types_1.BodyLabel.MissionEmitter);
+  }).subscribe(onCollisionEnd(privateState)).unsub, state_1.$pressed.observable.filter(function (key) {
+    return key === types_1.PressKey.Action;
+  }).subscribe(onActionPressed(privateState)).unsub, state_1.$dialog.observable.filter(function (dialog) {
+    return dialog.length === 0;
+  }).subscribe(onEndSpeaking(state, privateState)).unsub];
+  var localState = {
+    addEmitter: function addEmitter(pos, mission) {
+      var _a;
+
+      var emitterBody = (_a = Matter.Bodies).circle.apply(_a, __spreadArrays(pos, [RADIUS * 4, {
+        isStatic: true,
+        isSensor: true,
+        label: types_1.BodyLabel.MissionEmitter
+      }]));
+
+      privateState.emitterBodies.push(emitterBody);
+      privateState.missions.push(mission);
+      addToWorld_1.addToWorld(state.engine, [emitterBody]);
+    },
+    addTarget: function addTarget(pos) {
+      var _a;
+
+      var targetBody = (_a = Matter.Bodies).circle.apply(_a, __spreadArrays(pos, [RADIUS, {
+        isStatic: true,
+        isSensor: true,
+        label: types_1.BodyLabel.MissionTarget
+      }]));
+
+      privateState.targetBodies.push(targetBody);
+      addToWorld_1.addToWorld(state.engine, [targetBody]);
+    },
+    unsubs: unsubs
+  };
+  return {
+    localState: localState,
+    update: function update() {},
+    draw: function draw() {
+      p5.push();
+      {
+        p5.noStroke();
+
+        for (var _i = 0, _a = privateState.emitterBodies; _i < _a.length; _i++) {
+          var emitter = _a[_i];
+          p5.fill(255, 0, 255);
+          p5.circle(emitter.position.x, emitter.position.y, RADIUS * 2);
+          p5.fill('yellow');
+
+          if (privateState.status === types_1.InteractionStatus.CanInteract) {
+            p5.rect(emitter.position.x - 2.5, emitter.position.y - 20, 5, 10);
+          }
+        }
+
+        for (var _b = 0, _c = privateState.targetBodies; _b < _c.length; _b++) {
+          var target = _c[_b];
+          p5.fill(255, 255, 0);
+
+          if (privateState.status === types_1.InteractionStatus.Doing) {
+            p5.circle(target.position.x, target.position.y, RADIUS * 2);
+          }
+
+          ;
+        }
+      }
+      p5.pop();
+    }
+  };
+};
+},{"matter-js":"node_modules/matter-js/build/matter.js","../types":"src/types.ts","../state":"src/state/index.ts","../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Ground.ts":[function(require,module,exports) {
+"use strict";
+
+var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  Object.defineProperty(o, k2, {
+    enumerable: true,
+    get: function get() {
+      return m[k];
+    }
+  });
+} : function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  o[k2] = m[k];
+});
+
+var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
+  Object.defineProperty(o, "default", {
+    enumerable: true,
+    value: v
+  });
+} : function (o, v) {
+  o["default"] = v;
+});
+
+var __importStar = this && this.__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) {
+    if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+  }
+
+  __setModuleDefault(result, mod);
+
+  return result;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Grounds = void 0;
+
+var Matter = __importStar(require("matter-js"));
+
+var types_1 = require("../types");
+
+var addToWorld_1 = require("../hooks/addToWorld");
+
+exports.Grounds = function (p5, state) {
+  var unsubs = [];
+  var bodies = [];
+  var localState = {
+    addGround: function addGround(_a, _b) {
+      var x = _a[0],
+          y = _a[1];
+      var w = _b[0],
+          h = _b[1];
+      var body = Matter.Bodies.rectangle(x + w / 2, y + h / 2, w, h, {
+        isStatic: true,
+        label: types_1.BodyLabel.Ground
+      });
+      bodies.push(body);
+      unsubs.push(addToWorld_1.addToWorld(state.engine, [body]));
+    },
+    unsubs: unsubs
+  };
+  return {
+    localState: localState,
+    update: function update() {},
+    draw: function draw() {}
+  };
+};
+},{"matter-js":"node_modules/matter-js/build/matter.js","../types":"src/types.ts","../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/DialogEmitter.ts":[function(require,module,exports) {
+"use strict";
+
+var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  Object.defineProperty(o, k2, {
+    enumerable: true,
+    get: function get() {
+      return m[k];
+    }
+  });
+} : function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  o[k2] = m[k];
+});
+
+var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
+  Object.defineProperty(o, "default", {
+    enumerable: true,
+    value: v
+  });
+} : function (o, v) {
+  o["default"] = v;
+});
+
+var __importStar = this && this.__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) {
+    if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+  }
+
+  __setModuleDefault(result, mod);
+
+  return result;
+};
+
+var __spreadArrays = this && this.__spreadArrays || function () {
+  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
+    s += arguments[i].length;
+  }
+
+  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
+    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
+      r[k] = a[j];
+    }
+  }
+
+  return r;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.DialogEmitter = void 0;
+
+var Matter = __importStar(require("matter-js"));
+
+var types_1 = require("../types");
+
+var state_1 = require("../state");
+
+var addToWorld_1 = require("../hooks/addToWorld");
+
+var RADIUS = 5;
+
+var getOnActionPressed = function getOnActionPressed(privateState) {
+  return function () {
+    switch (privateState.status) {
+      case types_1.InteractionStatus.CanInteract:
+        privateState.status = types_1.InteractionStatus.Speaking;
+        state_1.$dialog.next(function () {
+          return privateState.dialog;
+        });
+        break;
+
+      default:
+        break;
+    }
+  };
+};
+
+exports.DialogEmitter = function (p5, state) {
+  var privateState = {
+    status: types_1.InteractionStatus.New,
+    dialog: [],
+    bodies: []
+  };
+  var onActionPressed = getOnActionPressed(privateState);
+  var unsubs = [state_1.$collisionStart.observable.filter(function (labels) {
+    return labels.includes(types_1.BodyLabel.DialogEmitter);
+  }).subscribe(function () {
+    if (privateState.status === types_1.InteractionStatus.Done) {
+      return;
+    }
+
+    privateState.status = types_1.InteractionStatus.CanInteract;
+  }).unsub, state_1.$collisionEnd.observable.filter(function (labels) {
+    return labels.includes(types_1.BodyLabel.DialogEmitter);
+  }).subscribe(function () {
+    if (privateState.status === types_1.InteractionStatus.CanInteract) {
+      privateState.status = types_1.InteractionStatus.New;
+    }
+  }).unsub, state_1.$pressed.observable.filter(function (key) {
+    return key === types_1.PressKey.Action;
+  }).subscribe(onActionPressed).unsub, state_1.$dialog.observable.filter(function (dialog) {
+    return dialog.length === 0;
+  }).subscribe(function () {
+    if (privateState.status === types_1.InteractionStatus.Speaking) {
+      privateState.status = types_1.InteractionStatus.Done;
+    }
+  }).unsub];
+  var localState = {
+    addDialog: function addDialog(pos, dialogPath) {
+      fetch(dialogPath).then(function (data) {
+        return data.json();
+      }).then(function (newDialog) {
+        var _a;
+
+        privateState.dialog = newDialog;
+
+        var body = (_a = Matter.Bodies).circle.apply(_a, __spreadArrays(pos, [RADIUS * 4, {
+          isStatic: true,
+          isSensor: true,
+          label: types_1.BodyLabel.DialogEmitter
+        }]));
+
+        privateState.bodies.push(body);
+        unsubs.push(addToWorld_1.addToWorld(state.engine, [body]));
+      }).catch(console.log);
+    },
+    unsubs: unsubs
+  };
+  return {
+    localState: localState,
+    update: function update() {},
+    draw: function draw() {
+      p5.push();
+      {
+        p5.noStroke();
+        p5.fill(0, 255, 0);
+
+        for (var _i = 0, _a = privateState.bodies; _i < _a.length; _i++) {
+          var body = _a[_i];
+          p5.circle(body.position.x, body.position.y, RADIUS * 2);
+          p5.fill('yellow');
+
+          if (privateState.status === types_1.InteractionStatus.CanInteract) {
+            p5.rect(body.position.x - 2.5, body.position.y - 20, 5, 10);
+          }
+        }
+      }
+      p5.pop();
+    }
+  };
+};
+},{"matter-js":"node_modules/matter-js/build/matter.js","../types":"src/types.ts","../state":"src/state/index.ts","../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Pressed.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.getAxe = exports.isButtonReleased = exports.isButtonPressed = exports.isButtonDown = exports.Pressed = void 0;
+
+var state_1 = require("../state");
+
+var types_1 = require("../types");
+
+var prevButtons = {};
+var prevAxes = {};
+
+exports.Pressed = function () {
+  var onKeyPressed = function onKeyPressed(event) {
+    switch (event.key) {
+      case 'z':
+        state_1.$pressed.next(function () {
+          return types_1.PressKey.Action;
+        });
+        break;
+
+      case 'x':
+        state_1.$pressed.next(function () {
+          return types_1.PressKey.Next;
+        });
+        break;
+    }
+  };
+
+  window.addEventListener('keydown', onKeyPressed);
+
+  var tick = function tick() {
+    var _a, _b;
+
+    var gamepad = navigator.getGamepads()[0];
+
+    for (var index = 0; (_a = index < (gamepad === null || gamepad === void 0 ? void 0 : gamepad.buttons.length)) !== null && _a !== void 0 ? _a : 0; index++) {
+      var button = gamepad.buttons[index];
+      prevButtons[index] = prevButtons[index] || [button.value, false];
+      var pressed = button.value !== prevButtons[index][0];
+      prevButtons[index] = [button.value, pressed];
+
+      if (pressed && button.value > 0) {
+        switch (index) {
+          case 0:
+            state_1.$pressed.next(function () {
+              return types_1.PressKey.Action;
+            });
+            break;
+
+          case 1:
+            state_1.$pressed.next(function () {
+              return types_1.PressKey.Next;
+            });
+            break;
+
+          default:
+            break;
+        }
+      }
+
+      for (var index_1 = 0; (_b = index_1 < (gamepad === null || gamepad === void 0 ? void 0 : gamepad.axes.length)) !== null && _b !== void 0 ? _b : 0; index_1++) {
+        prevAxes[index_1] = gamepad.axes[index_1];
+      }
+    }
+
+    window.requestAnimationFrame(tick);
+  };
+
+  window.requestAnimationFrame(tick);
+  return [function () {
+    return window.removeEventListener('keydown', onKeyPressed);
+  }];
+};
+
+exports.isButtonDown = function (index) {
+  var _a, _b;
+
+  return (_b = (_a = prevButtons[index]) === null || _a === void 0 ? void 0 : _a[0]) !== null && _b !== void 0 ? _b : 0 > 0;
+};
+
+exports.isButtonPressed = function (index) {
+  var _a, _b;
+
+  return ((_a = prevButtons[index]) === null || _a === void 0 ? void 0 : _a[0]) && ((_b = prevButtons[index]) === null || _b === void 0 ? void 0 : _b[1]);
+};
+
+exports.isButtonReleased = function (index) {
+  var _a, _b;
+
+  return ((_a = !prevButtons[index]) === null || _a === void 0 ? void 0 : _a[0]) && ((_b = prevButtons[index]) === null || _b === void 0 ? void 0 : _b[1]);
+};
+
+exports.getAxe = function (index) {
+  var _a, _b;
+
+  return (_b = (_a = prevAxes[index]) === null || _a === void 0 ? void 0 : _a[0]) !== null && _b !== void 0 ? _b : 0;
+};
+},{"../state":"src/state/index.ts","../types":"src/types.ts"}],"src/entities/TileMap.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.TileMap = void 0;
+var img = '/data/block.png';
+
+var drawToBuffer = function drawToBuffer(_a, layer, tileBuffer, imageData) {
+  var width = _a[0],
+      height = _a[1];
+  var gridCellWidth = layer.gridCellWidth,
+      gridCellHeight = layer.gridCellHeight,
+      dataCoords2D = layer.dataCoords2D;
+  var rowSize = width / gridCellWidth;
+  var columnSize = height / gridCellHeight;
+
+  for (var y = 0; y < columnSize; y++) {
+    for (var x = 0; x < rowSize; x++) {
+      var xPos = x * gridCellWidth;
+      var yPos = y * gridCellHeight;
+      var _b = dataCoords2D[y][x],
+          tileX = _b[0],
+          tileY = _b[1];
+      tileBuffer.image(imageData, xPos, yPos, gridCellWidth, gridCellHeight, tileX * gridCellWidth, tileY * gridCellHeight, 8, 8);
+    }
+  }
+};
+
+exports.TileMap = function (p5, state) {
+  var unsubs = [];
+  var buffers = [];
+  var localState = {
+    buffers: buffers,
+    setTileMap: function setTileMap(size, layer) {
+      p5.loadImage(img, function (image) {
+        var graphics = p5.createGraphics.apply(p5, size);
+        drawToBuffer(size, layer, graphics, image);
+        buffers.push(graphics);
+        unsubs.push(graphics.remove);
+      });
+    },
+    unsubs: unsubs
+  };
+  return {
+    localState: localState,
+    update: function update() {},
+    draw: function draw() {
+      for (var _i = 0, buffers_1 = buffers; _i < buffers_1.length; _i++) {
+        var buffer = buffers_1[_i];
+        p5.image(buffer, 0, 0);
+      }
+    }
+  };
+};
+},{}],"src/hooks/withCollision.ts":[function(require,module,exports) {
 "use strict";
 
 var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
@@ -45009,422 +45935,36 @@ exports.withCollision = function (engine) {
     Matter.Events.off(engine, 'collisionEnd', onCollisionEnd);
   }];
 };
-},{"matter-js":"node_modules/matter-js/build/matter.js","../state":"src/state/index.ts","../types":"src/types.ts"}],"src/hooks/addToWorld.ts":[function(require,module,exports) {
+},{"matter-js":"node_modules/matter-js/build/matter.js","../state":"src/state/index.ts","../types":"src/types.ts"}],"src/hooks/withDialogs.ts":[function(require,module,exports) {
 "use strict";
-
-var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  Object.defineProperty(o, k2, {
-    enumerable: true,
-    get: function get() {
-      return m[k];
-    }
-  });
-} : function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  o[k2] = m[k];
-});
-
-var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
-  Object.defineProperty(o, "default", {
-    enumerable: true,
-    value: v
-  });
-} : function (o, v) {
-  o["default"] = v;
-});
-
-var __importStar = this && this.__importStar || function (mod) {
-  if (mod && mod.__esModule) return mod;
-  var result = {};
-  if (mod != null) for (var k in mod) {
-    if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-  }
-
-  __setModuleDefault(result, mod);
-
-  return result;
-};
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.addToWorld = void 0;
+exports.withDialogs = void 0;
 
-var Matter = __importStar(require("matter-js"));
+var state_1 = require("../state");
 
-exports.addToWorld = function (engine, bodies) {
-  Matter.World.add(engine.world, bodies);
-  return function () {
-    bodies.forEach(function (body) {
-      Matter.Composite.remove(engine.world, body);
+var types_1 = require("../types");
+
+exports.withDialogs = function (state) {
+  return [state_1.$pressed.observable.filter(function (key) {
+    return key === types_1.PressKey.Next;
+  }).subscribe(function () {
+    state_1.$dialog.next(function (dialog) {
+      var newDialog = dialog.slice(1);
+      return newDialog;
     });
-  };
+  }).unsub, state_1.$dialog.observable.subscribe(function (dialog) {
+    if (dialog.length > 0) {
+      state.movable = false;
+    } else {
+      state.movable = true;
+    }
+  }).unsub];
 };
-},{"matter-js":"node_modules/matter-js/build/matter.js"}],"src/entities/Copter/index.ts":[function(require,module,exports) {
+},{"../state":"src/state/index.ts","../types":"src/types.ts"}],"src/entities/Level.ts":[function(require,module,exports) {
 "use strict";
-
-var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  Object.defineProperty(o, k2, {
-    enumerable: true,
-    get: function get() {
-      return m[k];
-    }
-  });
-} : function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  o[k2] = m[k];
-});
-
-var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
-  Object.defineProperty(o, "default", {
-    enumerable: true,
-    value: v
-  });
-} : function (o, v) {
-  o["default"] = v;
-});
-
-var __importStar = this && this.__importStar || function (mod) {
-  if (mod && mod.__esModule) return mod;
-  var result = {};
-  if (mod != null) for (var k in mod) {
-    if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-  }
-
-  __setModuleDefault(result, mod);
-
-  return result;
-};
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.Copter = void 0;
-
-var Matter = __importStar(require("matter-js"));
-
-var types_1 = require("../../types");
-
-var addToWorld_1 = require("../../hooks/addToWorld");
-
-var imagePath = '/data/copter.png';
-var MAX_MAGNITUDE = 5;
-var WIDTH = 16;
-var HEIGHT = 8 * .75;
-;
-
-exports.Copter = function (p5, state) {
-  var imageData;
-  var body = Matter.Bodies.rectangle(0, 0, WIDTH, HEIGHT, {
-    label: 'copter',
-    friction: 0.05
-  });
-  var localState = {
-    power: 0.00007,
-    setPos: function setPos(_a) {
-      var x = _a[0],
-          y = _a[1];
-      Matter.Body.setPosition(body, Matter.Vector.create(x, y));
-    },
-    getPos: function getPos() {
-      return body.position;
-    },
-    unsubs: [addToWorld_1.addToWorld(state.engine, [body])]
-  };
-  return {
-    localState: localState,
-    preload: function preload() {
-      imageData = p5.loadImage(imagePath);
-    },
-    update: function update() {
-      var _a, _b;
-
-      if (!state.movable) {
-        return;
-      }
-
-      var gamepad = navigator.getGamepads()[0];
-      var upValue = p5.keyIsDown(types_1.Key.Up) ? 1 : (_a = gamepad === null || gamepad === void 0 ? void 0 : gamepad.buttons[7].value) !== null && _a !== void 0 ? _a : 0;
-      var rotateValue = p5.keyIsDown(types_1.Key.Left) ? -1 : p5.keyIsDown(types_1.Key.Right) ? 1 : (_b = gamepad === null || gamepad === void 0 ? void 0 : gamepad.axes[0]) !== null && _b !== void 0 ? _b : 0;
-      var direction = p5.createVector(0, -(localState.power * upValue)).rotate(body.angle);
-
-      if (state.health > 0) {
-        Matter.Body.applyForce(body, body.position, direction);
-      }
-
-      if (Matter.Vector.magnitude(body.velocity) > MAX_MAGNITUDE) {
-        Matter.Body.setVelocity(body, body.velocity = Matter.Vector.mult(Matter.Vector.normalise(body.velocity), MAX_MAGNITUDE));
-      }
-
-      if (rotateValue !== 0) {
-        Matter.Body.rotate(body, rotateValue / 8);
-        Matter.Body.setAngularVelocity(body, 0);
-      }
-    },
-    draw: function draw() {
-      p5.push();
-      {
-        p5.translate(body.position.x, body.position.y);
-        p5.rotate(body.angle);
-        p5.image(imageData, -imageData.width / 2, -imageData.height / 2);
-      }
-      p5.pop();
-    }
-  };
-};
-},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Bonus/index.ts":[function(require,module,exports) {
-"use strict";
-
-var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  Object.defineProperty(o, k2, {
-    enumerable: true,
-    get: function get() {
-      return m[k];
-    }
-  });
-} : function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  o[k2] = m[k];
-});
-
-var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
-  Object.defineProperty(o, "default", {
-    enumerable: true,
-    value: v
-  });
-} : function (o, v) {
-  o["default"] = v;
-});
-
-var __importStar = this && this.__importStar || function (mod) {
-  if (mod && mod.__esModule) return mod;
-  var result = {};
-  if (mod != null) for (var k in mod) {
-    if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-  }
-
-  __setModuleDefault(result, mod);
-
-  return result;
-};
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.Bonuses = void 0;
-
-var Matter = __importStar(require("matter-js"));
-
-var types_1 = require("../../types");
-
-var state_1 = require("../../state");
-
-var addToWorld_1 = require("../../hooks/addToWorld");
-
-var RADIUS = 5;
-
-exports.Bonuses = function (p5, state) {
-  var bodies = [];
-  var unsubs = [state_1.$collisionActive.observable.subscribe(function (_a) {
-    var labelA = _a[0],
-        labelB = _a[1];
-
-    if (labelA === types_1.BodyLabel.Bonus || labelB === types_1.BodyLabel.Bonus) {
-      state.health = Math.min(1, state.health + 0.005);
-    }
-  }).unsubscribe];
-  var localState = {
-    addBonus: function addBonus(x, y) {
-      var body = Matter.Bodies.circle(x, y, RADIUS, {
-        isStatic: true,
-        isSensor: true,
-        label: types_1.BodyLabel.Bonus
-      });
-      bodies.push(body);
-      unsubs.push(addToWorld_1.addToWorld(state.engine, [body]));
-    },
-    unsubs: unsubs
-  };
-  return {
-    localState: localState,
-    update: function update() {},
-    draw: function draw() {
-      bodies.forEach(function (body) {
-        p5.circle(body.position.x, body.position.y, RADIUS * 2);
-      });
-    }
-  };
-};
-},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../state":"src/state/index.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Arrow/index.ts":[function(require,module,exports) {
-"use strict";
-
-var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  Object.defineProperty(o, k2, {
-    enumerable: true,
-    get: function get() {
-      return m[k];
-    }
-  });
-} : function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  o[k2] = m[k];
-});
-
-var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
-  Object.defineProperty(o, "default", {
-    enumerable: true,
-    value: v
-  });
-} : function (o, v) {
-  o["default"] = v;
-});
-
-var __importStar = this && this.__importStar || function (mod) {
-  if (mod && mod.__esModule) return mod;
-  var result = {};
-  if (mod != null) for (var k in mod) {
-    if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-  }
-
-  __setModuleDefault(result, mod);
-
-  return result;
-};
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.Arrow = void 0;
-
-var Matter = __importStar(require("matter-js"));
-
-var types_1 = require("../../types");
-
-exports.Arrow = function (p5, state) {
-  var localState = {
-    unsubs: [],
-    getPositionA: function getPositionA() {
-      return {
-        x: 0,
-        y: 0
-      };
-    },
-    getPositionB: function getPositionB() {
-      return {
-        x: 0,
-        y: 0
-      };
-    }
-  };
-  return {
-    localState: localState,
-    update: function update() {},
-    draw: function draw() {
-      p5.push();
-      {
-        var posA = localState.getPositionA();
-        var posB = localState.getPositionB();
-        var angle = Matter.Vector.angle(posA, posB);
-        var distance = Matter.Vector.magnitude(Matter.Vector.sub(posA, posB));
-
-        var _a = localState.getPositionB(),
-            x = _a.x,
-            y = _a.y;
-
-        var offset = Matter.Vector.mult(Matter.Vector.rotate(Matter.Vector.create(1, 0), angle), p5.width * 0.48);
-
-        if (x !== 0 && y !== 0 && distance > 100) {
-          p5.fill('red');
-          p5.translate((p5.width / 2 + offset.x) / types_1.SCALE, (p5.height / 2 + offset.y) / types_1.SCALE);
-          p5.angleMode('radians');
-          p5.rotate(angle);
-          p5.circle(0, 0, 5);
-        }
-      }
-      p5.pop();
-    }
-  };
-};
-},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts"}],"src/entities/Camera/index.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.Camera = void 0;
-
-var types_1 = require("../../types");
-
-exports.Camera = function (p5, state) {
-  var privateState = {
-    pos: p5.createVector(0, 0)
-  };
-  var localState = {
-    getTargetPos: function getTargetPos() {
-      return {
-        x: 0,
-        y: 0
-      };
-    },
-    unsubs: [],
-    getPos: function getPos() {
-      return privateState.pos;
-    }
-  };
-  return {
-    localState: localState,
-    update: function update() {
-      var _a = localState.getTargetPos(),
-          x = _a.x,
-          y = _a.y;
-
-      privateState.pos.lerp(x, y, 0, 0.1);
-    },
-    draw: function draw() {
-      p5.translate(-privateState.pos.x + p5.width / 2 / types_1.SCALE, -privateState.pos.y + p5.height / 2 / types_1.SCALE);
-    }
-  };
-};
-},{"../../types":"src/types.ts"}],"src/entities/MissionEmitter/index.ts":[function(require,module,exports) {
-"use strict";
-
-var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  Object.defineProperty(o, k2, {
-    enumerable: true,
-    get: function get() {
-      return m[k];
-    }
-  });
-} : function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  o[k2] = m[k];
-});
-
-var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
-  Object.defineProperty(o, "default", {
-    enumerable: true,
-    value: v
-  });
-} : function (o, v) {
-  o["default"] = v;
-});
-
-var __importStar = this && this.__importStar || function (mod) {
-  if (mod && mod.__esModule) return mod;
-  var result = {};
-  if (mod != null) for (var k in mod) {
-    if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-  }
-
-  __setModuleDefault(result, mod);
-
-  return result;
-};
 
 var __spreadArrays = this && this.__spreadArrays || function () {
   for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
@@ -45439,576 +45979,35 @@ var __spreadArrays = this && this.__spreadArrays || function () {
 
   return r;
 };
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.MissionEmitter = void 0;
-
-var Matter = __importStar(require("matter-js"));
-
-var types_1 = require("../../types");
-
-var state_1 = require("../../state");
-
-var addToWorld_1 = require("../../hooks/addToWorld");
-
-var RADIUS = 5;
-
-var onActionPressed = function onActionPressed(privateState) {
-  return function () {
-    switch (privateState.status) {
-      case types_1.InteractionStatus.CanInteract:
-        privateState.status = types_1.InteractionStatus.Speaking;
-        state_1.$dialog.next(function () {
-          return privateState.missions.map(function (mission) {
-            return {
-              speaker: mission.title,
-              speach: mission.description
-            };
-          });
-        });
-        break;
-
-      default:
-        break;
-    }
-  };
-};
-
-var onEndSpeaking = function onEndSpeaking(state, privateState) {
-  return function () {
-    if (privateState.status === types_1.InteractionStatus.Speaking) {
-      privateState.status = types_1.InteractionStatus.Doing;
-      state.targetPosition = privateState.targetBodies[0].position;
-    }
-  };
-};
-
-var onCollisionEnd = function onCollisionEnd(privateState) {
-  return function () {
-    if (privateState.status === types_1.InteractionStatus.CanInteract) {
-      privateState.status = types_1.InteractionStatus.New;
-    }
-  };
-};
-
-var onStartCollisionWithTarget = function onStartCollisionWithTarget(state, privateState) {
-  return function () {
-    if (privateState.status === types_1.InteractionStatus.Doing) {
-      privateState.status = types_1.InteractionStatus.Returning;
-      state.targetPosition = privateState.emitterBodies[0].position;
-    }
-  };
-};
-
-var onStartCollisionWithEmitter = function onStartCollisionWithEmitter(p5, state, privateState) {
-  return function () {
-    if (privateState.status === types_1.InteractionStatus.New) {
-      privateState.status = types_1.InteractionStatus.CanInteract;
-    } else if (privateState.status === types_1.InteractionStatus.Returning) {
-      privateState.status = types_1.InteractionStatus.Done;
-      state.targetPosition = p5.createVector();
-      state_1.$dialog.next(function () {
-        return [{
-          speaker: 'Speaker',
-          speach: 'Done! Thanks!'
-        }];
-      });
-    }
-  };
-};
-
-exports.MissionEmitter = function (p5, state) {
-  var privateState = {
-    emitterBodies: [],
-    targetBodies: [],
-    status: types_1.InteractionStatus.New,
-    missions: []
-  };
-  var unsubs = [state_1.$collisionStart.observable.filter(function (labels) {
-    return labels.includes(types_1.BodyLabel.MissionEmitter);
-  }).subscribe(onStartCollisionWithEmitter(p5, state, privateState)).unsubscribe, state_1.$collisionStart.observable.filter(function (labels) {
-    return labels.includes(types_1.BodyLabel.MissionTarget);
-  }).subscribe(onStartCollisionWithTarget(state, privateState)).unsubscribe, state_1.$collisionEnd.observable.filter(function (labels) {
-    return labels.includes(types_1.BodyLabel.MissionEmitter);
-  }).subscribe(onCollisionEnd(privateState)).unsubscribe, state_1.$pressed.observable.filter(function (key) {
-    return key === types_1.PressKey.Action;
-  }).subscribe(onActionPressed(privateState)).unsubscribe, state_1.$dialog.observable.filter(function (dialog) {
-    return dialog.length === 0;
-  }).subscribe(onEndSpeaking(state, privateState)).unsubscribe];
-  var localState = {
-    addEmitter: function addEmitter(pos, mission) {
-      var _a;
-
-      var emitterBody = (_a = Matter.Bodies).circle.apply(_a, __spreadArrays(pos, [RADIUS * 4, {
-        isStatic: true,
-        isSensor: true,
-        label: types_1.BodyLabel.MissionEmitter
-      }]));
-
-      privateState.emitterBodies.push(emitterBody);
-      privateState.missions.push(mission);
-      addToWorld_1.addToWorld(state.engine, [emitterBody]);
-    },
-    addTarget: function addTarget(pos) {
-      var _a;
-
-      var targetBody = (_a = Matter.Bodies).circle.apply(_a, __spreadArrays(pos, [RADIUS, {
-        isStatic: true,
-        isSensor: true,
-        label: types_1.BodyLabel.MissionTarget
-      }]));
-
-      privateState.targetBodies.push(targetBody);
-      addToWorld_1.addToWorld(state.engine, [targetBody]);
-    },
-    unsubs: unsubs
-  };
-  return {
-    localState: localState,
-    update: function update() {},
-    draw: function draw() {
-      p5.push();
-      {
-        p5.noStroke();
-
-        for (var _i = 0, _a = privateState.emitterBodies; _i < _a.length; _i++) {
-          var emitter = _a[_i];
-          p5.fill(255, 0, 255);
-          p5.circle(emitter.position.x, emitter.position.y, RADIUS * 2);
-          p5.fill('yellow');
-
-          if (privateState.status === types_1.InteractionStatus.CanInteract) {
-            p5.rect(emitter.position.x - 2.5, emitter.position.y - 20, 5, 10);
-          }
-        }
-
-        for (var _b = 0, _c = privateState.targetBodies; _b < _c.length; _b++) {
-          var target = _c[_b];
-          p5.fill(255, 255, 0);
-
-          if (privateState.status === types_1.InteractionStatus.Doing) {
-            p5.circle(target.position.x, target.position.y, RADIUS * 2);
-          }
-
-          ;
-        }
-      }
-      p5.pop();
-    }
-  };
-};
-},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../state":"src/state/index.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Ground/index.ts":[function(require,module,exports) {
-"use strict";
-
-var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  Object.defineProperty(o, k2, {
-    enumerable: true,
-    get: function get() {
-      return m[k];
-    }
-  });
-} : function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  o[k2] = m[k];
-});
-
-var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
-  Object.defineProperty(o, "default", {
-    enumerable: true,
-    value: v
-  });
-} : function (o, v) {
-  o["default"] = v;
-});
-
-var __importStar = this && this.__importStar || function (mod) {
-  if (mod && mod.__esModule) return mod;
-  var result = {};
-  if (mod != null) for (var k in mod) {
-    if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-  }
-
-  __setModuleDefault(result, mod);
-
-  return result;
-};
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.Grounds = void 0;
-
-var Matter = __importStar(require("matter-js"));
-
-var types_1 = require("../../types");
-
-var addToWorld_1 = require("../../hooks/addToWorld");
-
-exports.Grounds = function (p5, state) {
-  var unsubs = [];
-  var bodies = [];
-  var localState = {
-    addGround: function addGround(_a, _b) {
-      var x = _a[0],
-          y = _a[1];
-      var w = _b[0],
-          h = _b[1];
-      var body = Matter.Bodies.rectangle(x + w / 2, y + h / 2, w, h, {
-        isStatic: true,
-        label: types_1.BodyLabel.Ground
-      });
-      bodies.push(body);
-      unsubs.push(addToWorld_1.addToWorld(state.engine, [body]));
-    },
-    unsubs: unsubs
-  };
-  return {
-    localState: localState,
-    update: function update() {},
-    draw: function draw() {}
-  };
-};
-},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/DialogEmitter/index.ts":[function(require,module,exports) {
-"use strict";
-
-var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  Object.defineProperty(o, k2, {
-    enumerable: true,
-    get: function get() {
-      return m[k];
-    }
-  });
-} : function (o, m, k, k2) {
-  if (k2 === undefined) k2 = k;
-  o[k2] = m[k];
-});
-
-var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
-  Object.defineProperty(o, "default", {
-    enumerable: true,
-    value: v
-  });
-} : function (o, v) {
-  o["default"] = v;
-});
-
-var __importStar = this && this.__importStar || function (mod) {
-  if (mod && mod.__esModule) return mod;
-  var result = {};
-  if (mod != null) for (var k in mod) {
-    if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-  }
-
-  __setModuleDefault(result, mod);
-
-  return result;
-};
-
-var __spreadArrays = this && this.__spreadArrays || function () {
-  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
-    s += arguments[i].length;
-  }
-
-  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
-    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
-      r[k] = a[j];
-    }
-  }
-
-  return r;
-};
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.DialogEmitter = void 0;
-
-var Matter = __importStar(require("matter-js"));
-
-var types_1 = require("../../types");
-
-var state_1 = require("../../state");
-
-var addToWorld_1 = require("../../hooks/addToWorld");
-
-var RADIUS = 5;
-
-var getOnActionPressed = function getOnActionPressed(privateState) {
-  return function () {
-    switch (privateState.status) {
-      case types_1.InteractionStatus.CanInteract:
-        privateState.status = types_1.InteractionStatus.Speaking;
-        state_1.$dialog.next(function () {
-          return privateState.dialog;
-        });
-        break;
-
-      default:
-        break;
-    }
-  };
-};
-
-exports.DialogEmitter = function (p5, state) {
-  var privateState = {
-    status: types_1.InteractionStatus.New,
-    dialog: [],
-    bodies: []
-  };
-  var onActionPressed = getOnActionPressed(privateState);
-  var unsubs = [state_1.$collisionStart.observable.filter(function (labels) {
-    return labels.includes(types_1.BodyLabel.DialogEmitter);
-  }).subscribe(function () {
-    if (privateState.status === types_1.InteractionStatus.Done) {
-      return;
-    }
-
-    privateState.status = types_1.InteractionStatus.CanInteract;
-  }).unsubscribe, state_1.$collisionEnd.observable.filter(function (labels) {
-    return labels.includes(types_1.BodyLabel.DialogEmitter);
-  }).subscribe(function () {
-    if (privateState.status === types_1.InteractionStatus.CanInteract) {
-      privateState.status = types_1.InteractionStatus.New;
-    }
-  }).unsubscribe, state_1.$pressed.observable.filter(function (key) {
-    return key === types_1.PressKey.Action;
-  }).subscribe(onActionPressed).unsubscribe, state_1.$dialog.observable.filter(function (dialog) {
-    return dialog.length === 0;
-  }).subscribe(function () {
-    if (privateState.status === types_1.InteractionStatus.Speaking) {
-      privateState.status = types_1.InteractionStatus.Done;
-    }
-  }).unsubscribe];
-  var localState = {
-    addDialog: function addDialog(pos, dialogPath) {
-      fetch(dialogPath).then(function (data) {
-        return data.json();
-      }).then(function (newDialog) {
-        var _a;
-
-        privateState.dialog = newDialog;
-
-        var body = (_a = Matter.Bodies).circle.apply(_a, __spreadArrays(pos, [RADIUS * 4, {
-          isStatic: true,
-          isSensor: true,
-          label: types_1.BodyLabel.DialogEmitter
-        }]));
-
-        privateState.bodies.push(body);
-        unsubs.push(addToWorld_1.addToWorld(state.engine, [body]));
-      }).catch(console.log);
-    },
-    unsubs: unsubs
-  };
-  return {
-    localState: localState,
-    update: function update() {},
-    draw: function draw() {
-      p5.push();
-      {
-        p5.noStroke();
-        p5.fill(0, 255, 0);
-
-        for (var _i = 0, _a = privateState.bodies; _i < _a.length; _i++) {
-          var body = _a[_i];
-          p5.circle(body.position.x, body.position.y, RADIUS * 2);
-          p5.fill('yellow');
-
-          if (privateState.status === types_1.InteractionStatus.CanInteract) {
-            p5.rect(body.position.x - 2.5, body.position.y - 20, 5, 10);
-          }
-        }
-      }
-      p5.pop();
-    }
-  };
-};
-},{"matter-js":"node_modules/matter-js/build/matter.js","../../types":"src/types.ts","../../state":"src/state/index.ts","../../hooks/addToWorld":"src/hooks/addToWorld.ts"}],"src/entities/Pressed/index.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.getAxe = exports.isButtonReleased = exports.isButtonPressed = exports.isButtonDown = exports.Gamepad = void 0;
-
-var state_1 = require("../../state");
-
-var types_1 = require("../../types");
-
-var prevButtons = {};
-var prevAxes = {};
-
-exports.Gamepad = function () {
-  var onKeyPressed = function onKeyPressed(event) {
-    if (event.key === 'Enter') {
-      state_1.$pressed.next(function () {
-        return types_1.PressKey.Action;
-      });
-    }
-
-    if (event.key === 'ArrowRight') {
-      state_1.$pressed.next(function () {
-        return types_1.PressKey.Next;
-      });
-    }
-  };
-
-  return {
-    localState: {
-      unsubs: [function () {
-        window.addEventListener('keydown', onKeyPressed);
-        return function () {
-          window.removeEventListener('keydown', onKeyPressed);
-        };
-      }()]
-    },
-    draw: function draw() {},
-    update: function update() {
-      var _a, _b;
-
-      var gamepad = navigator.getGamepads()[0];
-
-      for (var index = 0; (_a = index < (gamepad === null || gamepad === void 0 ? void 0 : gamepad.buttons.length)) !== null && _a !== void 0 ? _a : 0; index++) {
-        var button = gamepad.buttons[index];
-        prevButtons[index] = prevButtons[index] || [button.value, false];
-        var pressed = button.value !== prevButtons[index][0];
-        prevButtons[index] = [button.value, pressed];
-
-        switch (index) {
-          case 0:
-            state_1.$pressed.next(function () {
-              return types_1.PressKey.Action;
-            });
-            break;
-
-          case 2:
-            state_1.$pressed.next(function () {
-              return types_1.PressKey.Next;
-            });
-            break;
-
-          default:
-            break;
-        }
-      }
-
-      for (var index = 0; (_b = index < (gamepad === null || gamepad === void 0 ? void 0 : gamepad.axes.length)) !== null && _b !== void 0 ? _b : 0; index++) {
-        prevAxes[index] = gamepad.axes[index];
-      }
-    }
-  };
-};
-
-exports.isButtonDown = function (index) {
-  var _a, _b;
-
-  return (_b = (_a = prevButtons[index]) === null || _a === void 0 ? void 0 : _a[0]) !== null && _b !== void 0 ? _b : 0 > 0;
-};
-
-exports.isButtonPressed = function (index) {
-  var _a, _b;
-
-  return ((_a = prevButtons[index]) === null || _a === void 0 ? void 0 : _a[0]) && ((_b = prevButtons[index]) === null || _b === void 0 ? void 0 : _b[1]);
-};
-
-exports.isButtonReleased = function (index) {
-  var _a, _b;
-
-  return ((_a = !prevButtons[index]) === null || _a === void 0 ? void 0 : _a[0]) && ((_b = prevButtons[index]) === null || _b === void 0 ? void 0 : _b[1]);
-};
-
-exports.getAxe = function (index) {
-  var _a, _b;
-
-  return (_b = (_a = prevAxes[index]) === null || _a === void 0 ? void 0 : _a[0]) !== null && _b !== void 0 ? _b : 0;
-};
-},{"../../state":"src/state/index.ts","../../types":"src/types.ts"}],"src/entities/TileMap/index.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.TileMap = void 0;
-var img = '/data/block.png';
-
-var drawToBuffer = function drawToBuffer(_a, layer, tileBuffer, imageData) {
-  var width = _a[0],
-      height = _a[1];
-  var gridCellWidth = layer.gridCellWidth,
-      gridCellHeight = layer.gridCellHeight,
-      dataCoords2D = layer.dataCoords2D;
-  var rowSize = width / gridCellWidth;
-  var columnSize = height / gridCellHeight;
-
-  for (var y = 0; y < columnSize; y++) {
-    for (var x = 0; x < rowSize; x++) {
-      var xPos = x * gridCellWidth;
-      var yPos = y * gridCellHeight;
-      var _b = dataCoords2D[y][x],
-          tileX = _b[0],
-          tileY = _b[1];
-      tileBuffer.image(imageData, xPos, yPos, gridCellWidth, gridCellHeight, tileX * gridCellWidth, tileY * gridCellHeight, 8, 8);
-    }
-  }
-};
-
-exports.TileMap = function (p5, state) {
-  var unsubs = [];
-  var buffers = [];
-  var localState = {
-    buffers: buffers,
-    setTileMap: function setTileMap(size, layer) {
-      p5.loadImage(img, function (image) {
-        var graphics = p5.createGraphics.apply(p5, size);
-        drawToBuffer(size, layer, graphics, image);
-        buffers.push(graphics);
-        unsubs.push(graphics.remove);
-      });
-    },
-    unsubs: unsubs
-  };
-  return {
-    localState: localState,
-    update: function update() {},
-    draw: function draw() {
-      for (var _i = 0, buffers_1 = buffers; _i < buffers_1.length; _i++) {
-        var buffer = buffers_1[_i];
-        p5.image(buffer, 0, 0);
-      }
-    }
-  };
-};
-},{}],"src/entities/Level/index.ts":[function(require,module,exports) {
-"use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.Level = void 0;
 
-var types_1 = require("../../types");
+var types_1 = require("../types");
 
-var Copter_1 = require("../Copter");
+var Copter_1 = require("./Copter");
 
-var Bonus_1 = require("../Bonus");
+var Bonus_1 = require("./Bonus");
 
-var Arrow_1 = require("../Arrow");
+var Arrow_1 = require("./Arrow");
 
-var Camera_1 = require("../Camera");
+var Camera_1 = require("./Camera");
 
-var MissionEmitter_1 = require("../MissionEmitter");
+var MissionEmitter_1 = require("./MissionEmitter");
 
-var Ground_1 = require("../Ground");
+var Ground_1 = require("./Ground");
 
-var DialogEmitter_1 = require("../DialogEmitter");
+var DialogEmitter_1 = require("./DialogEmitter");
 
-var Pressed_1 = require("../Pressed");
+var Pressed_1 = require("./Pressed");
 
-var TileMap_1 = require("../TileMap");
+var TileMap_1 = require("./TileMap");
+
+var withCollision_1 = require("../hooks/withCollision");
+
+var withDialogs_1 = require("../hooks/withDialogs");
 
 var drawBG = function drawBG(p5, xOffset, yOffset) {
   var w = p5.width;
@@ -46087,7 +46086,6 @@ var getEntities = function getEntities(levelPath, _a) {
 };
 
 exports.Level = function (p5, state) {
-  var gamepad = Pressed_1.Gamepad();
   var copter = Copter_1.Copter(p5, state);
   var camera = Camera_1.Camera(p5, state);
   var missionEmitter = MissionEmitter_1.MissionEmitter(p5, state);
@@ -46105,9 +46103,9 @@ exports.Level = function (p5, state) {
     return state.targetPosition;
   };
 
-  var children = [tileMap, gamepad, copter, missionEmitter, bonuses, grounds, dialogEmitter];
+  var children = [tileMap, copter, missionEmitter, bonuses, grounds, dialogEmitter];
   var localState = {
-    unsubs: [],
+    unsubs: __spreadArrays(Pressed_1.Pressed(), withCollision_1.withCollision(state.engine), withDialogs_1.withDialogs(state)),
     loadLevel: function loadLevel(path) {
       getEntities(path, {
         tileMap: tileMap,
@@ -46185,35 +46183,7 @@ exports.Level = function (p5, state) {
     }
   };
 };
-},{"../../types":"src/types.ts","../Copter":"src/entities/Copter/index.ts","../Bonus":"src/entities/Bonus/index.ts","../Arrow":"src/entities/Arrow/index.ts","../Camera":"src/entities/Camera/index.ts","../MissionEmitter":"src/entities/MissionEmitter/index.ts","../Ground":"src/entities/Ground/index.ts","../DialogEmitter":"src/entities/DialogEmitter/index.ts","../Pressed":"src/entities/Pressed/index.ts","../TileMap":"src/entities/TileMap/index.ts"}],"src/hooks/withDialogs.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.withDialogs = void 0;
-
-var state_1 = require("../state");
-
-var types_1 = require("../types");
-
-exports.withDialogs = function (state) {
-  return [state_1.$pressed.observable.filter(function (key) {
-    return key === types_1.PressKey.Next;
-  }).subscribe(function () {
-    state_1.$dialog.next(function (dialog) {
-      var newDialog = dialog.slice(1);
-      return newDialog;
-    });
-  }).unsubscribe, state_1.$dialog.observable.subscribe(function (dialog) {
-    if (dialog.length > 0) {
-      state.movable = false;
-    } else {
-      state.movable = true;
-    }
-  }).unsubscribe];
-};
-},{"../state":"src/state/index.ts","../types":"src/types.ts"}],"src/canvas.ts":[function(require,module,exports) {
+},{"../types":"src/types.ts","./Copter":"src/entities/Copter.ts","./Bonus":"src/entities/Bonus.ts","./Arrow":"src/entities/Arrow.ts","./Camera":"src/entities/Camera.ts","./MissionEmitter":"src/entities/MissionEmitter.ts","./Ground":"src/entities/Ground.ts","./DialogEmitter":"src/entities/DialogEmitter.ts","./Pressed":"src/entities/Pressed.ts","./TileMap":"src/entities/TileMap.ts","../hooks/withCollision":"src/hooks/withCollision.ts","../hooks/withDialogs":"src/hooks/withDialogs.ts"}],"src/canvas.ts":[function(require,module,exports) {
 "use strict";
 
 var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
@@ -46250,20 +46220,6 @@ var __importStar = this && this.__importStar || function (mod) {
   return result;
 };
 
-var __spreadArrays = this && this.__spreadArrays || function () {
-  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
-    s += arguments[i].length;
-  }
-
-  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
-    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
-      r[k] = a[j];
-    }
-  }
-
-  return r;
-};
-
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -46273,13 +46229,9 @@ var P5 = require("p5");
 
 var Matter = __importStar(require("matter-js"));
 
-var withCollision_1 = require("./hooks/withCollision");
-
 var Level_1 = require("./entities/Level");
 
 var state_1 = require("./state");
-
-var withDialogs_1 = require("./hooks/withDialogs");
 
 var canvas = document.querySelector('#canvas');
 var CANVAS_WIDTH = 500;
@@ -46302,8 +46254,7 @@ exports.initCanvas = function () {
       }
     };
     var level = Level_1.Level(p5, state);
-
-    var unsubs = __spreadArrays([state_1.$gameState.observable.subscribe(function (gameState) {
+    var unsubs = [state_1.$gameState.observable.subscribe(function (gameState) {
       state.gameState = gameState.type;
 
       switch (gameState.type) {
@@ -46320,10 +46271,10 @@ exports.initCanvas = function () {
           });
           break;
       }
-    }).unsubscribe, state_1.$pause.observable.subscribe(function (pause) {
+    }).unsub, state_1.$pause.observable.subscribe(function (pause) {
       state.paused = pause;
       runner.enabled = !pause;
-    }).unsubscribe], withCollision_1.withCollision(engine), withDialogs_1.withDialogs(state));
+    }).unsub];
 
     p5.setup = function () {
       p5.createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -46341,7 +46292,7 @@ exports.initCanvas = function () {
     };
   }, canvas);
 };
-},{"p5":"node_modules/p5/lib/p5.min.js","matter-js":"node_modules/matter-js/build/matter.js","./hooks/withCollision":"src/hooks/withCollision.ts","./entities/Level":"src/entities/Level/index.ts","./state":"src/state/index.ts","./hooks/withDialogs":"src/hooks/withDialogs.ts"}],"src/components/GameState.ts":[function(require,module,exports) {
+},{"p5":"node_modules/p5/lib/p5.min.js","matter-js":"node_modules/matter-js/build/matter.js","./entities/Level":"src/entities/Level.ts","./state":"src/state/index.ts"}],"src/components/GameState.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -46361,7 +46312,7 @@ var Health = function Health() {
   return TypeScriptUI_1.Div(TypeScriptUI_1.String("energy"), TypeScriptUI_1.Div(TypeScriptUI_1.Div().with(TypeScriptUI_1.className("progress-handle")).with(function (node) {
     return state_1.$nrg.observable.subscribe(function (nrg) {
       return node.style.width = nrg * 80 + "px";
-    }).unsubscribe;
+    }).unsub;
   })).with(TypeScriptUI_1.className("progress-track"))).with(TypeScriptUI_1.className("health"));
 };
 
@@ -46410,15 +46361,21 @@ var types_1 = require("../types");
 
 var TypeScriptUI_1 = require("../TypeScriptUI");
 
+var goToGame = function goToGame() {
+  return state_1.$gameState.next(function () {
+    return {
+      type: 'game',
+      levelPath: types_1.LevelPath.First
+    };
+  });
+};
+
 exports.MenuState = function () {
-  return TypeScriptUI_1.Div(TypeScriptUI_1.Div(TypeScriptUI_1.String('menu')), TypeScriptUI_1.Button('Go to game', function () {
-    state_1.$gameState.next(function () {
-      return {
-        type: 'game',
-        levelPath: types_1.LevelPath.First
-      };
-    });
-  }));
+  return TypeScriptUI_1.Div(TypeScriptUI_1.Div(TypeScriptUI_1.String('menu')), TypeScriptUI_1.Button('Go to game', goToGame)).with(function () {
+    return state_1.$pressed.observable.filter(function (key) {
+      return key === types_1.PressKey.Next;
+    }).subscribe(goToGame).unsub;
+  });
 };
 },{"../state":"src/state/index.ts","../types":"src/types.ts","../TypeScriptUI":"src/TypeScriptUI/index.ts"}],"src/index.ts":[function(require,module,exports) {
 "use strict";
@@ -46481,7 +46438,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49706" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "60416" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

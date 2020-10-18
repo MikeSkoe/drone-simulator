@@ -13,7 +13,7 @@ export const withDialogs = (
         return newDialog;
       })
     })
-    .unsubscribe,
+    .unsub,
 
   $dialog.observable
     .subscribe(dialog => {
@@ -23,6 +23,6 @@ export const withDialogs = (
         state.movable = true;
       }
     })
-    .unsubscribe,
+    .unsub,
 ];
 

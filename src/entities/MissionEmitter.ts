@@ -1,8 +1,8 @@
 import P5 = require('p5');
 import * as Matter from 'matter-js';
-import { Entity, Mission, BaseState, MyState, BodyLabel, InteractionStatus, PressKey } from '../../types';
-import { $collisionEnd, $collisionStart, $dialog, $pressed } from '../../state';
-import { addToWorld } from '../../hooks/addToWorld';
+import { Entity, Mission, BaseState, MyState, BodyLabel, InteractionStatus, PressKey } from '../types';
+import { $collisionEnd, $collisionStart, $dialog, $pressed } from '../state';
+import { addToWorld } from '../hooks/addToWorld';
 
 const RADIUS = 5;
 
@@ -80,27 +80,27 @@ export const MissionEmitter = (
     $collisionStart.observable
       .filter(labels => labels.includes(BodyLabel.MissionEmitter))
       .subscribe(onStartCollisionWithEmitter(p5, state, privateState))
-      .unsubscribe,
+      .unsub,
     
     $collisionStart.observable
       .filter(labels => labels.includes(BodyLabel.MissionTarget))
       .subscribe(onStartCollisionWithTarget(state, privateState))
-      .unsubscribe,
+      .unsub,
 
       $collisionEnd.observable
         .filter(labels => labels.includes(BodyLabel.MissionEmitter))
         .subscribe(onCollisionEnd(privateState))
-        .unsubscribe,
+        .unsub,
 
       $pressed.observable
         .filter(key => key === PressKey.Action)
         .subscribe(onActionPressed(privateState))
-        .unsubscribe,
+        .unsub,
       
       $dialog.observable
         .filter(dialog => dialog.length === 0)
         .subscribe(onEndSpeaking(state, privateState))
-        .unsubscribe,
+        .unsub,
   ]
 
   const localState: MissionEmitterState = {

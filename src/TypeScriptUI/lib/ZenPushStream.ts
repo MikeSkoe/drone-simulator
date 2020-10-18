@@ -1,4 +1,4 @@
-import {default as Observable} from 'zen-observable';
+import { Observable } from './Observable';
 
 type Message = 'next' | 'error' | 'complete';
   

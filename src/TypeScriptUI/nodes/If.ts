@@ -1,6 +1,6 @@
 import { View } from '../lib/View';
 import PlaceHolder from './PlaceHolder';
-import {default as Observable} from 'zen-observable';
+import {Observable} from '../lib/Observable';
 
 class If extends View<HTMLElement> {
     node = document.createElement('div');
@@ -35,7 +35,7 @@ class If extends View<HTMLElement> {
                     this.currentNode.remove();
                     this.currentNode = newNode;
                     this.node.appendChild(newNode.node);
-                }).unsubscribe,
+                }).unsub,
             );
         }
     }

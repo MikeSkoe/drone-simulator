@@ -1,6 +1,6 @@
 import { WithId, isIn, notIn } from '../lib/utils';
 import { View } from '../lib/View';
-import {default as Observable} from 'zen-observable';
+import {Observable} from '../lib/Observable';
 
 const setKey = (
     key: string,
@@ -89,7 +89,7 @@ class List<T extends WithId> extends View<HTMLDivElement> {
                 )
 
                 this.prevArr = newArr;
-            }).unsubscribe
+            }).unsub
         )
     }
 
