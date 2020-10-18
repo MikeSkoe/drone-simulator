@@ -183,7 +183,7 @@
       "nodeGhost": true,
       "tags": [],
       "values": [
-        {"name": "path", "definition": "String", "defaults": "/data/dialog1.json", "maxLength": 0, "trimWhitespace": true}
+        {"name": "path", "definition": "String", "defaults": "https://mikeskoe.github.io/drone-simulator/data/dialog1.json", "maxLength": 0, "trimWhitespace": true}
       ]
     },
     {
@@ -263,6 +263,6 @@
     }
   ],
   "tilesets": [
-    {"label": "New Tileset", "path": "block.png", "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAA9hAAAPYQGoP6dpAAABX0lEQVRoBe1YPQrCUAy2xYO4O3gUF3F00Ht4ExfHbh7FwfNUUkgJJS0v+R4RbFwepPn5fqxNbU7Xe7+p8Dk/nqYu3e1iyp9L3s5dsMQJ/Od1KCrZH99DHtXUINEWTV1IsoCnNpKo1TUNBkxAaxoZSwKRamuz0gFNlchYOhCptjYrHdBUiYylA5Fqa7PW7YB1kWMFay50Db8PeDZDCYTBWU5erS01nMur+EDAqyQ3izwlaSLRdP2uR5WMJECzJIl138TRymvz0gFNlchYOhCptjYrHdBUiYz9hwPyyRapnmfWFOuwSngaUQ26gkzBeHC0vNV5ihEASC1jJezDPRBNohZ4IjL+ve4h4XmHYPXk6ZnN9dCvEDKYAaA9IAIM4pdnEvil+jQ7HUgHQAXyKwQKCJenA7CEYIMqDliWM0tuCbdxmStJXsqpDWxplrwGO4AsY0gtk4AJUCMPEE8Ng5bnF6zeVIRmjmcPAAAAAElFTkSuQmCC", "tileWidth": 8, "tileHeight": 8, "tileSeparationX": 0, "tileSeparationY": 0}
+    {"label": "New Tileset", "path": "block.png", "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAA9hAAAPYQGoP6dpAAACgUlEQVRoBdWYUW7CMAyG22mH4ShoEyfhBe0gEy+cBG3iKNyG1R2uQvL3J44tRfCSNnGc70tL5XYcpt9+v5fm6e90Oq3G/F4ut9XBZODnfJ7Pplxj0t18OCepFZBVkITAfx0Ow/V6HTebzY21Ehsp8dasfp9ogRe5j+12/Nzt5tnTxlVdNcboFpDkbMfRFWFA1jGzALrdECSTskKyeLMASsZgkRzK0doXIoAgmVQrLJo3C6AnCwpe62OwSG4tT0u/+QogWQTJpFpA1+YsAgKG4NYmpv0MFsmlc73H73kClcifNtqfx8s5gmRS0xT38185CgEdYMAaoy2DRXI6L6JdbiFPMgTJpDxr5XNDBBgsksshPOchAgiSSXmAQ+dKISfwktTaylwp5rwF3VKTS0KrXW0JvXaFWtaEpbhnJ607740vrtwrwav8g4SctNzDmqxHWwj0gPBsWiHgSdZDvhDoAeHZtELAk6yHfCHQA8KzaYWAJ1kP+UKgB4Rn0woBT7Ie8g8CUkxJx6tIpPDCPr+RSYGkEpOIFnVPW/lMKFeAlc5s/Pt4lH17uo4ETb85Tou5/65h0I+7mkT7q1r5xtkqIfA5TNWiSdD02jsu5XRrXd4iEQUvLstLvdgkclWHKs1uE3R7TckfrnjL2lWANUH637E8jdI/Ys0aLObl34lDBNBtwm4rtqPWsRABBovkrJAsPkQAQTIpBmQdCxFgsEjOCsniQwQQJJNiQNaxEAEGi+SskCw+RABBMikGZB0LEWCwSM4KyeJDBBAkk2JA1jG3gJbitRIRhVwquRRzaaf1WCXu87RQg623hM7ZzBVonkDOtSpFY6wvogoNEWiRiICXdf8ApnqEkzEOi1YAAAAASUVORK5CYII=", "tileWidth": 8, "tileHeight": 8, "tileSeparationX": 0, "tileSeparationY": 0}
   ]
 }
