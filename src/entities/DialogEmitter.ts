@@ -1,13 +1,13 @@
 import P5 = require('p5');
 import * as Matter from 'matter-js';
 import { Entity, DialogItem, BaseState, MyState, BodyLabel, InteractionStatus, PressKey } from '../types';
-import { $collisionEnd, $collisionStart, $dialog, $pressed } from '../state';
+import { $canInteract, $collisionEnd, $collisionStart, $dialog, $pressed } from '../state';
 import { addToWorld } from '../hooks/addToWorld';
 
 const RADIUS = 5;
 
 export interface DialogEmitterState extends BaseState{
-  addDialog: (pos: [number, number], dialogPath: string) => void;
+  addDialog: (pos: [number, number], dialog: DialogItem[]) => void;
 }
 
 const getOnActionPressed = (
@@ -48,6 +48,7 @@ export const DialogEmitter = (
           }
 
           privateState.status = InteractionStatus.CanInteract;
+          $canInteract.next(() => true);
         })
         .unsub,
 
@@ -57,6 +58,8 @@ export const DialogEmitter = (
           if (privateState.status === InteractionStatus.CanInteract) {
             privateState.status = InteractionStatus.New;
           }
+
+          $canInteract.next(() => false);
         })
         .unsub,
 
@@ -66,35 +69,33 @@ export const DialogEmitter = (
         .unsub,
 
       $dialog.observable
-        .filter(dialog => dialog.length === 0)
-        .subscribe(() => {
-          if (privateState.status === InteractionStatus.Speaking) {
-            privateState.status = InteractionStatus.Done
+        .subscribe(dialog => {
+          if (dialog.length === 0) {
+            if (privateState.status === InteractionStatus.Speaking) {
+              privateState.status = InteractionStatus.Done
+            }
+          } else {
+            $canInteract.next(() => false);
           }
         })
         .unsub,
     ];
 
   const localState: DialogEmitterState = {
-    addDialog: (pos, dialogPath) => {
-      fetch(dialogPath)
-        .then(data => data.json())
-        .then((newDialog: DialogItem[]) => {
-          privateState.dialog = newDialog;
+    addDialog: (pos, dialog) => {
+      privateState.dialog = dialog;
 
-          const body = Matter.Bodies.circle(
-            ...pos, RADIUS * 4,
-            {
-              isStatic: true,
-              isSensor: true,
-              label: BodyLabel.DialogEmitter,
-            },
-          );
+      const body = Matter.Bodies.circle(
+        ...pos, RADIUS * 4,
+        {
+          isStatic: true,
+          isSensor: true,
+          label: BodyLabel.DialogEmitter,
+        },
+      );
 
-          privateState.bodies.push(body);
-          unsubs.push(addToWorld(state.engine, [body]));
-        })
-        .catch(console.log);
+      privateState.bodies.push(body);
+      unsubs.push(addToWorld(state.engine, [body]));
     },
     unsubs,
   };

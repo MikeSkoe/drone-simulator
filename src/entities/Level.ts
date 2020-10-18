@@ -55,7 +55,6 @@ const getEntities = (
   fetch(levelPath)
     .then(data => data.json())
     .then((data: LevelData) => {
-
       for (const layer of data.layers) {
         if (layer.name === 'tilemap') {
           tileMap.localState.setTileMap([data.width, data.height], layer);
@@ -75,11 +74,7 @@ const getEntities = (
               case 'mission_emitter':
                 missionEmitter.localState.addEmitter(
                   [entity.x, entity.y],
-                  {
-                    id: Math.random(),
-                    title: entity.values.title,
-                    description: entity.values.description,
-                  }
+                  JSON.parse(entity.values.dialog),
                 );
                 break;
 
@@ -88,7 +83,10 @@ const getEntities = (
                 break;
 
               case 'dialog_emitter':
-                dialogEmitter.localState.addDialog([entity.x, entity.y], entity.values.path)
+                dialogEmitter.localState.addDialog(
+                  [entity.x, entity.y],
+                  JSON.parse(entity.values.dialog),
+                );
                 break;
 
               case 'ground':

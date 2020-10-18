@@ -95,9 +95,7 @@ export type TileMapGroundLayer = {
     originX: number;
     originY: number;
     values: {
-      title: string;
-      description: string;
-      path: string;
+      dialog: string;
     }
   }[];
 }

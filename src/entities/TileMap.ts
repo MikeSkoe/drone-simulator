@@ -13,6 +13,8 @@ const drawToBuffer = (
     const rowSize = width / gridCellWidth;
     const columnSize = height / gridCellHeight;
 
+    tileBuffer.noSmooth();
+
     for ( let y = 0; y < columnSize; y++) {
       for (let x = 0; x < rowSize; x++) {
         const xPos = x * gridCellWidth;
@@ -48,7 +50,7 @@ export const TileMap = (
       p5.loadImage(
         img,
         image => {
-          const graphics = p5.createGraphics(...size);
+          const graphics = p5.createGraphics(...size, 'p2d');
 
           drawToBuffer(size, layer, graphics, image);
           buffers.push(graphics);

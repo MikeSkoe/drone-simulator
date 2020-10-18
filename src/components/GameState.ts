@@ -1,5 +1,5 @@
 import { Div, String, Switch, className, Button, If } from '../TypeScriptUI';
-import { $dialog, $gameState, $nrg, $pause } from '../state';
+import { $canInteract, $dialog, $gameState, $nrg, $pause } from '../state';
 import { DialogItem, LevelPath } from '../types';
 
 const Dialog = (item?: DialogItem) =>
@@ -12,8 +12,6 @@ const Dialog = (item?: DialogItem) =>
         Div(String(item.speach))
           .with(className("text")),
       ),
-      Div(String(">"))
-        .with(className("next inner-box")),
     ).with(className("dialog outer-box"));
 
 const Health = () => Div(
@@ -38,7 +36,7 @@ const GoToMenu = () => Div(
     ),
 );
 
-const pause = () => Div(
+const Pause = () => Div(
   If($pause.observable,
     () => Button(
       'play',
@@ -51,6 +49,15 @@ const pause = () => Div(
   ),
 );
 
+const Sugestions = () => Div(
+  If($canInteract.observable,
+    () => Div(String('press [Action] key to interact')),
+  ),
+  If($dialog.observable.map(dialog => dialog.length > 0),
+    () => Div(String('press [Next] to see next phrase')),
+  ),
+).with(className('suggestion'));
+
 export const GameState = () =>
   Div(
     Switch(
@@ -59,5 +66,6 @@ export const GameState = () =>
     ),
     Health(),
     GoToMenu(),
-    pause(),
+    Pause(),
+    Sugestions(),
   );

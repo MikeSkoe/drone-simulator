@@ -166,7 +166,7 @@
           {"x": 1, "y": 1}
         ]
       },
-      "color": "#fffc00ff",
+      "color": "#6bff00ff",
       "tileX": true,
       "tileY": true,
       "tileSize": {"x": 16, "y": 16},
@@ -183,7 +183,7 @@
       "nodeGhost": true,
       "tags": [],
       "values": [
-        {"name": "path", "definition": "String", "defaults": "https://mikeskoe.github.io/drone-simulator/data/dialog1.json", "maxLength": 0, "trimWhitespace": true}
+        {"name": "dialog", "definition": "Text", "defaults": "[\n  {\"speaker\": \"green\", \"speach\": \"Hi. Glad to see you here!\"},\n  {\"speaker\": \"green\", \"speach\": \"Go to pink, it has some mission for you\"},\n  {\"speaker\": \"green\", \"speach\": \"And don't forget to control your enegry reserve\"},\n  {\"speaker\": \"green\", \"speach\": \"You charging while touching white. Keep your eyes on it\"},\n  {\"speaker\": \"green\", \"speach\": \"Good luck and have fun!\"}\n]"}
       ]
     },
     {
@@ -204,7 +204,7 @@
           {"x": 1, "y": 1}
         ]
       },
-      "color": "#ff0000ff",
+      "color": "#a100ffff",
       "tileX": false,
       "tileY": false,
       "tileSize": {"x": 16, "y": 16},
@@ -221,8 +221,7 @@
       "nodeGhost": true,
       "tags": [],
       "values": [
-        {"name": "title", "definition": "String", "defaults": "this is a title", "maxLength": 0, "trimWhitespace": true},
-        {"name": "description", "definition": "String", "defaults": "Descr this is, btw", "maxLength": 0, "trimWhitespace": true}
+        {"name": "dialog", "definition": "Text", "defaults": "[\n  { \"speaker\": \"pink\", \"speach\": \"You look like a cool flying guy! Can you help me?\" },\n  { \"speaker\": \"pink\", \"speach\": \"Bring me a yellow thing, I miss it so much...\"},\n  { \"speaker\": \"pink\", \"speach\": \"I just can't image my life without it\"}\n]"}
       ]
     },
     {
@@ -243,7 +242,7 @@
           {"x": 1, "y": 1}
         ]
       },
-      "color": "#42ff00ff",
+      "color": "#fffc00ff",
       "tileX": false,
       "tileY": false,
       "tileSize": {"x": 8, "y": 8},

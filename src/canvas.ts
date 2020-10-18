@@ -65,7 +65,7 @@ export const initCanvas = () => {
       }
 
       p5.draw = () => {
-        p5.background('black');
+        p5.background(30);
 
         // update
         level.update();

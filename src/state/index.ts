@@ -9,3 +9,4 @@ export const $nrg = createState(1);
 export const $pressed = createState(PressKey.Action);
 export const $gameState = createState<GameState>({type: 'menu'});
 export const $pause = createState(true);
+export const $canInteract = createState(false);

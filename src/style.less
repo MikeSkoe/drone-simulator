@@ -16,7 +16,8 @@ html,body {
   margin: 0;
   padding: 0;
   font-family: CCRedAlertInet;
-  font-size: @indentMedium;
+  font-size: @indentSmall;
+  color: white;
 }
 
 body {
@@ -30,7 +31,7 @@ body {
   width: 500px;
   height: 500px;
   position: relative;
-  box-shadow: 0 0 @indentMedium black;
+  box-shadow: 0 0 @indentMedium #101010;
   border-radius: @indentMedium;
 }
 
@@ -55,20 +56,26 @@ canvas {
   margin: 15px;
 
   button {
-    background: transparent;
+    color: white;
+    background: rgba(0, 0, 0, 0.8);
     outline: none;
     border: none;
-    color: white;
     font-family: CCRedAlertInet;
     font-size: @indentSmall;
     .pixel-outline(lightgray);
     margin: @indentThin 0;
   }
 
+  .suggestion {
+    position: absolute;
+    bottom: @indentThin;
+    right: @indentSmall;
+    color: yellow;
+  }
+
   .outer-box {
     padding: @indentSmall @indentMedium @indentMedium;
-    background: rgba(100, 100, 100, 0.32);
-    color: white;
+    background: #101010ad;
     display: flex;
     .pixel-outline(lightgray);
 
@@ -94,6 +101,7 @@ canvas {
     left: @indentMedium;
     right: @indentMedium;
     bottom: @indentBig;
+    font-size: @indentMedium;
 
     .next {
       margin-left: auto;
@@ -107,7 +115,8 @@ canvas {
   }
 
   .health {
-    color: white;
+    display: flex;
+    align-items: center;
   }
 
   .progress-track {
@@ -115,6 +124,7 @@ canvas {
     height: 8px;
     background: gray;
     position: relative;
+    margin-left: @indentThin;
 
     .progress-handle {
       width: 8px;

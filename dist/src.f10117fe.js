@@ -44999,7 +44999,7 @@ exports.Copter = function (p5, state) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.$pause = exports.$gameState = exports.$pressed = exports.$nrg = exports.$dialog = exports.$collisionActive = exports.$collisionEnd = exports.$collisionStart = void 0;
+exports.$canInteract = exports.$pause = exports.$gameState = exports.$pressed = exports.$nrg = exports.$dialog = exports.$collisionActive = exports.$collisionEnd = exports.$collisionStart = void 0;
 
 var TypeScriptUI_1 = require("../TypeScriptUI");
 
@@ -45015,6 +45015,7 @@ exports.$gameState = TypeScriptUI_1.createState({
   type: 'menu'
 });
 exports.$pause = TypeScriptUI_1.createState(true);
+exports.$canInteract = TypeScriptUI_1.createState(false);
 },{"../TypeScriptUI":"src/TypeScriptUI/index.ts","../types":"src/types.ts"}],"src/entities/Bonus.ts":[function(require,module,exports) {
 "use strict";
 
@@ -45296,19 +45297,29 @@ var addToWorld_1 = require("../hooks/addToWorld");
 
 var RADIUS = 5;
 
-var onActionPressed = function onActionPressed(privateState) {
+var onActionPressed = function onActionPressed(p5, state, privateState) {
   return function () {
     switch (privateState.status) {
       case types_1.InteractionStatus.CanInteract:
-        privateState.status = types_1.InteractionStatus.Speaking;
-        state_1.$dialog.next(function () {
-          return privateState.missions.map(function (mission) {
-            return {
-              speaker: mission.title,
-              speach: mission.description
-            };
+        if (privateState.gotTarget) {
+          privateState.status = types_1.InteractionStatus.Done;
+          state.targetPosition = p5.createVector();
+          state_1.$dialog.next(function () {
+            return [{
+              speaker: 'Speaker',
+              speach: 'Done! Thanks!'
+            }];
           });
-        });
+        } else {
+          privateState.status = types_1.InteractionStatus.Speaking;
+          state_1.$dialog.next(function () {
+            return privateState.dialog;
+          });
+        }
+
+        break;
+
+      case types_1.InteractionStatus.Returning:
         break;
 
       default:
@@ -45331,6 +45342,10 @@ var onCollisionEnd = function onCollisionEnd(privateState) {
     if (privateState.status === types_1.InteractionStatus.CanInteract) {
       privateState.status = types_1.InteractionStatus.New;
     }
+
+    state_1.$canInteract.next(function () {
+      return false;
+    });
   };
 };
 
@@ -45338,24 +45353,25 @@ var onStartCollisionWithTarget = function onStartCollisionWithTarget(state, priv
   return function () {
     if (privateState.status === types_1.InteractionStatus.Doing) {
       privateState.status = types_1.InteractionStatus.Returning;
+      privateState.gotTarget = true;
       state.targetPosition = privateState.emitterBodies[0].position;
     }
   };
 };
 
-var onStartCollisionWithEmitter = function onStartCollisionWithEmitter(p5, state, privateState) {
+var onStartCollisionWithEmitter = function onStartCollisionWithEmitter(privateState) {
   return function () {
-    if (privateState.status === types_1.InteractionStatus.New) {
-      privateState.status = types_1.InteractionStatus.CanInteract;
-    } else if (privateState.status === types_1.InteractionStatus.Returning) {
-      privateState.status = types_1.InteractionStatus.Done;
-      state.targetPosition = p5.createVector();
-      state_1.$dialog.next(function () {
-        return [{
-          speaker: 'Speaker',
-          speach: 'Done! Thanks!'
-        }];
-      });
+    switch (privateState.status) {
+      case types_1.InteractionStatus.New:
+      case types_1.InteractionStatus.Returning:
+        privateState.status = types_1.InteractionStatus.CanInteract;
+        state_1.$canInteract.next(function () {
+          return true;
+        });
+        break;
+
+      default:
+        break;
     }
   };
 };
@@ -45365,21 +45381,22 @@ exports.MissionEmitter = function (p5, state) {
     emitterBodies: [],
     targetBodies: [],
     status: types_1.InteractionStatus.New,
-    missions: []
+    dialog: [],
+    gotTarget: false
   };
   var unsubs = [state_1.$collisionStart.observable.filter(function (labels) {
     return labels.includes(types_1.BodyLabel.MissionEmitter);
-  }).subscribe(onStartCollisionWithEmitter(p5, state, privateState)).unsub, state_1.$collisionStart.observable.filter(function (labels) {
+  }).subscribe(onStartCollisionWithEmitter(privateState)).unsub, state_1.$collisionStart.observable.filter(function (labels) {
     return labels.includes(types_1.BodyLabel.MissionTarget);
   }).subscribe(onStartCollisionWithTarget(state, privateState)).unsub, state_1.$collisionEnd.observable.filter(function (labels) {
     return labels.includes(types_1.BodyLabel.MissionEmitter);
   }).subscribe(onCollisionEnd(privateState)).unsub, state_1.$pressed.observable.filter(function (key) {
     return key === types_1.PressKey.Action;
-  }).subscribe(onActionPressed(privateState)).unsub, state_1.$dialog.observable.filter(function (dialog) {
+  }).subscribe(onActionPressed(p5, state, privateState)).unsub, state_1.$dialog.observable.filter(function (dialog) {
     return dialog.length === 0;
   }).subscribe(onEndSpeaking(state, privateState)).unsub];
   var localState = {
-    addEmitter: function addEmitter(pos, mission) {
+    addEmitter: function addEmitter(pos, dialog) {
       var _a;
 
       var emitterBody = (_a = Matter.Bodies).circle.apply(_a, __spreadArrays(pos, [RADIUS * 4, {
@@ -45389,7 +45406,7 @@ exports.MissionEmitter = function (p5, state) {
       }]));
 
       privateState.emitterBodies.push(emitterBody);
-      privateState.missions.push(mission);
+      privateState.dialog = dialog;
       addToWorld_1.addToWorld(state.engine, [emitterBody]);
     },
     addTarget: function addTarget(pos) {
@@ -45609,39 +45626,46 @@ exports.DialogEmitter = function (p5, state) {
     }
 
     privateState.status = types_1.InteractionStatus.CanInteract;
+    state_1.$canInteract.next(function () {
+      return true;
+    });
   }).unsub, state_1.$collisionEnd.observable.filter(function (labels) {
     return labels.includes(types_1.BodyLabel.DialogEmitter);
   }).subscribe(function () {
     if (privateState.status === types_1.InteractionStatus.CanInteract) {
       privateState.status = types_1.InteractionStatus.New;
     }
+
+    state_1.$canInteract.next(function () {
+      return false;
+    });
   }).unsub, state_1.$pressed.observable.filter(function (key) {
     return key === types_1.PressKey.Action;
-  }).subscribe(onActionPressed).unsub, state_1.$dialog.observable.filter(function (dialog) {
-    return dialog.length === 0;
-  }).subscribe(function () {
-    if (privateState.status === types_1.InteractionStatus.Speaking) {
-      privateState.status = types_1.InteractionStatus.Done;
+  }).subscribe(onActionPressed).unsub, state_1.$dialog.observable.subscribe(function (dialog) {
+    if (dialog.length === 0) {
+      if (privateState.status === types_1.InteractionStatus.Speaking) {
+        privateState.status = types_1.InteractionStatus.Done;
+      }
+    } else {
+      state_1.$canInteract.next(function () {
+        return false;
+      });
     }
   }).unsub];
   var localState = {
-    addDialog: function addDialog(pos, dialogPath) {
-      fetch(dialogPath).then(function (data) {
-        return data.json();
-      }).then(function (newDialog) {
-        var _a;
+    addDialog: function addDialog(pos, dialog) {
+      var _a;
 
-        privateState.dialog = newDialog;
+      privateState.dialog = dialog;
 
-        var body = (_a = Matter.Bodies).circle.apply(_a, __spreadArrays(pos, [RADIUS * 4, {
-          isStatic: true,
-          isSensor: true,
-          label: types_1.BodyLabel.DialogEmitter
-        }]));
+      var body = (_a = Matter.Bodies).circle.apply(_a, __spreadArrays(pos, [RADIUS * 4, {
+        isStatic: true,
+        isSensor: true,
+        label: types_1.BodyLabel.DialogEmitter
+      }]));
 
-        privateState.bodies.push(body);
-        unsubs.push(addToWorld_1.addToWorld(state.engine, [body]));
-      }).catch(console.log);
+      privateState.bodies.push(body);
+      unsubs.push(addToWorld_1.addToWorld(state.engine, [body]));
     },
     unsubs: unsubs
   };
@@ -45772,6 +45796,20 @@ exports.getAxe = function (index) {
 },{"../state":"src/state/index.ts","../types":"src/types.ts"}],"src/entities/TileMap.ts":[function(require,module,exports) {
 "use strict";
 
+var __spreadArrays = this && this.__spreadArrays || function () {
+  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
+    s += arguments[i].length;
+  }
+
+  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
+    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
+      r[k] = a[j];
+    }
+  }
+
+  return r;
+};
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -45786,6 +45824,7 @@ var drawToBuffer = function drawToBuffer(_a, layer, tileBuffer, imageData) {
       dataCoords2D = layer.dataCoords2D;
   var rowSize = width / gridCellWidth;
   var columnSize = height / gridCellHeight;
+  tileBuffer.noSmooth();
 
   for (var y = 0; y < columnSize; y++) {
     for (var x = 0; x < rowSize; x++) {
@@ -45806,7 +45845,7 @@ exports.TileMap = function (p5, state) {
     buffers: buffers,
     setTileMap: function setTileMap(size, layer) {
       p5.loadImage(img, function (image) {
-        var graphics = p5.createGraphics.apply(p5, size);
+        var graphics = p5.createGraphics.apply(p5, __spreadArrays(size, ['p2d']));
         drawToBuffer(size, layer, graphics, image);
         buffers.push(graphics);
         unsubs.push(graphics.remove);
@@ -46053,11 +46092,7 @@ var getEntities = function getEntities(levelPath, _a) {
               break;
 
             case 'mission_emitter':
-              missionEmitter.localState.addEmitter([entity.x, entity.y], {
-                id: Math.random(),
-                title: entity.values.title,
-                description: entity.values.description
-              });
+              missionEmitter.localState.addEmitter([entity.x, entity.y], JSON.parse(entity.values.dialog));
               break;
 
             case 'mission_target':
@@ -46065,7 +46100,7 @@ var getEntities = function getEntities(levelPath, _a) {
               break;
 
             case 'dialog_emitter':
-              dialogEmitter.localState.addDialog([entity.x, entity.y], entity.values.path);
+              dialogEmitter.localState.addDialog([entity.x, entity.y], JSON.parse(entity.values.dialog));
               break;
 
             case 'ground':
@@ -46282,7 +46317,7 @@ exports.initCanvas = function () {
     };
 
     p5.draw = function () {
-      p5.background('black');
+      p5.background(30);
       level.update();
       level.draw();
     };
@@ -46301,7 +46336,7 @@ var TypeScriptUI_1 = require("../TypeScriptUI");
 var state_1 = require("../state");
 
 var Dialog = function Dialog(item) {
-  return !item ? null : TypeScriptUI_1.Div(TypeScriptUI_1.Div(TypeScriptUI_1.Div(TypeScriptUI_1.String(item.speaker)).with(TypeScriptUI_1.className("title")), TypeScriptUI_1.Div(TypeScriptUI_1.String(item.speach)).with(TypeScriptUI_1.className("text"))), TypeScriptUI_1.Div(TypeScriptUI_1.String(">")).with(TypeScriptUI_1.className("next inner-box"))).with(TypeScriptUI_1.className("dialog outer-box"));
+  return !item ? null : TypeScriptUI_1.Div(TypeScriptUI_1.Div(TypeScriptUI_1.Div(TypeScriptUI_1.String(item.speaker)).with(TypeScriptUI_1.className("title")), TypeScriptUI_1.Div(TypeScriptUI_1.String(item.speach)).with(TypeScriptUI_1.className("text")))).with(TypeScriptUI_1.className("dialog outer-box"));
 };
 
 var Health = function Health() {
@@ -46322,7 +46357,7 @@ var GoToMenu = function GoToMenu() {
   }));
 };
 
-var pause = function pause() {
+var Pause = function Pause() {
   return TypeScriptUI_1.Div(TypeScriptUI_1.If(state_1.$pause.observable, function () {
     return TypeScriptUI_1.Button('play', function () {
       return state_1.$pause.next(function () {
@@ -46338,10 +46373,20 @@ var pause = function pause() {
   }));
 };
 
+var Sugestions = function Sugestions() {
+  return TypeScriptUI_1.Div(TypeScriptUI_1.If(state_1.$canInteract.observable, function () {
+    return TypeScriptUI_1.Div(TypeScriptUI_1.String('press [Action] key to interact'));
+  }), TypeScriptUI_1.If(state_1.$dialog.observable.map(function (dialog) {
+    return dialog.length > 0;
+  }), function () {
+    return TypeScriptUI_1.Div(TypeScriptUI_1.String('press [Next] to see next phrase'));
+  })).with(TypeScriptUI_1.className('suggestion'));
+};
+
 exports.GameState = function () {
   return TypeScriptUI_1.Div(TypeScriptUI_1.Switch(state_1.$dialog.observable.map(function (items) {
     return items[0];
-  }), Dialog), Health(), GoToMenu(), pause());
+  }), Dialog), Health(), GoToMenu(), Pause(), Sugestions());
 };
 },{"../TypeScriptUI":"src/TypeScriptUI/index.ts","../state":"src/state/index.ts"}],"src/components/MenuState.ts":[function(require,module,exports) {
 "use strict";
@@ -46434,7 +46479,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "54024" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55701" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

@@ -1,13 +1,13 @@
 import P5 = require('p5');
 import * as Matter from 'matter-js';
-import { Entity, Mission, BaseState, MyState, BodyLabel, InteractionStatus, PressKey } from '../types';
-import { $collisionEnd, $collisionStart, $dialog, $pressed } from '../state';
+import { Entity, Mission, BaseState, MyState, BodyLabel, InteractionStatus, PressKey, DialogItem } from '../types';
+import { $canInteract, $collisionEnd, $collisionStart, $dialog, $pressed } from '../state';
 import { addToWorld } from '../hooks/addToWorld';
 
 const RADIUS = 5;
 
 export interface MissionEmitterState extends BaseState {
-  addEmitter: (pos: [number, number], mission: Mission) => void;
+  addEmitter: (pos: [number, number], dialog: DialogItem[]) => void;
   addTarget: (pos: [number, number]) => void;
 }
 
@@ -15,17 +15,27 @@ interface PrivateState {
   emitterBodies: Matter.Body[];
   targetBodies: Matter.Body[];
   status: InteractionStatus;
-  missions: Mission[];
+  dialog: DialogItem[];
+  gotTarget: boolean;
 }
 
-const onActionPressed = (privateState: PrivateState) => () => {
+const onActionPressed = (p5: P5, state: MyState, privateState: PrivateState) => () => {
   switch(privateState.status) {
     case InteractionStatus.CanInteract:
-      privateState.status = InteractionStatus.Speaking;
-      $dialog.next(() => privateState.missions.map(mission => ({
-        speaker: mission.title,
-        speach: mission.description,
-      })));
+      if (privateState.gotTarget) {
+        privateState.status = InteractionStatus.Done;
+        state.targetPosition = p5.createVector();
+        $dialog.next(() => [{
+          speaker: 'Speaker',
+          speach: 'Done! Thanks!',
+        }]);
+      } else {
+        privateState.status = InteractionStatus.Speaking;
+        $dialog.next(() => privateState.dialog);
+      }
+      break;
+
+    case InteractionStatus.Returning:
       break;
 
     default: break;
@@ -44,25 +54,27 @@ const onCollisionEnd = (privateState: PrivateState) => () => {
   if (privateState.status === InteractionStatus.CanInteract) {
     privateState.status = InteractionStatus.New;
   }
+
+  $canInteract.next(() => false);
 }
 
 const onStartCollisionWithTarget = (state: MyState, privateState: PrivateState) => () => {
   if (privateState.status === InteractionStatus.Doing) {
     privateState.status = InteractionStatus.Returning;
+    privateState.gotTarget = true;
     state.targetPosition = privateState.emitterBodies[0].position;
   }
 }
 
-const onStartCollisionWithEmitter = (p5: P5, state: MyState, privateState: PrivateState) => () => {
-  if (privateState.status === InteractionStatus.New) {
-    privateState.status = InteractionStatus.CanInteract;
-  } else if (privateState.status === InteractionStatus.Returning) {
-    privateState.status = InteractionStatus.Done;
-    state.targetPosition = p5.createVector();
-    $dialog.next(() => [{
-      speaker: 'Speaker',
-      speach: 'Done! Thanks!',
-    }])
+const onStartCollisionWithEmitter = (privateState: PrivateState) => () => {
+  switch (privateState.status) {
+    case InteractionStatus.New:
+    case InteractionStatus.Returning:
+      privateState.status = InteractionStatus.CanInteract;
+      $canInteract.next(() => true);
+      break;
+    
+    default: break;
   }
 }
 
@@ -74,37 +86,38 @@ export const MissionEmitter = (
     emitterBodies: [],
     targetBodies: [],
     status: InteractionStatus.New,
-    missions: [],
-  }
+    dialog: [],
+    gotTarget: false,
+  };
   const unsubs: (() => void)[] = [
     $collisionStart.observable
       .filter(labels => labels.includes(BodyLabel.MissionEmitter))
-      .subscribe(onStartCollisionWithEmitter(p5, state, privateState))
+      .subscribe(onStartCollisionWithEmitter(privateState))
       .unsub,
-    
+
     $collisionStart.observable
       .filter(labels => labels.includes(BodyLabel.MissionTarget))
       .subscribe(onStartCollisionWithTarget(state, privateState))
       .unsub,
 
-      $collisionEnd.observable
-        .filter(labels => labels.includes(BodyLabel.MissionEmitter))
-        .subscribe(onCollisionEnd(privateState))
-        .unsub,
+    $collisionEnd.observable
+      .filter(labels => labels.includes(BodyLabel.MissionEmitter))
+      .subscribe(onCollisionEnd(privateState))
+      .unsub,
 
-      $pressed.observable
-        .filter(key => key === PressKey.Action)
-        .subscribe(onActionPressed(privateState))
-        .unsub,
-      
-      $dialog.observable
-        .filter(dialog => dialog.length === 0)
-        .subscribe(onEndSpeaking(state, privateState))
-        .unsub,
+    $pressed.observable
+      .filter(key => key === PressKey.Action)
+      .subscribe(onActionPressed(p5, state, privateState))
+      .unsub,
+
+    $dialog.observable
+      .filter(dialog => dialog.length === 0)
+      .subscribe(onEndSpeaking(state, privateState))
+      .unsub,
   ]
 
   const localState: MissionEmitterState = {
-    addEmitter: (pos, mission) => {
+    addEmitter: (pos, dialog) => {
       const emitterBody = Matter.Bodies.circle(
         ...pos, RADIUS * 4,
         {
@@ -115,7 +128,7 @@ export const MissionEmitter = (
       );
 
       privateState.emitterBodies.push(emitterBody);
-      privateState.missions.push(mission);
+      privateState.dialog = dialog;
       addToWorld(state.engine, [emitterBody]);
     },
 
