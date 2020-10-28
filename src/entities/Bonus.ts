@@ -14,20 +14,8 @@ export const Bonuses = (
   p5: P5,
   state: MyState,
 ): Entity<BonusState> => {
-  const bodies: Matter.Body[] = [];
-  const unsubs = [
-      $collisionActive.observable.subscribe(
-        ([labelA, labelB]) => {
-          if (
-            labelA === BodyLabel.Bonus
-            || labelB === BodyLabel.Bonus
-          ) {
-            state.health = Math.min(1, state.health + 0.005);
-          }
-        }
-      ).unsub,
-  ];
-
+  let bodies: Matter.Body[] = [];
+  const unsubs: (() => void)[] = [];
   const localState: BonusState = {
     addBonus: (x, y) => {
       const body = Matter.Bodies.circle(
@@ -39,8 +27,20 @@ export const Bonuses = (
         },
       );
 
-      bodies.push(body);
-      unsubs.push(addToWorld(state.engine, [body]));
+      bodies = [body];
+      unsubs.push(
+        addToWorld(state.engine, [body]),
+        $collisionActive.observable.subscribe(
+          ([labelA, labelB]) => {
+            if (
+              labelA === BodyLabel.Bonus
+              || labelB === BodyLabel.Bonus
+            ) {
+              state.health = Math.min(1, state.health + 0.005);
+            }
+          }
+        ).unsub,
+      );
     },
     unsubs,
   };

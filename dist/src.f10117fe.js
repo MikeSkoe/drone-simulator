@@ -44788,7 +44788,8 @@ Object.defineProperty(exports, "__esModule", {
 exports.PressKey = exports.InteractionStatus = exports.BodyLabel = exports.Key = exports.LevelPath = exports.SCALE = void 0;
 exports.SCALE = 2;
 exports.LevelPath = {
-  First: location.href + 'data/level1.json'
+  First: location.href + 'data/level1.json',
+  Second: location.href + 'data/level2.json'
 };
 var Key;
 
@@ -44936,21 +44937,26 @@ var HEIGHT = 8 * .75;
 
 exports.Copter = function (p5, state) {
   var imageData;
-  var body = Matter.Bodies.rectangle(0, 0, WIDTH, HEIGHT, {
-    label: 'copter',
-    friction: 0.05
-  });
+  var bodies = [];
+  var unsubs = [];
   var localState = {
     power: 0.00007,
     setPos: function setPos(_a) {
       var x = _a[0],
           y = _a[1];
-      Matter.Body.setPosition(body, Matter.Vector.create(x, y));
+      var body = Matter.Bodies.rectangle(x, y, WIDTH, HEIGHT, {
+        label: 'copter',
+        friction: 0.05
+      });
+      bodies = [body];
+      unsubs.push(addToWorld_1.addToWorld(state.engine, [body]));
     },
     getPos: function getPos() {
-      return body.position;
+      var _a, _b;
+
+      return (_b = (_a = bodies[0]) === null || _a === void 0 ? void 0 : _a.position) !== null && _b !== void 0 ? _b : Matter.Vector.create();
     },
-    unsubs: [addToWorld_1.addToWorld(state.engine, [body])]
+    unsubs: unsubs
   };
   return {
     localState: localState,
@@ -44960,7 +44966,9 @@ exports.Copter = function (p5, state) {
     update: function update() {
       var _a, _b;
 
-      if (!state.movable) {
+      var body = bodies[0];
+
+      if (!state.movable || !body) {
         return;
       }
 
@@ -44985,9 +44993,12 @@ exports.Copter = function (p5, state) {
     draw: function draw() {
       p5.push();
       {
-        p5.translate(body.position.x, body.position.y);
-        p5.rotate(body.angle);
-        p5.image(imageData, -imageData.width / 2, -imageData.height / 2);
+        for (var _i = 0, bodies_1 = bodies; _i < bodies_1.length; _i++) {
+          var body = bodies_1[_i];
+          p5.translate(body.position.x, body.position.y);
+          p5.rotate(body.angle);
+          p5.image(imageData, -imageData.width / 2, -imageData.height / 2);
+        }
       }
       p5.pop();
     }
@@ -45070,14 +45081,7 @@ var RADIUS = 5;
 
 exports.Bonuses = function (p5, state) {
   var bodies = [];
-  var unsubs = [state_1.$collisionActive.observable.subscribe(function (_a) {
-    var labelA = _a[0],
-        labelB = _a[1];
-
-    if (labelA === types_1.BodyLabel.Bonus || labelB === types_1.BodyLabel.Bonus) {
-      state.health = Math.min(1, state.health + 0.005);
-    }
-  }).unsub];
+  var unsubs = [];
   var localState = {
     addBonus: function addBonus(x, y) {
       var body = Matter.Bodies.circle(x, y, RADIUS, {
@@ -45085,8 +45089,15 @@ exports.Bonuses = function (p5, state) {
         isSensor: true,
         label: types_1.BodyLabel.Bonus
       });
-      bodies.push(body);
-      unsubs.push(addToWorld_1.addToWorld(state.engine, [body]));
+      bodies = [body];
+      unsubs.push(addToWorld_1.addToWorld(state.engine, [body]), state_1.$collisionActive.observable.subscribe(function (_a) {
+        var labelA = _a[0],
+            labelB = _a[1];
+
+        if (labelA === types_1.BodyLabel.Bonus || labelB === types_1.BodyLabel.Bonus) {
+          state.health = Math.min(1, state.health + 0.005);
+        }
+      }).unsub);
     },
     unsubs: unsubs
   };
@@ -45376,25 +45387,20 @@ var onStartCollisionWithEmitter = function onStartCollisionWithEmitter(privateSt
   };
 };
 
-exports.MissionEmitter = function (p5, state) {
-  var privateState = {
+var initialState = function initialState() {
+  return {
     emitterBodies: [],
     targetBodies: [],
     status: types_1.InteractionStatus.New,
     dialog: [],
     gotTarget: false
   };
-  var unsubs = [state_1.$collisionStart.observable.filter(function (labels) {
-    return labels.includes(types_1.BodyLabel.MissionEmitter);
-  }).subscribe(onStartCollisionWithEmitter(privateState)).unsub, state_1.$collisionStart.observable.filter(function (labels) {
-    return labels.includes(types_1.BodyLabel.MissionTarget);
-  }).subscribe(onStartCollisionWithTarget(state, privateState)).unsub, state_1.$collisionEnd.observable.filter(function (labels) {
-    return labels.includes(types_1.BodyLabel.MissionEmitter);
-  }).subscribe(onCollisionEnd(privateState)).unsub, state_1.$pressed.observable.filter(function (key) {
-    return key === types_1.PressKey.Action;
-  }).subscribe(onActionPressed(p5, state, privateState)).unsub, state_1.$dialog.observable.filter(function (dialog) {
-    return dialog.length === 0;
-  }).subscribe(onEndSpeaking(state, privateState)).unsub];
+};
+
+exports.MissionEmitter = function (p5, state) {
+  var privateState = initialState();
+  var unsubs = [];
+  console.log(state);
   var localState = {
     addEmitter: function addEmitter(pos, dialog) {
       var _a;
@@ -45405,9 +45411,22 @@ exports.MissionEmitter = function (p5, state) {
         label: types_1.BodyLabel.MissionEmitter
       }]));
 
-      privateState.emitterBodies.push(emitterBody);
+      privateState.emitterBodies = [emitterBody];
       privateState.dialog = dialog;
-      addToWorld_1.addToWorld(state.engine, [emitterBody]);
+      unsubs.push(state_1.$collisionStart.observable.filter(function (labels) {
+        return labels.includes(types_1.BodyLabel.MissionEmitter);
+      }).subscribe(onStartCollisionWithEmitter(privateState)).unsub, state_1.$collisionEnd.observable.filter(function (labels) {
+        return labels.includes(types_1.BodyLabel.MissionEmitter);
+      }).subscribe(onCollisionEnd(privateState)).unsub, state_1.$pressed.observable.filter(function (key) {
+        return key === types_1.PressKey.Action;
+      }).subscribe(onActionPressed(p5, state, privateState)).unsub, state_1.$dialog.observable.filter(function (dialog) {
+        return dialog.length === 0;
+      }).subscribe(onEndSpeaking(state, privateState)).unsub, state_1.$collisionStart.observable.filter(function (labels) {
+        return labels.includes(types_1.BodyLabel.MissionTarget);
+      }).subscribe(onStartCollisionWithTarget(state, privateState)).unsub, function () {
+        state.targetPosition = Matter.Vector.create();
+        Object.assign(privateState, initialState());
+      }, addToWorld_1.addToWorld(state.engine, [emitterBody]));
     },
     addTarget: function addTarget(pos) {
       var _a;
@@ -45418,8 +45437,8 @@ exports.MissionEmitter = function (p5, state) {
         label: types_1.BodyLabel.MissionTarget
       }]));
 
-      privateState.targetBodies.push(targetBody);
-      addToWorld_1.addToWorld(state.engine, [targetBody]);
+      privateState.targetBodies = [targetBody];
+      unsubs.push(addToWorld_1.addToWorld(state.engine, [targetBody]));
     },
     unsubs: unsubs
   };
@@ -45618,40 +45637,7 @@ exports.DialogEmitter = function (p5, state) {
     bodies: []
   };
   var onActionPressed = getOnActionPressed(privateState);
-  var unsubs = [state_1.$collisionStart.observable.filter(function (labels) {
-    return labels.includes(types_1.BodyLabel.DialogEmitter);
-  }).subscribe(function () {
-    if (privateState.status === types_1.InteractionStatus.Done) {
-      return;
-    }
-
-    privateState.status = types_1.InteractionStatus.CanInteract;
-    state_1.$canInteract.next(function () {
-      return true;
-    });
-  }).unsub, state_1.$collisionEnd.observable.filter(function (labels) {
-    return labels.includes(types_1.BodyLabel.DialogEmitter);
-  }).subscribe(function () {
-    if (privateState.status === types_1.InteractionStatus.CanInteract) {
-      privateState.status = types_1.InteractionStatus.New;
-    }
-
-    state_1.$canInteract.next(function () {
-      return false;
-    });
-  }).unsub, state_1.$pressed.observable.filter(function (key) {
-    return key === types_1.PressKey.Action;
-  }).subscribe(onActionPressed).unsub, state_1.$dialog.observable.subscribe(function (dialog) {
-    if (dialog.length === 0) {
-      if (privateState.status === types_1.InteractionStatus.Speaking) {
-        privateState.status = types_1.InteractionStatus.Done;
-      }
-    } else {
-      state_1.$canInteract.next(function () {
-        return false;
-      });
-    }
-  }).unsub];
+  var unsubs = [];
   var localState = {
     addDialog: function addDialog(pos, dialog) {
       var _a;
@@ -45664,8 +45650,43 @@ exports.DialogEmitter = function (p5, state) {
         label: types_1.BodyLabel.DialogEmitter
       }]));
 
-      privateState.bodies.push(body);
-      unsubs.push(addToWorld_1.addToWorld(state.engine, [body]));
+      privateState.bodies = [body];
+      unsubs.push(state_1.$collisionStart.observable.filter(function (labels) {
+        return labels.includes(types_1.BodyLabel.DialogEmitter);
+      }).subscribe(function () {
+        if (privateState.status === types_1.InteractionStatus.Done) {
+          return;
+        }
+
+        privateState.status = types_1.InteractionStatus.CanInteract;
+        state_1.$canInteract.next(function () {
+          return true;
+        });
+      }).unsub, state_1.$collisionEnd.observable.filter(function (labels) {
+        return labels.includes(types_1.BodyLabel.DialogEmitter);
+      }).subscribe(function () {
+        if (privateState.status === types_1.InteractionStatus.CanInteract) {
+          privateState.status = types_1.InteractionStatus.New;
+        }
+
+        state_1.$canInteract.next(function () {
+          return false;
+        });
+      }).unsub, state_1.$pressed.observable.filter(function (key) {
+        return key === types_1.PressKey.Action;
+      }).subscribe(onActionPressed).unsub, state_1.$dialog.observable.subscribe(function (dialog) {
+        if (dialog.length === 0) {
+          if (privateState.status === types_1.InteractionStatus.Speaking) {
+            privateState.status = types_1.InteractionStatus.Done;
+          }
+        } else {
+          state_1.$canInteract.next(function () {
+            return false;
+          });
+        }
+      }).unsub, addToWorld_1.addToWorld(state.engine, [body]), function () {
+        return privateState.status = types_1.InteractionStatus.New;
+      });
     },
     unsubs: unsubs
   };
@@ -45819,6 +45840,7 @@ var img = location.href + 'data/block.png';
 var drawToBuffer = function drawToBuffer(_a, layer, tileBuffer, imageData) {
   var width = _a[0],
       height = _a[1];
+  tileBuffer.clear();
   var gridCellWidth = layer.gridCellWidth,
       gridCellHeight = layer.gridCellHeight,
       dataCoords2D = layer.dataCoords2D;
@@ -45847,8 +45869,7 @@ exports.TileMap = function (p5, state) {
       p5.loadImage(img, function (image) {
         var graphics = p5.createGraphics.apply(p5, __spreadArrays(size, ['p2d']));
         drawToBuffer(size, layer, graphics, image);
-        buffers.push(graphics);
-        unsubs.push(graphics.remove);
+        buffers = [graphics];
       });
     },
     unsubs: unsubs
@@ -46297,6 +46318,8 @@ exports.initCanvas = function () {
           break;
 
         case 'menu':
+          console.log('menu');
+          level.localState.unloadLevel();
           state_1.$pause.next(function () {
             return true;
           });
@@ -46348,7 +46371,7 @@ var Health = function Health() {
 };
 
 var GoToMenu = function GoToMenu() {
-  return TypeScriptUI_1.Div(TypeScriptUI_1.Button('Go to menu', function () {
+  return TypeScriptUI_1.Div(TypeScriptUI_1.Button('Go to level list', function () {
     state_1.$gameState.next(function () {
       return {
         type: 'menu'
@@ -46402,17 +46425,19 @@ var types_1 = require("../types");
 
 var TypeScriptUI_1 = require("../TypeScriptUI");
 
-var goToGame = function goToGame() {
-  return state_1.$gameState.next(function () {
-    return {
-      type: 'game',
-      levelPath: types_1.LevelPath.First
-    };
-  });
+var goToGame = function goToGame(levelPath) {
+  return function () {
+    return state_1.$gameState.next(function () {
+      return {
+        type: 'game',
+        levelPath: levelPath
+      };
+    });
+  };
 };
 
 exports.MenuState = function () {
-  return TypeScriptUI_1.Div(TypeScriptUI_1.Div(TypeScriptUI_1.String('menu')), TypeScriptUI_1.Button('Go to game', goToGame)).with(function () {
+  return TypeScriptUI_1.Div(TypeScriptUI_1.Div(TypeScriptUI_1.String('menu')), TypeScriptUI_1.Button('Go to level 1', goToGame(types_1.LevelPath.First)), TypeScriptUI_1.Button('Go to level 2', goToGame(types_1.LevelPath.Second))).with(function () {
     return state_1.$pressed.observable.filter(function (key) {
       return key === types_1.PressKey.Next;
     }).subscribe(goToGame).unsub;
@@ -46479,7 +46504,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55701" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "60785" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

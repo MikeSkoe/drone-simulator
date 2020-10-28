@@ -39,47 +39,7 @@ export const DialogEmitter = (
     bodies: [],
   }
   const onActionPressed = getOnActionPressed(privateState);
-  const unsubs: (() => void)[] = [
-      $collisionStart.observable
-        .filter(labels => labels.includes(BodyLabel.DialogEmitter))
-        .subscribe(() => {
-          if (privateState.status === InteractionStatus.Done) {
-            return;
-          }
-
-          privateState.status = InteractionStatus.CanInteract;
-          $canInteract.next(() => true);
-        })
-        .unsub,
-
-      $collisionEnd.observable
-        .filter(labels => labels.includes(BodyLabel.DialogEmitter))
-        .subscribe(() => {
-          if (privateState.status === InteractionStatus.CanInteract) {
-            privateState.status = InteractionStatus.New;
-          }
-
-          $canInteract.next(() => false);
-        })
-        .unsub,
-
-      $pressed.observable
-        .filter(key => key === PressKey.Action)
-        .subscribe(onActionPressed)
-        .unsub,
-
-      $dialog.observable
-        .subscribe(dialog => {
-          if (dialog.length === 0) {
-            if (privateState.status === InteractionStatus.Speaking) {
-              privateState.status = InteractionStatus.Done
-            }
-          } else {
-            $canInteract.next(() => false);
-          }
-        })
-        .unsub,
-    ];
+  const unsubs: (() => void)[] = [];
 
   const localState: DialogEmitterState = {
     addDialog: (pos, dialog) => {
@@ -94,8 +54,52 @@ export const DialogEmitter = (
         },
       );
 
-      privateState.bodies.push(body);
-      unsubs.push(addToWorld(state.engine, [body]));
+      privateState.bodies = [body];
+      unsubs.push(
+        $collisionStart.observable
+          .filter(labels => labels.includes(BodyLabel.DialogEmitter))
+          .subscribe(() => {
+            if (privateState.status === InteractionStatus.Done) {
+              return;
+            }
+
+            privateState.status = InteractionStatus.CanInteract;
+            $canInteract.next(() => true);
+          })
+          .unsub,
+
+        $collisionEnd.observable
+          .filter(labels => labels.includes(BodyLabel.DialogEmitter))
+          .subscribe(() => {
+            if (privateState.status === InteractionStatus.CanInteract) {
+              privateState.status = InteractionStatus.New;
+            }
+
+            $canInteract.next(() => false);
+          })
+          .unsub,
+
+        $pressed.observable
+          .filter(key => key === PressKey.Action)
+          .subscribe(onActionPressed)
+          .unsub,
+
+        $dialog.observable
+          .subscribe(dialog => {
+            if (dialog.length === 0) {
+              if (privateState.status === InteractionStatus.Speaking) {
+                privateState.status = InteractionStatus.Done
+              }
+            } else {
+              $canInteract.next(() => false);
+            }
+          })
+          .unsub,
+
+        addToWorld(state.engine, [body]),
+
+        () => privateState.status = InteractionStatus.New,
+      );
     },
     unsubs,
   };

@@ -9,6 +9,8 @@ const drawToBuffer = (
   tileBuffer: P5.Graphics,
   imageData: P5.Image,
 ) => {
+    tileBuffer.clear();
+    
     const {gridCellWidth, gridCellHeight, dataCoords2D} = layer;
     const rowSize = width / gridCellWidth;
     const columnSize = height / gridCellHeight;
@@ -42,7 +44,7 @@ export const TileMap = (
   state: MyState,
 ): Entity<TileMapState> =>{
   const unsubs: (() => void)[] = [];
-  const buffers: P5.Graphics[] = [];
+  let buffers: P5.Graphics[] = [];
 
   const localState: TileMapState = {
     buffers,
@@ -53,8 +55,7 @@ export const TileMap = (
           const graphics = p5.createGraphics(...size, 'p2d');
 
           drawToBuffer(size, layer, graphics, image);
-          buffers.push(graphics);
-          unsubs.push(graphics.remove);
+          buffers = [graphics];
         }
       );
     },

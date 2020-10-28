@@ -3,6 +3,7 @@ import * as Matter from 'matter-js';
 export const SCALE = 2;
 export const LevelPath = {
   First: location.href + 'data/level1.json',
+  Second: location.href + 'data/level2.json',
 };
 
 export enum Key {

@@ -1,5 +1,5 @@
 import { createState } from '../TypeScriptUI';
-import { GameState, BodyLabel, DialogItem, PressKey } from '../types';
+import { GameState, BodyLabel, DialogItem, PressKey, LevelPath } from '../types';
 
 export const $collisionStart = createState<[BodyLabel | undefined, BodyLabel | undefined]>([undefined, undefined]);
 export const $collisionEnd = createState<[BodyLabel | undefined, BodyLabel | undefined]>([undefined, undefined]);

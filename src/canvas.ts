@@ -1,10 +1,8 @@
 import P5 = require('p5');
 import * as Matter from 'matter-js';
-import { withCollision } from './hooks/withCollision';
 import { Level } from './entities/Level';
 import { MyState } from './types';
 import { $gameState, $pause } from './state';
-import { withDialogs } from './hooks/withDialogs';
 
 const canvas = document.querySelector<HTMLDivElement>('#canvas');
 const CANVAS_WIDTH = 500;
@@ -41,6 +39,8 @@ export const initCanvas = () => {
                 break;
               
               case 'menu':
+                console.log('menu');
+                level.localState.unloadLevel();
                 $pause.next(() => true);
                 break;
             }

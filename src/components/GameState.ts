@@ -29,7 +29,7 @@ const Health = () => Div(
 
 const GoToMenu = () => Div(
     Button(
-        'Go to menu',
+        'Go to level list',
         () => {
             $gameState.next(() => ({type: 'menu'}));
         },
